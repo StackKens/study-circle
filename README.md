@@ -2,7 +2,6 @@
 
 > A collaborative learning platform that helps university students connect, share ideas, organize study sessions, and learn together.
 
----
 
 # Overview
 
@@ -18,7 +17,6 @@ The platform creates a digital space where students can:
 
 StudyCircle aims to make learning more interactive, social, and accessible.
 
----
 
 # Problem Statement
 
@@ -34,7 +32,7 @@ Most existing platforms are either too general or not built specifically for aca
 
 StudyCircle solves this by providing a dedicated environment focused on student interaction and shared learning.
 
----
+
 
 # Solution
 
@@ -48,7 +46,6 @@ StudyCircle provides a centralized platform where students can:
 
 The goal is to encourage collaborative learning and improve the overall university learning experience.
 
----
 
 # Key Features
 
@@ -79,8 +76,6 @@ The goal is to encourage collaborative learning and improve the overall universi
 - Accessible on desktop and mobile devices
 - Clean and user-friendly interface
 
----
-
 # Target Users
 
 StudyCircle is designed primarily for:
@@ -90,7 +85,6 @@ StudyCircle is designed primarily for:
 - Academic clubs and communities
 - Peer mentors and tutors
 
----
 
 # Technologies Used
 
@@ -117,7 +111,6 @@ StudyCircle is designed primarily for:
 
 - JWT Authentication
 
----
 
 # System Workflow
 
@@ -128,7 +121,6 @@ StudyCircle is designed primarily for:
 5. Students improve learning through teamwor
 6. Progress is tracked in real time.
 
----
 
 # Project Goals
 
@@ -140,7 +132,6 @@ The main objectives of StudyCircle are:
 - Build stronger academic communities
 - Support productive learning environments
 
----
 
 # Future Improvements
 
@@ -154,7 +145,6 @@ Potential future features include:
 - Academic progress tracking
 - Mobile application support
 
----
 
 # Why StudyCircle Matters
 
@@ -171,7 +161,6 @@ StudyCircle promotes:
 The platform is not just about studying.
 It is about building meaningful academic connections.
 
----
 
 # Installation
 
@@ -207,13 +196,11 @@ studycircle/
 └── README.md
 ```
 
----
 
 # Author
 
 Developed by stackkens.
 
----
 
 # Conclusion
 
