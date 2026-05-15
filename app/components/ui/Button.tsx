@@ -5,6 +5,7 @@ interface ButtonProps {
   onClick?: () => void;
   fullWidth?: boolean;
   type?: "button" | "submit";
+  disabled?: boolean;
 }
 
 export function Button({
@@ -14,9 +15,9 @@ export function Button({
   onClick,
   fullWidth = false,
   type = "button",
+  disabled,
 }: ButtonProps) {
   const baseStyles = "rounded-xl font-medium transition-all duration-200";
-
   const variants = {
     primary: "bg-[var(--g2)] text-white hover:bg-[var(--g3)]",
 
@@ -37,11 +38,18 @@ export function Button({
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={`
+        
         ${baseStyles}
         ${variants[variant]}
         ${sizes[size]}
         ${fullWidth ? "w-full" : ""}
+        ${
+          disabled
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-pointer hover:scale-[1.02]"
+        }
       `}
     >
       {children}
