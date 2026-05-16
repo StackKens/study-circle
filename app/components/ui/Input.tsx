@@ -4,9 +4,8 @@ interface InputProps {
   type: "text" | "email" | "password" | "number";
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error: string;
-  fullWidth: boolean;
-  children: React.ReactNode;
+  error?: string;
+  fullWidth?: boolean;
 }
 export default function Input({
   label,
@@ -29,7 +28,7 @@ export default function Input({
         onChange={onChange}
         placeholder={placeholder}
         className={`
-          px-4 py-3 rounded-lg border
+          px-4 py-3 rounded-lg border w-70 
           bg-white text-(--dark)
           outline-none transition-all duration-200
 

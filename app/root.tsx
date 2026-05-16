@@ -23,6 +23,12 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "StudyCircle" },
+    { name: "description", content: "Learn, Connect,Grow" },
+  ];
+}
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
