@@ -10,7 +10,6 @@ export default [
     index("routes/home.tsx"),
     route("study-way", "./routes/study-way.tsx"),
     route("features", "./routes/features.tsx"),
-    route("universities", "./routes/universities.tsx"),
     route("stories", "./routes/stories.tsx"),
     route("auth/login", "routes/auth/login.tsx"),
     route("auth/register", "routes/auth/register.tsx"),
