@@ -45,7 +45,7 @@ export function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
           {/* Modal Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100">
             <h2 className="text-2xl font-bold text-slate-800">
-              {type === "login" ? "Welcome back" : "Create an account"}
+              {type === "login" ? "Continue Learning" : "Join the circle"}
             </h2>
             <button
               onClick={onClose}
@@ -55,11 +55,11 @@ export function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
             </button>
           </div>
 
-          {/* Modal Content - This is where your actual auth forms go */}
+          {/* Modal Content */}
           <div className="p-6">
             {type === "login" ? (
               // Your login form component
-              <div>Login form here</div>
+              <div>Login form component</div>
             ) : (
               // Your register form component
               <div>Register form here</div>

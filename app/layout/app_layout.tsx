@@ -47,20 +47,18 @@ export default function AppLayout() {
 
           {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              to="/auth/login"
-              className="px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-all duration-150"
+            <button
+              className="px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-all duration-150 cursor-pointer"
               onClick={() => setAuthModal("login")}
             >
               Log in
-            </Link>
-            <Link
-              to="/auth/register"
+            </button>
+            <p
               className="px-5 py-2 text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-px"
               onClick={() => setAuthModal("register")}
             >
               Get started free
-            </Link>
+            </p>
           </div>
 
           {/* Mobile menu toggle */}
@@ -87,8 +85,7 @@ export default function AppLayout() {
               </a>
             ))}
             <div className="border-t border-slate-100 mt-2 pt-3 flex flex-col gap-2">
-              <Link
-                to="/auth/login"
+              <button
                 onClick={() => {
                   setMenuOpen(false);
                   setAuthModal("login");
@@ -96,9 +93,8 @@ export default function AppLayout() {
                 className="px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-all text-center"
               >
                 Log in
-              </Link>
-              <Link
-                to="/auth/register"
+              </button>
+              <button
                 onClick={() => {
                   setMenuOpen(false);
                   setAuthModal("register");
@@ -106,7 +102,7 @@ export default function AppLayout() {
                 className="px-4 py-3 text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-center transition-all"
               >
                 Get started free
-              </Link>
+              </button>
             </div>
           </div>
         )}

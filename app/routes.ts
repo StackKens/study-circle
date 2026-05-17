@@ -11,7 +11,5 @@ export default [
     route("study-way", "./routes/study-way.tsx"),
     route("features", "./routes/features.tsx"),
     route("stories", "./routes/stories.tsx"),
-    route("auth/login", "routes/auth/login.tsx"),
-    route("auth/register", "routes/auth/register.tsx"),
   ]),
 ] satisfies RouteConfig;
