@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet } from "react-router";
 import { Menu, X, BookOpen } from "lucide-react";
+import { AuthModal } from "~/components/ui/AuthModal";
 
 export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const location = useLocation();
+  const [authModal, setAuthModal] = useState<"login" | "register" | null>(null);
 
   const navLinks = [
     { label: "The Study Way", to: "/#how" },
@@ -49,12 +50,14 @@ export default function AppLayout() {
             <Link
               to="/auth/login"
               className="px-5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-all duration-150"
+              onClick={() => setAuthModal("login")}
             >
               Log in
             </Link>
             <Link
               to="/auth/register"
               className="px-5 py-2 text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg shadow-sm transition-all duration-150 hover:-translate-y-px"
+              onClick={() => setAuthModal("register")}
             >
               Get started free
             </Link>
@@ -62,9 +65,9 @@ export default function AppLayout() {
 
           {/* Mobile menu toggle */}
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="Toggle menu"
+            onClick={() => setMenuOpen(!menuOpen)}
           >
             {menuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -86,14 +89,20 @@ export default function AppLayout() {
             <div className="border-t border-slate-100 mt-2 pt-3 flex flex-col gap-2">
               <Link
                 to="/auth/login"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setAuthModal("login");
+                }}
                 className="px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-all text-center"
               >
                 Log in
               </Link>
               <Link
                 to="/auth/register"
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  setAuthModal("register");
+                }}
                 className="px-4 py-3 text-sm font-semibold bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-center transition-all"
               >
                 Get started free
@@ -104,6 +113,12 @@ export default function AppLayout() {
       </nav>
 
       <Outlet />
+
+      <AuthModal
+        isOpen={authModal !== null}
+        onClose={() => setAuthModal(null)}
+        type={authModal || "login"}
+      />
     </>
   );
 }
