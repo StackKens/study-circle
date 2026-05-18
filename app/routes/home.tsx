@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import {
   BookOpen,
   Calendar,
@@ -9,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
+import { useAuthModal } from "~/context/AuthContext";
 
 export function meta() {
   return [
@@ -117,21 +117,18 @@ const footerCols = [
 ];
 
 export default function Home() {
+  const { openAuthModal } = useAuthModal();
+
   return (
     <main className="bg-slate-50">
       {/* HERO */}
-
       <section className="min-h-screen flex items-center text-white relative overflow-hidden bg-slate-900">
-        {/* Clean gradient background */}
         <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-teal-950 to-slate-900" />
-
         <div className="absolute top-0 left-1/4 w-150 h-150 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-100 h-100 bg-cyan-500/8 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-8 py-32 grid md:grid-cols-2 gap-16 items-center relative z-10 w-full">
-          {/* Left */}
           <div className="space-y-8">
-            {/* Live badge */}
             <div className="inline-flex items-center gap-2.5 bg-white/8 backdrop-blur-md px-5 py-2.5 rounded-xl text-sm border border-white/12 text-slate-300">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -139,36 +136,30 @@ export default function Home() {
               </span>
               Live in 12+ Ugandan Universities
             </div>
-
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
               Study with focus.
               <br />
               <span className="text-teal-400">Succeed together.</span>
             </h1>
-
             <p className="text-lg text-slate-400 max-w-lg leading-relaxed">
               The platform where students taking the same courses connect, share
               quality materials, schedule sessions, and stay accountable.
             </p>
-
-            {/* CTAs */}
             <div className="flex flex-wrap gap-4 pt-2">
-              <Link
-                to="/auth/register"
+              <button
+                onClick={() => openAuthModal("register")}
                 className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-white px-8 py-3.5 rounded-xl font-semibold text-base shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5"
               >
                 Join Free
                 <ArrowRight size={16} />
-              </Link>
-              <Link
-                to="/auth/login"
+              </button>
+              <button
+                onClick={() => openAuthModal("login")}
                 className="inline-flex items-center gap-2 border border-white/20 hover:bg-white/8 text-slate-300 hover:text-white px-8 py-3.5 rounded-xl font-medium text-base transition-all duration-200"
               >
                 Sign in
-              </Link>
+              </button>
             </div>
-
-            {/* Social proof */}
             <div className="flex items-center gap-4 pt-2">
               <div className="flex -space-x-2.5">
                 {[
@@ -212,7 +203,6 @@ export default function Home() {
                 <span className="text-teal-400 text-xs font-semibold">75%</span>
               </div>
             </div>
-
             {/* Session card */}
             <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-5">
               <div className="flex items-center gap-3">
@@ -232,7 +222,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -249,7 +238,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-
             {/* Checklist */}
             <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-5">
               <div className="grid grid-cols-2 gap-2.5">
@@ -272,6 +260,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* UNIVERSITIES */}
       <section
         id="universities"
@@ -307,7 +296,6 @@ export default function Home() {
             Three steps to better academic performance
           </p>
         </div>
-
         <div className="grid md:grid-cols-3 gap-8">
           {steps.map((step, i) => (
             <div key={step.num} className="relative text-center group">
@@ -347,7 +335,6 @@ export default function Home() {
               Built for serious students. No bloat. Just the tools that help.
             </p>
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map(({ icon: Icon, title, desc }) => (
               <div
@@ -383,7 +370,6 @@ export default function Home() {
             Thousands of students already studying smarter
           </p>
         </div>
-
         <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((t) => (
             <div
@@ -433,13 +419,13 @@ export default function Home() {
           <p className="text-lg text-slate-400 mb-10">
             Join thousands of students already improving their grades together.
           </p>
-          <Link
-            to="/auth/register"
+          <button
+            onClick={() => openAuthModal("register")}
             className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-xl shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5"
           >
             Get Started Free
             <ArrowRight size={18} />
-          </Link>
+          </button>
           <p className="text-slate-600 text-sm mt-5">
             No credit card required • Takes less than 30 seconds
           </p>
@@ -471,7 +457,6 @@ export default function Home() {
                 Learn • Connect • Grow
               </p>
             </div>
-
             {footerCols.map((col) => (
               <div key={col.heading}>
                 <h4 className="font-semibold text-slate-300 mb-4 text-sm">
@@ -492,10 +477,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-
           <div className="border-t border-slate-900 pt-8 text-xs flex flex-col md:flex-row justify-between items-center gap-3 text-slate-700">
             <p>© 2026 StudyCycle Uganda. All rights reserved.</p>
-            <p>Made with care for students, by students.</p>
+            <p>Made with Love for students, by students.</p>
           </div>
         </div>
       </footer>

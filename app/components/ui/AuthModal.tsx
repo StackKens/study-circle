@@ -1,14 +1,15 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
-
+import { AuthForm } from "./AuthForm";
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   type: "login" | "register";
+  onSwitch: () => void;
 }
 
-export function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
-  // Close the modal on pressing of the escape key
+export function AuthModal({ isOpen, onClose, type, onSwitch }: AuthModalProps) {
+  // Close on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) onClose();
@@ -17,13 +18,9 @@ export function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when modal is open
+  // Lock body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -33,37 +30,33 @@ export function AuthModal({ isOpen, onClose, type }: AuthModalProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop clicking it closes the modal */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 animate-in fade-in duration-200"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
         onClick={onClose}
       />
 
-      {/* Modal */}
+      {/* Modal container */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200">
-          {/* Modal Header */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-100">
-            <h2 className="text-2xl font-bold text-slate-800">
-              {type === "login" ? "Continue Learning" : "Join the circle"}
-            </h2>
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+          // Stop click from reaching the backdrop and closing the modal
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close button */}
+          <div className="flex justify-end p-4 pb-0">
             <button
               onClick={onClose}
-              className="p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+              aria-label="Close"
             >
-              <X size={20} className="text-slate-500" />
+              <X size={18} />
             </button>
           </div>
 
-          {/* Modal Content */}
-          <div className="p-6">
-            {type === "login" ? (
-              // Your login form component
-              <div>Login form component</div>
-            ) : (
-              // Your register form component
-              <div>Register form here</div>
-            )}
+          {/* Form */}
+          <div className="px-6 pb-6">
+            <AuthForm type={type} onSwitch={onSwitch} onClose={onClose} />
           </div>
         </div>
       </div>
