@@ -65,13 +65,15 @@ export async function register(req: Request, res: Response) {
     );
 
     res.status(201).json({ token, user });
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (err: any) {
+    console.error("=== REGISTER ERROR ===");
+    console.error("Message:", err.message);
+    console.error("Stack:", err.stack);
+    res.status(500).json({ error: err.message });
   }
 }
 
-//  Login ─
+//  Login
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
 

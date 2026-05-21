@@ -7,6 +7,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { AuthProvider } from "./context/AuthContext";
+import { AuthModalProvider } from "./context/AuthModalContext";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -39,7 +41,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          <AuthModalProvider>{children}</AuthModalProvider>
+        </AuthProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

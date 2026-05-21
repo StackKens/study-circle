@@ -146,12 +146,13 @@ export default function DashboardLayout() {
             </div>
           </main>
 
-          {/* FIXED BOTTOM TAB BAR (mobile only) */}
+          {/* FIXED BOTTOM TAB BAR */}
           <div className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 flex justify-around items-center py-2 px-2 z-10 shadow-lg">
             {bottomTabs.map((tab) => (
               <NavLink
                 key={tab.name}
                 to={tab.path}
+                end={tab.path === "/dashboard"}
                 className={({ isActive }) =>
                   `flex flex-col items-center gap-1 py-1 px-2 rounded-lg transition-all duration-200 ${
                     isActive

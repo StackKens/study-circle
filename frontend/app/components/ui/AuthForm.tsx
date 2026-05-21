@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useAuth } from "../../context/AuthContext";
 interface AuthFormData {
   name: string;
   email: string;
@@ -67,6 +68,8 @@ function Field({
 }
 
 export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
+  const { login, register: registerApi } = useAuth();
+
   const navigate = useNavigate();
 
   // Base fields
@@ -155,25 +158,27 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
     setIsLoading(true);
     try {
       if (type === "login") {
-        console.log("Login:", { email, password });
-        await new Promise((r) => setTimeout(r, 1000));
-        // Simulate auth success
-        localStorage.setItem("auth_token", "mock-jwt-token");
-        onClose();
-        navigate("/dashboard");
+        await login(email, password);
       } else {
-        await new Promise((r) => setTimeout(r, 1000));
-        localStorage.setItem("auth_token", "mock-jwt-token");
-        onClose();
-        navigate("/dashboard");
+        await registerApi({
+          name,
+          email,
+          password,
+          university: getFinalUniversity(),
+          course: getFinalCourse(),
+          year_of_study: yearOfStudy,
+        });
       }
-    } catch {
-      setErrors({ general: "Something went wrong. Please try again." });
+      onClose();
+      navigate("/dashboard");
+    } catch (err) {
+      setErrors({
+        general: err instanceof Error ? err.message : "Something went wrong.",
+      });
     } finally {
       setIsLoading(false);
     }
   }
-
   const inputClass = (hasError?: string) =>
     `w-full px-4 py-2.5 text-sm rounded-xl border bg-slate-50 text-slate-800 outline-none transition-all duration-150 focus:bg-white focus:ring-2 focus:ring-teal-500/20 ${
       hasError

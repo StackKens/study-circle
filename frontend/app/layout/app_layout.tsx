@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link, Outlet } from "react-router";
 import { Menu, X, BookOpen } from "lucide-react";
 import { AuthModal } from "../components/ui/AuthModal";
-import { AuthProvider, useAuthModal } from "../context/AuthContext";
+import { useAuthModal } from "../context/AuthModalContext";
 
-// Inner component that consumes the modal state
-function AppLayoutContent() {
+// useAuth is imported only if you need user data in the layout (optional)
+// import { useAuth } from "../context/AuthContext";
+
+export default function AppLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { authModalType, closeAuthModal, openAuthModal } = useAuthModal();
+  // const { user } = useAuth(); // if you need user info
 
   const navLinks = [
     { label: "The Study Way", to: "/#how" },
@@ -30,7 +33,7 @@ function AppLayoutContent() {
               <BookOpen size={18} className="text-white" strokeWidth={2.5} />
             </div>
             <span className="text-xl font-bold text-slate-800 tracking-tight">
-              Study<span className="text-teal-600">Cycle</span>
+              Study<span className="text-teal-600">Circle</span>
             </span>
           </Link>
 
@@ -121,14 +124,5 @@ function AppLayoutContent() {
         }
       />
     </>
-  );
-}
-
-// Main export wraps with provider
-export default function AppLayout() {
-  return (
-    <AuthProvider>
-      <AppLayoutContent />
-    </AuthProvider>
   );
 }
