@@ -1,14 +1,18 @@
 {
-  "name": "y",
+  "name": "study-circle",
   "version": "1.0.0",
   "description": "study-circle-backend",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --exec ts-node src/index.ts"
   },
-  "author": "",
+  "author": "stackkens",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",

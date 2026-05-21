@@ -3,7 +3,7 @@ import { Router } from "express";
 const router = Router();
 
 router.get("/", (req, res) => {
-  res.json({ message: "Resources endpoint - to be implemented" });
+  res.json({ message: "Sessions endpoint - to be implemented" });
 });
 
 export default router;
