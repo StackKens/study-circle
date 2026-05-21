@@ -6,7 +6,6 @@ import {
   Bell,
   Lock,
   ArrowRight,
-  CheckCircle,
 } from "lucide-react";
 import { useAuthModal } from "~/context/AuthContext";
 
@@ -75,7 +74,6 @@ const testimonials = [
     name: "Alex Stackkens",
     role: "Makerere University • Year 3 CS",
     initials: "AS",
-    color: "bg-rose-100 text-rose-700",
   },
   {
     quote:
@@ -83,7 +81,6 @@ const testimonials = [
     name: "Mushabenta Linic",
     role: "Victoria University • Year 2",
     initials: "ML",
-    color: "bg-blue-100 text-blue-700",
   },
   {
     quote:
@@ -91,7 +88,6 @@ const testimonials = [
     name: "Odoi Simon Chidz",
     role: "Makerere University • Year 1",
     initials: "OS",
-    color: "bg-amber-100 text-amber-700",
   },
 ];
 
@@ -120,161 +116,156 @@ export default function Home() {
   const { openAuthModal } = useAuthModal();
 
   return (
-    <main className="bg-slate-50">
-      {/* HERO */}
-      <section className="min-h-screen flex items-center text-white relative overflow-hidden bg-slate-900">
-        <div className="absolute inset-0 bg-linear-to-br from-slate-900 via-teal-950 to-slate-900" />
-        <div className="absolute top-0 left-1/4 w-150 h-150 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-100 h-100 bg-cyan-500/8 rounded-full blur-3xl pointer-events-none" />
+    <main className="bg-white font-sans">
+      {/*  HERO  */}
+      <section className="min-h-screen flex flex-col justify-center bg-[#0a0f1e] text-white relative overflow-hidden">
+        {/* Single, subtle ambient glow — no noise */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-teal-500/[0.07] blur-[120px]" />
+        </div>
 
-        <div className="max-w-7xl mx-auto px-8 py-32 grid md:grid-cols-2 gap-16 items-center relative z-10 w-full">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2.5 bg-white/8 backdrop-blur-md px-5 py-2.5 rounded-xl text-sm border border-white/12 text-slate-300">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400" />
-              </span>
+        {/* Thin top rule */}
+        <div className="absolute top-0 inset-x-0 h-px bg-white/[0.06]" />
+
+        <div className="max-w-6xl mx-auto px-8 py-32 relative z-10 w-full">
+          {/* Status pill — minimal */}
+          <div className="mb-12 flex items-center gap-2.5 w-fit">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            </span>
+            <span className="text-xs text-slate-400 tracking-[0.12em] uppercase font-medium">
               Live in 12+ Ugandan Universities
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.06] tracking-[-0.03em] text-white max-w-3xl mb-7">
+            Study with focus.{" "}
+            <span className="text-teal-400">Succeed together.</span>
+          </h1>
+
+          <p className="text-slate-400 text-lg leading-relaxed max-w-xl mb-12">
+            Connect with students taking the same courses. Share quality
+            materials, schedule sessions, and stay accountable — all in one
+            quiet, focused space.
+          </p>
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-5 mb-16">
+            <button
+              onClick={() => openAuthModal("register")}
+              className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-7 py-3.5 rounded-lg font-semibold text-sm tracking-wide shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px cursor-pointer"
+            >
+              Join Free
+              <ArrowRight size={15} />
+            </button>
+            <button
+              onClick={() => openAuthModal("login")}
+              className="inline-flex items-center gap-2 text-slate-400  cursor-pointer hover:text-white text-sm font-medium transition-colors duration-200 group"
+            >
+              Sign in
+              <ArrowRight
+                size={14}
+                className="group-hover:translate-x-0.5 cursor-pointer transition-transform duration-200"
+              />
+            </button>
+          </div>
+
+          {/* Social proof */}
+          <div className="flex items-center gap-4 border-t border-white/[0.07] pt-8">
+            <div className="flex -space-x-2">
+              {[
+                "bg-rose-400",
+                "bg-blue-400",
+                "bg-amber-400",
+                "bg-teal-400",
+              ].map((c, i) => (
+                <div
+                  key={i}
+                  className={`w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] ${c}`}
+                />
+              ))}
             </div>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight">
-              Study with focus.
-              <br />
-              <span className="text-teal-400">Succeed together.</span>
-            </h1>
-            <p className="text-lg text-slate-400 max-w-lg leading-relaxed">
-              The platform where students taking the same courses connect, share
-              quality materials, schedule sessions, and stay accountable.
+            <p className="text-slate-500 text-sm">
+              <span className="text-slate-200 font-semibold">12,000+</span>{" "}
+              students studying right now
             </p>
-            <div className="flex flex-wrap gap-4 pt-2">
-              <button
-                onClick={() => openAuthModal("register")}
-                className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-white px-8 py-3.5 rounded-xl font-semibold text-base shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5"
-              >
-                Join Free
-                <ArrowRight size={16} />
-              </button>
-              <button
-                onClick={() => openAuthModal("login")}
-                className="inline-flex items-center gap-2 border border-white/20 hover:bg-white/8 text-slate-300 hover:text-white px-8 py-3.5 rounded-xl font-medium text-base transition-all duration-200"
-              >
-                Sign in
-              </button>
-            </div>
-            <div className="flex items-center gap-4 pt-2">
-              <div className="flex -space-x-2.5">
-                {[
-                  "bg-rose-400",
-                  "bg-blue-400",
-                  "bg-amber-400",
-                  "bg-teal-400",
-                ].map((c, i) => (
-                  <div
-                    key={i}
-                    className={`w-8 h-8 rounded-full border-2 border-slate-900 ${c}`}
-                  />
-                ))}
+          </div>
+        </div>
+
+        {/* App preview — right side, desktop only */}
+        <div className="hidden lg:flex flex-col gap-3 absolute right-10 top-1/2 -translate-y-1/2 w-[320px]">
+          {/* Group card */}
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 backdrop-blur-sm">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="font-semibold text-sm text-white">
+                  Data Structures & Algorithms
+                </p>
+                <p className="text-slate-500 text-xs mt-0.5">12 members</p>
               </div>
-              <p className="text-slate-400 text-sm">
-                <span className="text-white font-semibold">12,000+</span>{" "}
-                students studying right now
+              <span className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full w-3/4 bg-teal-400 rounded-full" />
+              </div>
+              <span className="text-teal-400 text-xs font-semibold">75%</span>
+            </div>
+          </div>
+
+          {/* Session card */}
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 backdrop-blur-sm flex items-center gap-3">
+            <div className="w-9 h-9 bg-teal-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Calendar size={16} className="text-teal-400" />
+            </div>
+            <div>
+              <p className="text-[11px] text-slate-500 uppercase tracking-wide font-medium">
+                Next session
+              </p>
+              <p className="text-white font-semibold text-sm">
+                Database Systems Review
+              </p>
+              <p className="text-teal-400 text-xs mt-0.5">
+                Today at 4:00 PM · 9 attending
               </p>
             </div>
           </div>
 
-          <div className="hidden md:flex flex-col gap-3">
-            {/* Group card */}
-            <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="font-semibold text-base">
-                    Data Structures & Algorithms
-                  </p>
-                  <p className="text-slate-400 text-sm mt-0.5">12 members</p>
-                </div>
-                <span className="flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 text-xs font-semibold px-2.5 py-1 rounded-full border border-emerald-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live session
-                </span>
+          {/* Mini stats */}
+          <div className="grid grid-cols-3 gap-2.5">
+            {[
+              { val: "4", label: "Groups", color: "text-teal-400" },
+              { val: "52", label: "Resources", color: "text-amber-400" },
+              { val: "7", label: "Online", color: "text-emerald-400" },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3.5 text-center backdrop-blur-sm"
+              >
+                <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
+                <p className="text-slate-600 text-[10px] mt-0.5">{s.label}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full w-3/4 bg-teal-400 rounded-full" />
-                </div>
-                <span className="text-teal-400 text-xs font-semibold">75%</span>
-              </div>
-            </div>
-            {/* Session card */}
-            <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-teal-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Calendar size={18} className="text-teal-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-500 uppercase tracking-wide font-medium">
-                    Next session
-                  </p>
-                  <p className="font-semibold text-sm mt-0.5">
-                    Database Systems Review
-                  </p>
-                  <p className="text-teal-400 text-xs mt-0.5">
-                    Today at 4:00 PM • 9 members going
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { val: "4", label: "Active groups", color: "text-teal-400" },
-                { val: "52", label: "Resources", color: "text-amber-400" },
-                { val: "7", label: "Online now", color: "text-emerald-400" },
-              ].map((s) => (
-                <div
-                  key={s.label}
-                  className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-4 text-center"
-                >
-                  <p className={`text-2xl font-bold ${s.color}`}>{s.val}</p>
-                  <p className="text-slate-500 text-xs mt-1">{s.label}</p>
-                </div>
-              ))}
-            </div>
-            {/* Checklist */}
-            <div className="bg-white/6 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  "Resource sharing",
-                  "Session scheduling",
-                  "Progress tracking",
-                  "Group matching",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-2 text-slate-300 text-sm"
-                  >
-                    <CheckCircle size={14} className="text-teal-400 shrink-0" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* UNIVERSITIES */}
-      <section
-        id="universities"
-        className="bg-white py-12 border-b border-slate-100"
-      >
-        <div className="max-w-7xl mx-auto px-8">
-          <p className="text-center text-slate-400 text-xs tracking-widest uppercase mb-8 font-medium">
-            Proudly used at
+      {/*  UNIVERSITIES  */}
+      <section className="border-y border-slate-100 py-10">
+        <div className="max-w-5xl mx-auto px-8">
+          <p className="text-center text-slate-400 text-[11px] tracking-[0.18em] uppercase mb-7 font-medium">
+            Trusted at
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-x-10 gap-y-4">
+          <div className="flex flex-wrap justify-center items-center gap-x-10 gap-y-3">
             {universities.map((uni) => (
               <p
                 key={uni}
-                className="font-semibold text-base text-slate-400 hover:text-teal-700 transition-colors cursor-default"
+                className="text-slate-400 text-sm font-medium hover:text-teal-700 transition-colors duration-200 cursor-default"
               >
                 {uni}
               </p>
@@ -283,71 +274,73 @@ export default function Home() {
         </div>
       </section>
 
-      {/* THE STUDY WAY */}
-      <section id="how" className="max-w-7xl mx-auto px-8 py-24">
-        <div className="text-center mb-16">
-          <p className="text-teal-600 text-sm font-semibold uppercase tracking-widest mb-3">
-            The Study Way
-          </p>
-          <h2 className="text-4xl font-bold text-slate-800 mb-4">
-            Simple. Powerful. Effective.
-          </h2>
-          <p className="text-slate-500 max-w-md mx-auto">
-            Three steps to better academic performance
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {steps.map((step, i) => (
-            <div key={step.num} className="relative text-center group">
-              {i < steps.length - 1 && (
-                <div className="hidden md:block absolute top-8 left-[60%] right-[-40%] h-px bg-slate-200 z-0" />
-              )}
-              <div className="relative z-10">
-                <div className="w-16 h-16 mx-auto bg-teal-50 border-2 border-teal-100 text-teal-700 rounded-2xl flex items-center justify-center text-lg font-bold mb-6 group-hover:bg-teal-600 group-hover:text-white group-hover:border-teal-600 transition-all duration-200">
-                  {step.num}
+      {/*  HOW IT WORKS  */}
+      <section id="how" className="py-28 px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-16">
+            <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">
+              How it works
+            </p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Three steps to studying smarter
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12">
+            {steps.map((step, i) => (
+              <div key={step.num}>
+                <div className="flex items-center gap-4 mb-5">
+                  <span className="text-[11px] font-bold text-slate-300 tracking-[0.12em]">
+                    {step.num}
+                  </span>
+                  {i < steps.length - 1 && (
+                    <div className="hidden md:block flex-1 h-px bg-slate-100" />
+                  )}
                 </div>
-                <h3 className="font-bold text-lg mb-3 text-slate-800">
+                <h3 className="font-bold text-slate-900 text-lg mb-3 tracking-tight">
                   {step.title}
                 </h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
                   {step.desc}
                 </p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/*  FEATURES  */}
       <section
         id="features"
-        className="bg-slate-50 border-y border-slate-100 py-24"
+        className="py-28 px-8 bg-slate-50/60 border-y border-slate-100"
       >
-        <div className="max-w-7xl mx-auto px-8">
-          <div className="text-center mb-16">
-            <p className="text-teal-600 text-sm font-semibold uppercase tracking-widest mb-3">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-16">
+            <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">
               Features
             </p>
-            <h2 className="text-4xl font-bold text-slate-800 mb-4">
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">
               Everything you need
             </h2>
-            <p className="text-slate-500">
-              Built for serious students. No bloat. Just the tools that help.
+            <p className="text-slate-500 text-sm max-w-sm">
+              Built for serious students. No bloat — just the tools that help.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+          {/* Grid with dividers instead of individual cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-slate-200 rounded-2xl overflow-hidden border border-slate-200">
             {features.map(({ icon: Icon, title, desc }) => (
               <div
                 key={title}
-                className="bg-white p-7 rounded-2xl border border-slate-200 hover:-translate-y-1.5 hover:shadow-lg hover:border-teal-100 transition-all duration-300 cursor-default group"
+                className="bg-white p-7 hover:bg-teal-50/40 transition-colors duration-300 cursor-default group"
               >
-                <div className="w-11 h-11 bg-teal-50 rounded-xl flex items-center justify-center mb-5 group-hover:bg-teal-600 transition-colors duration-200">
+                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mb-5 group-hover:bg-teal-600 transition-colors duration-200">
                   <Icon
-                    size={20}
-                    className="text-teal-600 group-hover:text-white transition-colors duration-200"
+                    size={18}
+                    className="text-slate-600 group-hover:text-white transition-colors duration-200"
                   />
                 </div>
-                <h3 className="font-bold text-lg mb-2 text-slate-800">
+                <h3 className="font-semibold text-slate-900 mb-2 tracking-tight">
                   {title}
                 </h3>
                 <p className="text-slate-500 leading-relaxed text-sm">{desc}</p>
@@ -357,117 +350,115 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
-      <section id="testimonials" className="max-w-7xl mx-auto px-8 py-24">
-        <div className="text-center mb-16">
-          <p className="text-teal-600 text-sm font-semibold uppercase tracking-widest mb-3">
-            Stories
-          </p>
-          <h2 className="text-4xl font-bold text-slate-800 mb-4">
-            Real students. Real results.
-          </h2>
-          <p className="text-slate-500">
-            Thousands of students already studying smarter
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {testimonials.map((t) => (
-            <div
-              key={t.name}
-              className="bg-white p-7 rounded-2xl border border-slate-200 hover:-translate-y-1 hover:shadow-md transition-all duration-300 flex flex-col"
-            >
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <svg
-                    key={i}
-                    className="w-4 h-4 text-amber-400 fill-amber-400"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-slate-600 leading-relaxed text-sm flex-1">
-                "{t.quote}"
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 ${t.color} rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0`}
-                >
-                  {t.initials}
-                </div>
+      {/*  TESTIMONIALS  */}
+      <section id="testimonials" className="py-28 px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-16">
+            <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">
+              Student stories
+            </p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
+              Real students. Real results.
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="flex flex-col justify-between p-7 rounded-2xl border border-slate-200 bg-white hover:border-teal-200 hover:shadow-sm transition-all duration-300"
+              >
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">
-                    {t.name}
+                  <div className="flex gap-1 mb-5">
+                    {[...Array(5)].map((_, i) => (
+                      <svg
+                        key={i}
+                        className="w-3.5 h-3.5 text-amber-400 fill-amber-400"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-slate-600 leading-relaxed text-sm">
+                    "{t.quote}"
                   </p>
-                  <p className="text-xs text-slate-400">{t.role}</p>
+                </div>
+                <div className="mt-8 flex items-center gap-3 pt-6 border-t border-slate-100">
+                  <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 text-sm">
+                      {t.name}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">{t.role}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* FINAL CTA */}
-      <section className="bg-slate-900 text-white py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-br from-teal-950/60 to-slate-900" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-125 h-75 bg-teal-500/10 rounded-full blur-3xl" />
-        <div className="max-w-4xl mx-auto text-center px-8 relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold mb-5">
+      {/*  FINAL CTA  */}
+      <section className="py-28 px-8 bg-[#0a0f1e] relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-teal-500/[0.06] blur-[100px] rounded-full" />
+        </div>
+        <div className="max-w-2xl mx-auto text-center relative z-10">
+          <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold text-white tracking-tight mb-5 leading-tight">
             Start studying smarter today
           </h2>
-          <p className="text-lg text-slate-400 mb-10">
+          <p className="text-slate-400 text-base mb-10 leading-relaxed">
             Join thousands of students already improving their grades together.
           </p>
           <button
             onClick={() => openAuthModal("register")}
-            className="inline-flex items-center gap-2 bg-teal-500 hover:bg-teal-400 text-white px-10 py-4 rounded-xl font-bold text-lg shadow-xl shadow-teal-500/20 transition-all duration-200 hover:-translate-y-0.5"
+            className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-8 py-4 rounded-lg font-semibold text-base shadow-xl shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px"
           >
             Get Started Free
-            <ArrowRight size={18} />
+            <ArrowRight size={16} />
           </button>
-          <p className="text-slate-600 text-sm mt-5">
-            No credit card required • Takes less than 30 seconds
+          <p className="text-slate-700 text-xs mt-5">
+            No credit card required · Takes less than 30 seconds
           </p>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="bg-slate-950 text-slate-500">
-        <div className="max-w-7xl mx-auto px-8 pt-16 pb-10">
-          <div className="grid md:grid-cols-5 gap-10 mb-12">
+      {/*  FOOTER  */}
+      <footer className="bg-[#070b16] text-slate-500">
+        <div className="max-w-5xl mx-auto px-8 pt-16 pb-10">
+          <div className="grid md:grid-cols-5 gap-10 mb-14">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 bg-teal-600 rounded-md flex items-center justify-center">
                   <BookOpen
-                    size={16}
+                    size={14}
                     className="text-white"
                     strokeWidth={2.5}
                   />
                 </div>
-                <span className="text-white font-bold text-lg">
+                <span className="text-white font-bold">
                   Study<span className="text-teal-400">Cycle</span>
                 </span>
               </div>
-              <p className="text-sm leading-relaxed max-w-xs">
+              <p className="text-sm leading-relaxed max-w-xs text-slate-500">
                 The modern study platform built for university students in
                 Uganda and beyond.
-              </p>
-              <p className="text-xs mt-4 text-slate-700 tracking-widest uppercase">
-                Learn • Connect • Grow
               </p>
             </div>
             {footerCols.map((col) => (
               <div key={col.heading}>
-                <h4 className="font-semibold text-slate-300 mb-4 text-sm">
+                <h4 className="font-semibold text-slate-300 mb-4 text-xs uppercase tracking-[0.12em]">
                   {col.heading}
                 </h4>
-                <ul className="space-y-2.5">
+                <ul className="space-y-3">
                   {col.links.map((link) => (
                     <li key={link}>
                       <a
                         href="#"
-                        className="text-sm hover:text-slate-200 transition-colors"
+                        className="text-sm hover:text-slate-200 transition-colors duration-200"
                       >
                         {link}
                       </a>
@@ -477,9 +468,9 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div className="border-t border-slate-900 pt-8 text-xs flex flex-col md:flex-row justify-between items-center gap-3 text-slate-700">
+          <div className="border-t border-white/[0.05] pt-8 text-xs flex flex-col md:flex-row justify-between items-center gap-3 text-slate-700">
             <p>© 2026 StudyCycle Uganda. All rights reserved.</p>
-            <p>Made with Love for students, by students.</p>
+            <p>Made with love for students, by students.</p>
           </div>
         </div>
       </footer>

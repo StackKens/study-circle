@@ -6,10 +6,18 @@ import {
 } from "@react-router/dev/routes";
 
 export default [
-  layout("layout/app_layout.tsx", [
-    index("routes/home.tsx"),
-    route("study-way", "./routes/study-way.tsx"),
-    route("features", "./routes/features.tsx"),
-    route("stories", "./routes/stories.tsx"),
+  // Public routes
+  layout("layout/app_layout.tsx", [index("routes/home.tsx")]),
+
+  // Private routes, protected by a component
+  layout("layout/dashboard_layout.tsx", [
+    route("dashboard", "routes/dashboard/index.tsx"),
+    route("dashboard/groups", "routes/dashboard/groups.tsx"),
+    route("dashboard/sessions", "routes/dashboard/sessions.tsx"),
+    route("dashboard/resources", "routes/dashboard/resources.tsx"),
+    route("dashboard/progress", "routes/dashboard/progress.tsx"),
+    route("dashboard/friends", "routes/dashboard/friends.tsx"),
+    route("dashboard/library", "routes/dashboard/library.tsx"),
+    route("dashboard/profile", "routes/dashboard/profile.tsx"),
   ]),
 ] satisfies RouteConfig;

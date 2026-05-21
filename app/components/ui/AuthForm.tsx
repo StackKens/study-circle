@@ -155,22 +155,15 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
     setIsLoading(true);
     try {
       if (type === "login") {
-        // Mock login
         console.log("Login:", { email, password });
         await new Promise((r) => setTimeout(r, 1000));
+        // Simulate auth success
+        localStorage.setItem("auth_token", "mock-jwt-token");
         onClose();
         navigate("/dashboard");
       } else {
-        const payload = {
-          name: name.trim(),
-          email: email.trim(),
-          password,
-          university: getFinalUniversity(),
-          course: getFinalCourse(),
-          yearOfStudy,
-        };
-        console.log("Register payload:", payload);
         await new Promise((r) => setTimeout(r, 1000));
+        localStorage.setItem("auth_token", "mock-jwt-token");
         onClose();
         navigate("/dashboard");
       }

@@ -7,4 +7,5 @@ export interface Session {
   attendees: string[];
   participants: number;
   createdAt: string;
+  status: string;
 }
