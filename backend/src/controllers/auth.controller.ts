@@ -36,8 +36,7 @@ export async function register(req: Request, res: Response) {
       return;
     }
 
-    // Hash the password — NEVER store plain text
-    // 12 is the salt rounds — higher = slower = more secure
+    // Hash the password — NEVER stored plain text
     const password_hash = await bcrypt.hash(password, 12);
 
     // Insert new user
@@ -89,7 +88,6 @@ export async function login(req: Request, res: Response) {
     ]);
 
     if (result.rows.length === 0) {
-      // Don't say "email not found" — that tells attackers which emails exist
       res.status(401).json({ error: "Invalid email or password" });
       return;
     }
@@ -111,7 +109,7 @@ export async function login(req: Request, res: Response) {
       { expiresIn: "7d" },
     );
 
-    // Never send password_hash back to frontend
+    // Never send password_hash
     const { password_hash, ...userWithoutPassword } = user;
 
     res.json({ token, user: userWithoutPassword });

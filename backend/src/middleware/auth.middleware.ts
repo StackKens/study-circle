@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 // Extend Express Request type to include user
-// This means req.user is available in all protected routes
 export interface AuthRequest extends Request {
   user?: { id: string; email: string };
 }
@@ -27,9 +26,8 @@ export function authenticateToken(
       email: string;
     };
     // Attach user info to the request object
-    // Now every controller can access req.user.id
     req.user = decoded;
-    next(); // pass control to the next function — the controller
+    next();
   } catch (err) {
     res.status(403).json({ error: "Invalid or expired token" });
   }

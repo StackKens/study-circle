@@ -9,16 +9,16 @@ import authRoutes from "./routes/auth";
 import groupRoutes from "./routes/groups";
 import sessionRoutes from "./routes/sessions";
 import resourceRoutes from "./routes/resources";
+import userRoutes from "./routes/users";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 //  Middleware
-// Parse incoming JSON bodies — without this req.body is undefined
 app.use(express.json());
 
 // CORS — allow your React frontend to call this API
-// In development allow localhost:5173 (Vite default)
+// In development allow localhost:5173
 // In production allow your Vercel URL
 app.use(
   cors({
@@ -35,9 +35,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/sessions", sessionRoutes);
 app.use("/api/resources", resourceRoutes);
+app.use("/api/users", userRoutes);
 
 //  Health check
-// Railway and Vercel ping this to check if server is alive
 app.get("/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
