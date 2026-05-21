@@ -7,7 +7,7 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react";
-import { useAuthModal } from "~/context/AuthContext";
+import { useAuthModal } from "../context/AuthContext";
 
 export function meta() {
   return [

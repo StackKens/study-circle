@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Users, Calendar, Plus, ArrowRight } from "lucide-react";
-import type { Group } from "~/types/group";
+import type { Group } from "../../types/group";
 
 const mockGroups: Group[] = [
   {

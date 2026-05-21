@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Outlet } from "react-router";
 import { Menu, X, BookOpen } from "lucide-react";
-import { AuthModal } from "~/components/ui/AuthModal";
+import { AuthModal } from "../components/ui/AuthModal";
 import { AuthProvider, useAuthModal } from "../context/AuthContext";
 
 // Inner component that consumes the modal state

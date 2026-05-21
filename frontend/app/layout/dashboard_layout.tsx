@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, NavLink, useNavigate, Link } from "react-router";
-import { ProtectedRoute } from "~/components/ProtectedRote";
+import { ProtectedRoute } from "../components/ProtectedRote";
 
 import {
   LayoutDashboard,

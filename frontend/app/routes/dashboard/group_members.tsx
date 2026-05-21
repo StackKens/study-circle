@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Shield, UserMinus, Crown, Users, LogOut } from "lucide-react";
-import type { GroupMember } from "~/types/groupMemeber";
+import type { GroupMember } from "../../types/groupMemeber";
 
 interface GroupMemberWithUser extends GroupMember {
   userName: string;

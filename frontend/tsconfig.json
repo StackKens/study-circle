@@ -14,7 +14,7 @@
     "jsx": "react-jsx",
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["study-circle-frontend/app/*"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

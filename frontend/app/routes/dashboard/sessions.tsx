@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Calendar, Clock, Users, Plus } from "lucide-react";
-import type { Session } from "~/types/session";
+import type { Session } from "../../types/session";
 
 const mockSessions: Session[] = [
   {
