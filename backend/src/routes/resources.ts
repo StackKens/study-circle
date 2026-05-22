@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.middleware";
-import { uploadResource, getMyResources, getAllResources } from "../controllers/resources.controller";
+import { uploadResource, getMyResources, getAllResources, incrementDownload, getResourceRecommendations } from "../controllers/resources.controller";
 
 const router = Router();
 
@@ -8,7 +8,9 @@ const router = Router();
 router.use(authenticateToken);
 
 router.get("/", getMyResources);
+router.get("/recommendations", getResourceRecommendations);
 router.get("/all", getAllResources);
 router.post("/", uploadResource);
+router.patch("/:id/download", incrementDownload);
 
 export default router;

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  UserPlus, UserMinus, Search, X, Check, Loader2, Users,
+  UserPlus, UserMinus, Search, X, Check, Loader2, Users, Sparkles, RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -36,6 +36,17 @@ interface SearchResult {
   avatar_url?: string;
 }
 
+interface FriendRecommendation {
+  id: string;
+  name: string;
+  university: string;
+  course: string;
+  year_of_study: number;
+  mutual_groups: number;
+  score: number;
+  reason: string;
+}
+
 function Avatar({ name, url, size = 9 }: { name: string; url?: string; size?: number }) {
   const cls = `w-${size} h-${size} rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-sm font-semibold`;
   return url
@@ -56,6 +67,8 @@ export default function FriendsPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [recommendations, setRecommendations] = useState<FriendRecommendation[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -81,6 +94,24 @@ export default function FriendsPage() {
     if (token) fetchFriends();
   }, [token, fetchFriends]);
 
+  const fetchRecommendations = useCallback(async () => {
+    if (!token) return;
+    setRecommendationsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/friends/recommendations`, { headers });
+      const data = await res.json();
+      if (Array.isArray(data)) setRecommendations(data);
+    } catch (err) {
+      console.error("fetchRecommendations error:", err);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) fetchRecommendations();
+  }, [token, fetchRecommendations]);
+
   // Debounced search
   useEffect(() => {
     if (searchQuery.length < 2) { setSearchResults([]); return; }
@@ -99,13 +130,17 @@ export default function FriendsPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, token]);
 
-  const handleSendRequest = async (userId: string) => {
+  const handleSendRequest = async (userId: string, fromRecommendation = false) => {
     setLoadingId(userId);
     try {
       await fetch(`${API_URL}/friends/request/${userId}`, { method: "POST", headers });
-      setSearchResults((prev) =>
-        prev.map((u) => u.id === userId ? { ...u, friendship_status: "pending" } : u)
-      );
+      if (fromRecommendation) {
+        setRecommendations((prev) => prev.filter((u) => u.id !== userId));
+      } else {
+        setSearchResults((prev) =>
+          prev.map((u) => u.id === userId ? { ...u, friendship_status: "pending" } : u)
+        );
+      }
     } finally {
       setLoadingId(null);
     }
@@ -219,6 +254,71 @@ export default function FriendsPage() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Suggested People */}
+      {!showSearch && (
+        <section className="mb-6 bg-white rounded-xl border border-slate-200 p-5">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+                <Sparkles size={18} />
+              </div>
+              <div>
+                <p className="font-semibold text-slate-900">Suggested People</p>
+                <p className="text-sm text-slate-500 mt-0.5">Students matched to your course and study activity</p>
+              </div>
+            </div>
+            <button
+              onClick={fetchRecommendations}
+              disabled={recommendationsLoading}
+              className="w-9 h-9 rounded-lg border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-200 disabled:opacity-60 flex items-center justify-center transition-colors"
+              title="Refresh suggestions"
+            >
+              {recommendationsLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            </button>
+          </div>
+
+          {recommendationsLoading ? (
+            <div className="py-8 flex items-center justify-center text-sm text-slate-400 gap-2">
+              <Loader2 size={16} className="animate-spin" /> Finding matches...
+            </div>
+          ) : recommendations.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-3">
+              {recommendations.map((person) => (
+                <div key={person.id} className="rounded-lg border border-slate-200 p-4 bg-slate-50/60">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={person.name} />
+                      <div>
+                        <p className="font-semibold text-slate-900 text-sm">{person.name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{person.course} · {person.university}</p>
+                      </div>
+                    </div>
+                    <div className="text-xs font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md shrink-0">
+                      {person.score}% match
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-500 leading-relaxed mt-3">{person.reason}</p>
+                  <div className="flex items-center justify-between mt-4">
+                    <span className="text-xs text-slate-400">
+                      {person.mutual_groups > 0 ? `${person.mutual_groups} mutual group${person.mutual_groups !== 1 ? "s" : ""}` : `Year ${person.year_of_study}`}
+                    </span>
+                    <button
+                      onClick={() => handleSendRequest(person.id, true)}
+                      disabled={loadingId === person.id}
+                      className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      {loadingId === person.id ? <Loader2 size={12} className="animate-spin" /> : <><UserPlus size={12} /> Add</>}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 py-5 text-center">No suggestions yet. Join more groups to get better matches.</p>
+          )}
+        </section>
       )}
 
       {/* Pending Requests */}

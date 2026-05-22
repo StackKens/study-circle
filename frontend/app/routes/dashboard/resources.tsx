@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, Link, Video, Download, Upload, X, Check, Loader2 } from "lucide-react";
+import { FileText, Link, Video, Download, Upload, X, Check, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useResourceStore } from "../../store/resourceStore";
 import { useGroupStore } from "../../store/groupStore";
@@ -20,6 +20,19 @@ async function uploadToCloudinary(file: File): Promise<string> {
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || "Cloudinary upload failed");
   return data.secure_url;
+}
+
+interface ResourceRecommendation {
+  id: string;
+  title: string;
+  type: Resource["type"];
+  subject: string;
+  group_name: string;
+  uploaded_by_name: string;
+  downloads: number;
+  score: number;
+  reason: string;
+  url?: string;
 }
 
 const iconMap: Record<Resource["type"], React.ElementType> = {
@@ -61,14 +74,23 @@ async function forceDownload(url: string, title: string) {
   URL.revokeObjectURL(a.href);
 }
 
+async function trackDownload(id: string, token: string) {
+  await fetch(`${API_URL}/resources/${id}/download`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export default function ResourcesPage() {
   const { token } = useAuth();
-  const { resources, isLoading, fetchResources, addResource } = useResourceStore();
+  const { resources, isLoading, fetchResources, addResource, incrementDownload } = useResourceStore();
   const { groups, fetchGroups } = useGroupStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [recommendations, setRecommendations] = useState<ResourceRecommendation[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     type: "link" as Resource["type"],
@@ -83,6 +105,26 @@ export default function ResourcesPage() {
     fetchResources(token);
     if (groups.length === 0) fetchGroups(token);
   }, [token, fetchResources, fetchGroups]);
+
+  async function fetchRecommendations() {
+    if (!token) return;
+    setRecommendationsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/resources/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setRecommendations(data);
+    } catch (err) {
+      console.error("fetchRecommendations error:", err);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (token) fetchRecommendations();
+  }, [token]);
 
   const isFileType = formData.type !== "link";
 
@@ -151,6 +193,78 @@ export default function ResourcesPage() {
         </button>
       </div>
 
+      {/* Recommended Resources */}
+      <section className="mb-8 bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Recommended for You</p>
+              <p className="text-sm text-slate-500 mt-0.5">Materials from other groups matched to your course</p>
+            </div>
+          </div>
+          <button
+            onClick={fetchRecommendations}
+            disabled={recommendationsLoading}
+            className="w-9 h-9 rounded-lg border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-200 disabled:opacity-60 flex items-center justify-center transition-colors"
+            title="Refresh recommendations"
+          >
+            {recommendationsLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+          </button>
+        </div>
+
+        {recommendationsLoading ? (
+          <div className="py-8 flex items-center justify-center text-sm text-slate-400 gap-2">
+            <Loader2 size={16} className="animate-spin" /> Finding relevant materials...
+          </div>
+        ) : recommendations.length > 0 ? (
+          <div className="grid md:grid-cols-2 gap-3">
+            {recommendations.map((rec) => {
+              const Icon = iconMap[rec.type] ?? FileText;
+              const config = typeConfig[rec.type] ?? typeConfig.document;
+              return (
+                <div key={rec.id} className="rounded-lg border border-slate-200 p-4 bg-slate-50/60">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-9 h-9 ${config.bg} ${config.text} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                      <Icon size={15} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-slate-900 text-sm leading-snug">{rec.title}</p>
+                        <div className="text-xs font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md shrink-0">
+                          {rec.score}% match
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">{config.label} · {rec.group_name}</p>
+                      <p className="text-sm text-slate-500 leading-relaxed mt-2">{rec.reason}</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Download size={11} /> {rec.downloads}
+                        </span>
+                        {rec.url && (
+                          <a
+                            href={rec.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+                          >
+                            View
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 py-5 text-center">No recommendations yet. Join more groups to get better matches.</p>
+        )}
+      </section>
+
       {isLoading ? (
         <div className="text-center py-20 text-slate-400 text-sm">Loading...</div>
       ) : resources.length > 0 ? (
@@ -187,7 +301,11 @@ export default function ResourcesPage() {
                     </a>
                     {resource.type !== "link" && (
                       <button
-                        onClick={() => forceDownload(resource.url, resource.title)}
+                        onClick={async () => {
+                          await forceDownload(resource.url, resource.title);
+                          await trackDownload(resource.id, token!);
+                          incrementDownload(resource.id);
+                        }}
                         className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                       >
                         Download

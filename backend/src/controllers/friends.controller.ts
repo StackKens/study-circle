@@ -2,6 +2,44 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 
+import { recommendFriendsForUser } from "../services/ai.service";
+
+// GET /api/friends/recommendations
+export async function getFriendRecommendations(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  try {
+    const profileResult = await pool.query(
+      `SELECT university, course, year_of_study FROM users WHERE id = $1`,
+      [userId]
+    );
+    if (profileResult.rows.length === 0) { res.status(404).json({ error: "User not found" }); return; }
+
+    const candidatesResult = await pool.query(
+      `SELECT u.id, u.name, u.university, u.course, u.year_of_study,
+        COUNT(DISTINCT gm2.group_id) AS mutual_groups
+       FROM users u
+       LEFT JOIN group_members gm1 ON gm1.user_id = u.id
+       LEFT JOIN group_members gm2 ON gm2.group_id = gm1.group_id AND gm2.user_id = $1
+       WHERE u.id != $1
+         AND NOT EXISTS (
+           SELECT 1 FROM friendships f
+           WHERE (f.user_id = $1 AND f.friend_id = u.id)
+              OR (f.user_id = u.id AND f.friend_id = $1)
+         )
+       GROUP BY u.id
+       ORDER BY mutual_groups DESC, u.created_at DESC
+       LIMIT 25`,
+      [userId]
+    );
+
+    const recommendations = await recommendFriendsForUser(profileResult.rows[0], candidatesResult.rows);
+    res.json(recommendations);
+  } catch (err) {
+    console.error("getFriendRecommendations error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // GET /api/friends — accepted friends with mutual group count
 export async function getFriends(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
