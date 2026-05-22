@@ -2,6 +2,7 @@ export interface Resource {
   id: string;
   group_id: string;
   group_name: string;
+  subject: string;
   title: string;
   type: "pdf" | "link" | "video" | "document";
   url: string;
