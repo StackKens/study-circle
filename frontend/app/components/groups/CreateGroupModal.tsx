@@ -248,14 +248,14 @@ export function CreateGroupModal({
             <button
               type="button"
               onClick={handleClose}
-              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50"
+              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-medium rounded-lg  cursor-pointer hover:bg-slate-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold py-2.5 rounded-lg disabled:bg-teal-300 flex items-center justify-center gap-2"
+              className="flex-1 bg-teal-600 hover:bg-teal-500 text-white text-sm font-semibold py-2.5 rounded-lg disabled:bg-teal-300  cursor-pointer flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <Loader2 size={16} className="animate-spin" />

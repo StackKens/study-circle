@@ -1,10 +1,13 @@
 import { Router } from "express";
+import { authenticateToken } from "../middleware/auth.middleware";
+import { createGroup, getMyGroups } from "../controllers/groups.controller";
 
 const router = Router();
 
-//  implement group routes
-router.get("/", (req, res) => {
-  res.json({ message: "Groups endpoint - to be implemented" });
-});
+// JWT via Authorization header — inherently CSRF-safe
+router.use(authenticateToken);
+
+router.get("/", getMyGroups);
+router.post("/", createGroup);
 
 export default router;

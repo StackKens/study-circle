@@ -161,11 +161,6 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const refreshGroups = () => {
-    console.log("Group created – you can refetch groups here");
-    // Later: fetch real groups and update state
-  };
-
   return (
     <div className="max-w-6xl mx-auto px-1">
       <div className="mb-8">
@@ -402,7 +397,7 @@ export default function DashboardHome() {
       <CreateGroupModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onSuccess={refreshGroups}
+        onSuccess={() => setShowCreateModal(false)}
       />
     </div>
   );
