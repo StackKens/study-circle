@@ -10,4 +10,5 @@ export interface Session {
   status: string;
   group_name: string;
   has_joined?: boolean;
+  meet_link?: string;
 }

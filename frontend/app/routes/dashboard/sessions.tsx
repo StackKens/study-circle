@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Users, Plus, X, Check, Loader2 } from "lucide-react";
+import { Calendar, Clock, Users, Plus, X, Check, Loader2, Video } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionStore } from "../../store/sessionStore";
 import { useGroupStore } from "../../store/groupStore";
@@ -238,17 +238,29 @@ export default function SessionsPage() {
                             {session.group_name}
                           </p>
                         </div>
-                        <button
-                          onClick={() => handleJoin(session.id)}
-                          disabled={joining === session.id || joinAction.disabled}
-                          className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          {joining === session.id ? (
-                            <Loader2 size={13} className="animate-spin" />
-                          ) : (
-                            joinAction.label
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {session.meet_link && getStatus(session.start_time, session.end_time) !== "completed" && (
+                            <a
+                              href={session.meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                            >
+                              <Video size={13} /> Join Meet
+                            </a>
                           )}
-                        </button>
+                          <button
+                            onClick={() => handleJoin(session.id)}
+                            disabled={joining === session.id || joinAction.disabled}
+                            className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                          >
+                            {joining === session.id ? (
+                              <Loader2 size={13} className="animate-spin" />
+                            ) : (
+                              joinAction.label
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
