@@ -145,7 +145,7 @@ export default function ResourcesPage() {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
         >
           <Upload size={15} /> Upload
         </button>
@@ -188,7 +188,7 @@ export default function ResourcesPage() {
                     {resource.type !== "link" && (
                       <button
                         onClick={() => forceDownload(resource.url, resource.title)}
-                        className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                        className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                       >
                         Download
                       </button>
@@ -206,7 +206,7 @@ export default function ResourcesPage() {
           </div>
           <p className="font-medium text-slate-700 mb-1">No resources yet</p>
           <p className="text-sm text-slate-400 mb-5">Share a link, PDF, or document with your group</p>
-          <button onClick={() => setIsModalOpen(true)} className="text-sm text-teal-600 font-semibold">
+          <button onClick={() => setIsModalOpen(true)} className="text-sm text-teal-600 font-semibold cursor-pointer">
             Upload the first resource →
           </button>
         </div>
@@ -218,7 +218,7 @@ export default function ResourcesPage() {
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-slate-100">
               <h2 className="text-lg font-bold text-slate-800">Upload Resource</h2>
-              <button onClick={resetModal} className="p-1 rounded-lg hover:bg-slate-100">
+              <button onClick={resetModal} className="p-1 rounded-lg hover:bg-slate-100 cursor-pointer">
                 <X size={18} className="text-slate-500" />
               </button>
             </div>
@@ -283,7 +283,7 @@ export default function ResourcesPage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full px-3 py-2 border border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-teal-400 hover:text-teal-600 transition-colors text-left"
+                    className="w-full px-3 py-2 border border-dashed border-slate-300 rounded-lg text-sm text-slate-500 hover:border-teal-400 hover:text-teal-600 transition-colors text-left cursor-pointer"
                   >
                     {file ? file.name : "Click to select a file"}
                   </button>
@@ -309,14 +309,14 @@ export default function ResourcesPage() {
             <div className="flex gap-3 p-5 border-t border-slate-100">
               <button
                 onClick={resetModal}
-                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpload}
                 disabled={isSubmitting}
-                className="flex-1 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+                className="flex-1 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               >
                 {isSubmitting ? <Loader2 size={15} className="animate-spin" /> : <><Check size={15} /> Upload</>}
               </button>

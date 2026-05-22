@@ -6,9 +6,9 @@
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npx react-router dev",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build": "react-router build",
-    "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "build": "cd frontend && react-router build",
+    "start": "react-router-serve ./frontend/build/server/index.js",
+    "typecheck": "cd frontend && react-router typegen && tsc"
   },
   "dependencies": {
     "@react-router/node": "7.15.0",

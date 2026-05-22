@@ -59,13 +59,22 @@ export async function joinSession(req: AuthRequest, res: Response) {
   try {
     // Session must exist and user must be a group member
     const session = await pool.query(
-      `SELECT s.group_id FROM sessions s
+      `SELECT s.group_id, s.start_time, s.end_time FROM sessions s
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
        WHERE s.id = $2`,
       [userId, id]
     );
     if (session.rows.length === 0) {
       res.status(403).json({ error: "Session not found or you are not a group member" });
+      return;
+    }
+
+    const now = Date.now();
+    const startTime = new Date(session.rows[0].start_time).getTime();
+    const endTime = new Date(session.rows[0].end_time).getTime();
+
+    if (now > endTime) {
+      res.status(409).json({ error: "This session has already ended" });
       return;
     }
 
@@ -80,7 +89,11 @@ export async function joinSession(req: AuthRequest, res: Response) {
       [id]
     );
 
-    res.json({ joined: true, participant_count: parseInt(updated.rows[0].participant_count, 10) });
+    res.json({
+      joined: true,
+      status: now < startTime ? "reserved" : "checked_in",
+      participant_count: parseInt(updated.rows[0].participant_count, 10),
+    });
   } catch (err) {
     console.error("joinSession error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -93,7 +106,11 @@ export async function getMySessions(req: AuthRequest, res: Response) {
   try {
     const result = await pool.query(
       `SELECT s.*, g.name AS group_name,
-        (SELECT COUNT(*) FROM session_attendees WHERE session_id = s.id) AS participant_count
+        (SELECT COUNT(*) FROM session_attendees WHERE session_id = s.id) AS participant_count,
+        EXISTS (
+          SELECT 1 FROM session_attendees sa
+          WHERE sa.session_id = s.id AND sa.user_id = $1
+        ) AS has_joined
        FROM sessions s
        JOIN groups g ON g.id = s.group_id
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1

@@ -34,6 +34,7 @@ const sidebarItems = [
   { name: "Progress", path: "/dashboard/progress", icon: TrendingUp },
   { name: "Friends", path: "/dashboard/friends", icon: UserPlus },
   { name: "Library", path: "/dashboard/library", icon: Book },
+  { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
 export default function DashboardLayout() {
