@@ -1,5 +1,5 @@
 import { useAuth } from "../../context/AuthContext";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Mail,
   MapPin,
@@ -9,9 +9,26 @@ import {
   BookOpen,
   Clock,
   Award,
+  Camera,
+  Loader2,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const CLOUDINARY_CLOUD = "db0oxbeck";
+const CLOUDINARY_PRESET = "p3mbqg5a";
+
+async function uploadToCloudinary(file: File): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", CLOUDINARY_PRESET);
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
+    { method: "POST", body: form },
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || "Upload failed");
+  return data.secure_url;
+}
 
 // Define types for the data we fetch
 interface UserStats {
@@ -34,13 +51,15 @@ interface Badge {
 }
 
 export default function ProfilePage() {
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [bio, setBio] = useState<string>("");
   const [editing, setEditing] = useState(false);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [recentGroups, setRecentGroups] = useState<RecentGroup[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
   const [loading, setLoading] = useState(true);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch profile data (stats, groups, badges)
   useEffect(() => {
@@ -88,15 +107,65 @@ export default function ProfilePage() {
   if (loading) return <div className="p-4">Loading profile...</div>;
   if (!user) return <div className="p-4">Please log in</div>;
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const avatar_url = await uploadToCloudinary(file);
+      await fetch(`${API_URL}/users/${user.id}/avatar`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ avatar_url }),
+      });
+      updateUser({ avatar_url });
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-1">
       {/* Identity card */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-5">
         <div className="flex items-start gap-5">
           <div className="relative flex-shrink-0">
-            <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
-              {user.name.charAt(0)}
-            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="relative w-16 h-16 rounded-full overflow-hidden group"
+              title="Change profile photo"
+            >
+              {user.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="w-full h-full object-cover "
+                />
+              ) : (
+                <div className="w-full h-full bg-teal-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {user.name.charAt(0)}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {avatarUploading ? (
+                  <Loader2 size={18} className="text-white animate-spin" />
+                ) : (
+                  <Camera size={18} className="text-white" />
+                )}
+              </div>
+            </button>
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">

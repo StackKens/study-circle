@@ -135,6 +135,35 @@ export async function getUserBio(req: AuthRequest, res: Response) {
   }
 }
 
+// PATCH /api/users/:id/avatar
+export async function updateUserAvatar(req: AuthRequest, res: Response) {
+  const authenticatedUserId = req.user?.id;
+  const targetUserId = req.params.id;
+
+  if (!authenticatedUserId || authenticatedUserId !== targetUserId) {
+    res.status(403).json({ error: "You can only update your own avatar" });
+    return;
+  }
+
+  const { avatar_url } = req.body;
+  if (!avatar_url) {
+    res.status(400).json({ error: "avatar_url is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE users SET avatar_url = $1 WHERE id = $2
+       RETURNING id, name, email, university, course, year_of_study, created_at, avatar_url`,
+      [avatar_url, authenticatedUserId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("updateUserAvatar error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // PATCH /api/users/:id/bio
 // Updates the bio of the authenticated user (only own bio can be changed)
 export async function updateUserBio(req: AuthRequest, res: Response) {

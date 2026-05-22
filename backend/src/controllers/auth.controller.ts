@@ -123,7 +123,7 @@ export async function login(req: Request, res: Response) {
 export async function getMe(req: any, res: Response) {
   try {
     const result = await pool.query(
-      `SELECT id, name, email, university, course, year_of_study, created_at
+      `SELECT id, name, email, university, course, year_of_study, created_at, avatar_url
        FROM users WHERE id = $1`,
       [req.user.id],
     );
