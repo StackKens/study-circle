@@ -187,7 +187,7 @@ export default function LibraryPage() {
                     {resource.type !== "link" && (
                       <button
                         onClick={() => forceDownload(resource.url, resource.title)}
-                        className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+                        className="text-xs text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                       >
                         Download
                       </button>

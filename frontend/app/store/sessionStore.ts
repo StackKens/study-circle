@@ -9,6 +9,7 @@ interface SessionStore {
   fetchSessions: (token: string) => Promise<void>;
   addSession: (session: Session) => void;
   updateParticipantCount: (sessionId: string, count: number) => void;
+  markSessionJoined: (sessionId: string, count: number) => void;
 }
 
 export const useSessionStore = create<SessionStore>((set) => ({
@@ -37,6 +38,15 @@ export const useSessionStore = create<SessionStore>((set) => ({
     set((state) => ({
       sessions: state.sessions.map((s) =>
         s.id === sessionId ? { ...s, participant_count: count } : s
+      ),
+    })),
+
+  markSessionJoined: (sessionId, count) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId
+          ? { ...s, participant_count: count, has_joined: true }
+          : s,
       ),
     })),
 }));

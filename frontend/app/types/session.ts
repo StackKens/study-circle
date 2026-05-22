@@ -9,4 +9,5 @@ export interface Session {
   created_at: string;
   status: string;
   group_name: string;
+  has_joined?: boolean;
 }

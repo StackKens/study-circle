@@ -47,7 +47,7 @@ export function AuthModal({ isOpen, onClose, type, onSwitch }: AuthModalProps) {
           <div className="flex justify-end p-4 pb-0">
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
+              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600 cursor-pointer"
               aria-label="Close"
             >
               <X size={18} />

@@ -2,7 +2,6 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db/index";
 
-// GET /api/users/me/stats
 // Returns group count, session count, resource count, total study hours
 export async function getUserStats(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
@@ -48,7 +47,6 @@ export async function getUserStats(req: AuthRequest, res: Response) {
   }
 }
 
-// GET /api/users/me/groups?limit=3
 // Returns the user's groups (with optional limit)
 export async function getUserGroups(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
@@ -77,11 +75,13 @@ export async function getUserGroups(req: AuthRequest, res: Response) {
   }
 }
 
-// GET /api/users/me/progress
 // Returns per-group stats: sessions count, resources count, members count, last session
 export async function getUserProgress(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
 
   try {
     const result = await pool.query(
@@ -95,7 +95,7 @@ export async function getUserProgress(req: AuthRequest, res: Response) {
        FROM groups g
        JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
        ORDER BY g.created_at DESC`,
-      [userId]
+      [userId],
     );
     res.json(result.rows);
   } catch (err) {
@@ -104,14 +104,12 @@ export async function getUserProgress(req: AuthRequest, res: Response) {
   }
 }
 
-// GET /api/users/me/badges
 // Currently returns an empty array (placeholder for future badge system)
 export async function getUserBadges(req: AuthRequest, res: Response) {
   // TODO: implement badge logic when ready
   res.json([]);
 }
 
-// GET /api/users/:id/bio
 // Returns the bio of a specific user (public)
 export async function getUserBio(req: AuthRequest, res: Response) {
   const userId = req.params.id;
@@ -135,7 +133,6 @@ export async function getUserBio(req: AuthRequest, res: Response) {
   }
 }
 
-// PATCH /api/users/:id/avatar
 export async function updateUserAvatar(req: AuthRequest, res: Response) {
   const authenticatedUserId = req.user?.id;
   const targetUserId = req.params.id;
@@ -155,7 +152,7 @@ export async function updateUserAvatar(req: AuthRequest, res: Response) {
     const result = await pool.query(
       `UPDATE users SET avatar_url = $1 WHERE id = $2
        RETURNING id, name, email, university, course, year_of_study, created_at, avatar_url`,
-      [avatar_url, authenticatedUserId]
+      [avatar_url, authenticatedUserId],
     );
     res.json(result.rows[0]);
   } catch (err) {
@@ -164,7 +161,6 @@ export async function updateUserAvatar(req: AuthRequest, res: Response) {
   }
 }
 
-// PATCH /api/users/:id/bio
 // Updates the bio of the authenticated user (only own bio can be changed)
 export async function updateUserBio(req: AuthRequest, res: Response) {
   const authenticatedUserId = req.user?.id;

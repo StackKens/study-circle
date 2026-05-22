@@ -113,7 +113,7 @@ export function CreateGroupModal({
           </h2>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg hover:bg-slate-100"
+            className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -216,7 +216,7 @@ export function CreateGroupModal({
                       setShowCustomInput(false);
                       setCustomUniversity("");
                     }}
-                    className="px-3 py-1.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50"
+                    className="px-3 py-1.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 cursor-pointer"
                   >
                     Cancel
                   </button>

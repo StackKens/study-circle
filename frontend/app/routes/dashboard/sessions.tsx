@@ -46,10 +46,11 @@ function getStatus(start: string, end: string): SessionStatus {
 
 export default function SessionsPage() {
   const { token } = useAuth();
-  const { sessions, isLoading, fetchSessions, addSession, updateParticipantCount } = useSessionStore();
+  const { sessions, isLoading, fetchSessions, addSession, markSessionJoined } = useSessionStore();
   const { groups, fetchGroups } = useGroupStore();
 
   const [joining, setJoining] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,18 +117,38 @@ export default function SessionsPage() {
 
   const handleJoin = async (sessionId: string) => {
     setJoining(sessionId);
+    setJoinError("");
     try {
       const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (res.ok) updateParticipantCount(sessionId, data.participant_count);
+      if (!res.ok) throw new Error(data.error || "Failed to join session");
+      markSessionJoined(sessionId, data.participant_count);
     } catch (err) {
       console.error("joinSession error:", err);
+      setJoinError(
+        err instanceof Error ? err.message : "Failed to join session",
+      );
     } finally {
       setJoining(null);
     }
+  };
+
+  const getJoinAction = (session: { start_time: string; end_time: string; has_joined?: boolean }) => {
+    const status = getStatus(session.start_time, session.end_time);
+    if (status === "completed") {
+      return { label: "Ended", disabled: true };
+    }
+    if (session.has_joined) {
+      return {
+        label: status === "ongoing" ? "Checked in" : "Reserved",
+        disabled: true,
+      };
+    }
+    if (status === "ongoing") return { label: "Join now", disabled: false };
+    return { label: "Reserve spot", disabled: false };
   };
 
   const inputClass =
@@ -163,6 +184,12 @@ export default function SessionsPage() {
         </div>
       ) : (
         <>
+          {joinError && (
+            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+              {joinError}
+            </div>
+          )}
+
           {/* Upcoming */}
           <div className="mb-8">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
@@ -173,6 +200,7 @@ export default function SessionsPage() {
               <div className="space-y-3">
                 {upcoming.map((session) => {
                   const { date, time } = formatDateTime(session.start_time);
+                  const joinAction = getJoinAction(session);
                   const config =
                     statusConfig[
                       getStatus(session.start_time, session.end_time)
@@ -212,10 +240,14 @@ export default function SessionsPage() {
                         </div>
                         <button
                           onClick={() => handleJoin(session.id)}
-                          disabled={joining === session.id}
-                          className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors flex items-center gap-1.5"
+                          disabled={joining === session.id || joinAction.disabled}
+                          className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                         >
-                          {joining === session.id ? <Loader2 size={13} className="animate-spin" /> : "Join"}
+                          {joining === session.id ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            joinAction.label
+                          )}
                         </button>
                       </div>
                     </div>
@@ -295,7 +327,7 @@ export default function SessionsPage() {
                   setIsModalOpen(false);
                   setError("");
                 }}
-                className="p-1 rounded-lg hover:bg-slate-100"
+                className="p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
                 <X size={18} className="text-slate-500" />
               </button>
@@ -381,7 +413,7 @@ export default function SessionsPage() {
                   setIsModalOpen(false);
                   setError("");
                 }}
-                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50"
+                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 cursor-pointer"
               >
                 Cancel
               </button>

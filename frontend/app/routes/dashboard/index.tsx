@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
   Users, Calendar, FolderOpen, Clock,
-  PlusCircle, BookOpen, ArrowRight,
+  PlusCircle, BookOpen, ArrowRight, Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -52,9 +52,11 @@ function formatSessionTime(iso: string) {
 export default function DashboardHome() {
   const { user, token } = useAuth();
   const { groups, fetchGroups } = useGroupStore();
-  const { sessions, fetchSessions } = useSessionStore();
+  const { sessions, fetchSessions, markSessionJoined } = useSessionStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState("");
 
   useEffect(() => {
     if (!token) return;
@@ -73,6 +75,35 @@ export default function DashboardHome() {
     .slice(0, 3);
 
   const recentGroups = groups.slice(0, 3);
+
+  async function handleJoinSession(sessionId: string) {
+    if (!token) return;
+
+    setJoiningSessionId(sessionId);
+    setJoinError("");
+    try {
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to join session");
+      markSessionJoined(sessionId, data.participant_count);
+    } catch (err) {
+      console.error("joinSession error:", err);
+      setJoinError(
+        err instanceof Error ? err.message : "Failed to join session",
+      );
+    } finally {
+      setJoiningSessionId(null);
+    }
+  }
+
+  function getJoinLabel(session: (typeof sessions)[number]) {
+    const status = getStatus(session.start_time, session.end_time);
+    if (session.has_joined) return status === "ongoing" ? "Checked in" : "Reserved";
+    return status === "ongoing" ? "Join now" : "Reserve";
+  }
 
   const stats = [
     { label: "Active Groups",      value: groups.length,                    icon: Users,      change: groups.length > 0 ? `${groups.length} joined` : "None yet"              },
@@ -120,7 +151,7 @@ export default function DashboardHome() {
               <button
                 key={action.label}
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all w-full text-left"
+                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all w-full text-left cursor-pointer"
               >
                 <div className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}>
                   <action.icon size={17} />
@@ -131,7 +162,7 @@ export default function DashboardHome() {
               <Link
                 key={action.label}
                 to={action.path!}
-                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
+                className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
               >
                 <div className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}>
                   <action.icon size={17} />
@@ -185,6 +216,11 @@ export default function DashboardHome() {
             </div>
             {upcomingSessions.length > 0 ? (
               <div className="space-y-1">
+                {joinError && (
+                  <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                    {joinError}
+                  </p>
+                )}
                 {upcomingSessions.map((session) => (
                   <div key={session.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors">
                     <div>
@@ -193,8 +229,16 @@ export default function DashboardHome() {
                         {formatSessionTime(session.start_time)} · {session.participant_count} attending
                       </p>
                     </div>
-                    <button className="bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors">
-                      Join
+                    <button
+                      onClick={() => handleJoinSession(session.id)}
+                      disabled={joiningSessionId === session.id || session.has_joined}
+                      className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      {joiningSessionId === session.id ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        getJoinLabel(session)
+                      )}
                     </button>
                   </div>
                 ))}

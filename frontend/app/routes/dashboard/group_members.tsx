@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { Shield, UserMinus, Crown, Users, LogOut } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Crown, Loader2, Users } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 import type { GroupMember } from "../../types/groupMemeber";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 interface GroupMemberWithUser extends GroupMember {
   userName: string;
@@ -11,36 +14,8 @@ interface GroupMemberWithUser extends GroupMember {
 interface GroupMembersProps {
   groupId: string;
   groupName: string;
-  currentUserId: string;
   currentUserRole: "admin" | "member";
 }
-
-const mockMembers: GroupMemberWithUser[] = [
-  {
-    userId: "1",
-    groupId: "g1",
-    role: "admin",
-    joinedAt: "2026-01-10T00:00:00Z",
-    userName: "Alex Mukasa",
-    userEmail: "alex@example.com",
-  },
-  {
-    userId: "2",
-    groupId: "g1",
-    role: "member",
-    joinedAt: "2026-01-15T00:00:00Z",
-    userName: "Sarah Nakitto",
-    userEmail: "sarah@example.com",
-  },
-  {
-    userId: "3",
-    groupId: "g1",
-    role: "member",
-    joinedAt: "2026-02-01T00:00:00Z",
-    userName: "Michael Okello",
-    userEmail: "michael@example.com",
-  },
-];
 
 function formatDate(isoString: string) {
   return new Date(isoString).toLocaleDateString(undefined, {
@@ -53,41 +28,38 @@ function formatDate(isoString: string) {
 export function GroupMembers({
   groupId,
   groupName,
-  currentUserId,
   currentUserRole,
 }: GroupMembersProps) {
-  const [members, setMembers] = useState(mockMembers);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [showInvite, setShowInvite] = useState(false);
+  const { token } = useAuth();
+  const [members, setMembers] = useState<GroupMemberWithUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const isAdmin = currentUserRole === "admin";
   const adminCount = members.filter((m) => m.role === "admin").length;
 
-  const handlePromote = (userId: string, userName: string) => {
-    setMembers((prev) =>
-      prev.map((m) =>
-        m.userId === userId ? { ...m, role: "admin" as const } : m,
-      ),
-    );
-    alert(`Promoted ${userName} to admin`);
-  };
+  useEffect(() => {
+    if (!token) return;
 
-  const handleRemove = (userId: string, userName: string) => {
-    if (userId === currentUserId) {
-      alert("You cannot remove yourself. Leave the group instead.");
-      return;
+    async function fetchMembers() {
+      setIsLoading(true);
+      setError("");
+      try {
+        const res = await fetch(`${API_URL}/groups/${groupId}/members`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load members");
+        setMembers(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load members");
+      } finally {
+        setIsLoading(false);
+      }
     }
-    setMembers((prev) => prev.filter((m) => m.userId !== userId));
-    alert(`Removed ${userName} from the group`);
-  };
 
-  const handleInvite = () => {
-    if (inviteEmail.trim()) {
-      alert(`Invitation sent to ${inviteEmail}`);
-      setInviteEmail("");
-      setShowInvite(false);
-    }
-  };
+    fetchMembers();
+  }, [groupId, token]);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -104,57 +76,51 @@ export function GroupMembers({
             </p>
           </div>
           {isAdmin && (
-            <button
-              onClick={() => setShowInvite(!showInvite)}
-              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors"
-            >
-              <Users size={14} /> Invite
-            </button>
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full">
+              <Users size={12} /> Admin
+            </span>
           )}
         </div>
       </div>
 
-      {/* Invite form */}
-      {showInvite && (
-        <div className="px-5 py-4 bg-slate-50 border-b border-slate-100">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-2.5">
-            Invite by email
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="email"
-              placeholder="colleague@university.ac.ug"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="flex-1 px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-            />
-            <button
-              onClick={handleInvite}
-              className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-            >
-              Send
-            </button>
-            <button
-              onClick={() => setShowInvite(false)}
-              className="border border-slate-200 text-slate-500 hover:bg-slate-100 px-3.5 py-2 rounded-lg text-sm transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Members */}
       <div className="divide-y divide-slate-100">
-        {members.map((member) => (
+        {isLoading && (
+          <div className="px-5 py-6 flex items-center justify-center gap-2 text-sm text-slate-400">
+            <Loader2 size={15} className="animate-spin" />
+            Loading members...
+          </div>
+        )}
+
+        {error && (
+          <div className="px-5 py-4 text-sm text-red-600 bg-red-50">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && members.length === 0 && (
+          <div className="px-5 py-6 text-sm text-slate-400 text-center">
+            No members found.
+          </div>
+        )}
+
+        {!isLoading && !error && members.map((member) => (
           <div
             key={member.userId}
             className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                {member.userName.charAt(0)}
-              </div>
+              {member.userAvatar ? (
+                <img
+                  src={member.userAvatar}
+                  alt={member.userName}
+                  className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                  {member.userName.charAt(0)}
+                </div>
+              )}
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-slate-900 text-sm">
@@ -171,41 +137,9 @@ export function GroupMembers({
                 </p>
               </div>
             </div>
-
-            {isAdmin && member.userId !== currentUserId && (
-              <div className="flex items-center gap-1">
-                {member.role !== "admin" && (
-                  <button
-                    onClick={() =>
-                      handlePromote(member.userId, member.userName)
-                    }
-                    className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-amber-500 rounded-lg hover:bg-amber-50 transition-colors"
-                    title="Make admin"
-                  >
-                    <Shield size={15} />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleRemove(member.userId, member.userName)}
-                  className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
-                  title="Remove member"
-                >
-                  <UserMinus size={15} />
-                </button>
-              </div>
-            )}
           </div>
         ))}
       </div>
-
-      {/* Leave group — members only */}
-      {!isAdmin && (
-        <div className="px-5 py-3.5 border-t border-slate-100">
-          <button className="flex items-center gap-2 text-red-500 hover:text-red-600 text-sm font-medium transition-colors">
-            <LogOut size={14} /> Leave Group
-          </button>
-        </div>
-      )}
     </div>
   );
 }

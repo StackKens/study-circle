@@ -1,5 +1,6 @@
 import { useAuth } from "../../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router";
 import {
   Mail,
   MapPin,
@@ -223,7 +224,7 @@ export default function ProfilePage() {
                     </button>
                     <button
                       onClick={() => setEditing(false)}
-                      className="border border-slate-200 text-slate-500 px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
+                      className="border border-slate-200 text-slate-500 px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -338,9 +339,12 @@ export default function ProfilePage() {
                   {group.subject} · {group.memberCount} members
                 </p>
               </div>
-              <button className="text-xs text-teal-600 font-semibold  cursor-pointer hover:text-teal-700">
+              <Link
+                to={`/dashboard/groups?focus=${group.id}`}
+                className="text-xs text-teal-600 font-semibold cursor-pointer hover:text-teal-700"
+              >
                 View
-              </button>
+              </Link>
             </div>
           ))}
         </div>
