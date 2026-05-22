@@ -91,6 +91,7 @@ StudyCircle is designed primarily for:
 ## Frontend
 
 - React
+- Typescript 
 - React Router V7(framework mode)
 - Context API / Zustand
 - Tailwind CSS
