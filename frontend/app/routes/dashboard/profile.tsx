@@ -267,8 +267,8 @@ export default function ProfilePage() {
                   {group.subject} · {group.memberCount} members
                 </p>
               </div>
-              <button className="text-xs text-teal-600 font-semibold hover:text-teal-700">
-                View →
+              <button className="text-xs text-teal-600 font-semibold  cursor-pointer hover:text-teal-700">
+                View
               </button>
             </div>
           ))}

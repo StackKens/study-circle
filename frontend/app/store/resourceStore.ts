@@ -1,0 +1,34 @@
+import { create } from "zustand";
+import type { Resource } from "../types/resource";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+interface ResourceStore {
+  resources: Resource[];
+  isLoading: boolean;
+  fetchResources: (token: string) => Promise<void>;
+  addResource: (resource: Resource) => void;
+}
+
+export const useResourceStore = create<ResourceStore>((set) => ({
+  resources: [],
+  isLoading: false,
+
+  fetchResources: async (token) => {
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_URL}/resources`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) set({ resources: data });
+    } catch (err) {
+      console.error("fetchResources error:", err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  addResource: (resource) =>
+    set((state) => ({ resources: [resource, ...state.resources] })),
+}));

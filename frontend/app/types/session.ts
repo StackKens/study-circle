@@ -8,4 +8,5 @@ export interface Session {
   created_by?: string;
   created_at: string;
   status: string;
+  group_name: string;
 }
