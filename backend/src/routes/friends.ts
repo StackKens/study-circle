@@ -8,6 +8,7 @@ import {
   acceptFriendRequest,
   declineFriendRequest,
   removeFriend,
+  getFriendRecommendations,
 } from "../controllers/friends.controller";
 
 const router = Router();
@@ -16,6 +17,7 @@ const router = Router();
 router.use(authenticateToken);
 
 router.get("/", getFriends);
+router.get("/recommendations", getFriendRecommendations);
 router.get("/requests", getFriendRequests);
 router.get("/search", searchUsers);
 router.post("/request/:id", sendFriendRequest);

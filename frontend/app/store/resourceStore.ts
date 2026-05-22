@@ -8,6 +8,7 @@ interface ResourceStore {
   isLoading: boolean;
   fetchResources: (token: string) => Promise<void>;
   addResource: (resource: Resource) => void;
+  incrementDownload: (id: string) => void;
 }
 
 export const useResourceStore = create<ResourceStore>((set) => ({
@@ -31,4 +32,11 @@ export const useResourceStore = create<ResourceStore>((set) => ({
 
   addResource: (resource) =>
     set((state) => ({ resources: [resource, ...state.resources] })),
+
+  incrementDownload: (id) =>
+    set((state) => ({
+      resources: state.resources.map((r) =>
+        r.id === id ? { ...r, downloads: r.downloads + 1 } : r
+      ),
+    })),
 }));
