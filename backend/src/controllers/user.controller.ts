@@ -77,6 +77,33 @@ export async function getUserGroups(req: AuthRequest, res: Response) {
   }
 }
 
+// GET /api/users/me/progress
+// Returns per-group stats: sessions count, resources count, members count, last session
+export async function getUserProgress(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const result = await pool.query(
+      `SELECT
+        g.id, g.name, g.subject, g.university,
+        gm.role,
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS member_count,
+        (SELECT COUNT(*) FROM sessions WHERE group_id = g.id) AS session_count,
+        (SELECT COUNT(*) FROM resources WHERE group_id = g.id) AS resource_count,
+        (SELECT MAX(start_time) FROM sessions WHERE group_id = g.id) AS last_session
+       FROM groups g
+       JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+       ORDER BY g.created_at DESC`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getUserProgress error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // GET /api/users/me/badges
 // Currently returns an empty array (placeholder for future badge system)
 export async function getUserBadges(req: AuthRequest, res: Response) {

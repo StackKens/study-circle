@@ -53,11 +53,11 @@ export default function SessionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    title: "",
-    group_id: "",
-    start_time: "",
-    end_time: "",
+    title: "", group_id: "", start_time: "", end_time: "",
   });
+
+  const adminGroups = groups.filter((g) => g.role === "admin");
+  const isAdmin = adminGroups.length > 0;
 
   useEffect(() => {
     if (!token) return;
@@ -129,12 +129,14 @@ export default function SessionsPage() {
             Schedule and join study meetings
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-        >
-          <Plus size={15} /> Create Session
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+          >
+            <Plus size={15} /> Create Session
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -305,10 +307,8 @@ export default function SessionsPage() {
                   className={inputClass}
                 >
                   <option value="">Select a group</option>
-                  {groups.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
+                  {adminGroups.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
                 </select>
                 {groups.length === 0 && (

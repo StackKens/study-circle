@@ -12,13 +12,17 @@ export async function createSession(req: AuthRequest, res: Response) {
   }
 
   try {
-    // Verify user is a member of the group
+    // Verify user is an admin of the group
     const membership = await pool.query(
-      `SELECT 1 FROM group_members WHERE user_id = $1 AND group_id = $2`,
+      `SELECT role FROM group_members WHERE user_id = $1 AND group_id = $2`,
       [userId, group_id]
     );
     if (membership.rows.length === 0) {
       res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+    if (membership.rows[0].role !== "admin") {
+      res.status(403).json({ error: "Only group admins can create sessions" });
       return;
     }
 
