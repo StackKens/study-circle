@@ -64,7 +64,7 @@ export default function DashboardLayout() {
                 key={item.name}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                     isActive
                       ? "bg-teal-50 text-teal-700"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -79,7 +79,7 @@ export default function DashboardLayout() {
           <div className="p-4 border-t border-slate-200">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex cursor-pointer items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut size={18} /> Logout
             </button>
@@ -91,9 +91,12 @@ export default function DashboardLayout() {
           {/* Mobile header (visible only on mobile) */}
           <header className="md:hidden bg-white border-b border-slate-200 h-14 px-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-800">
+              <Link
+                to="/"
+                className="font-bold text-slate-800   cursor-pointer"
+              >
                 Study<span className="text-teal-600">Circle</span>
-              </span>
+              </Link>
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -133,7 +136,7 @@ export default function DashboardLayout() {
                   handleLogout();
                   setMobileMenuOpen(false);
                 }}
-                className="block w-full text-left py-2 text-sm text-red-600 hover:text-red-700"
+                className="block w-full text-left py-2 text-sm text-red-600 hover:text-red-700 "
               >
                 Logout
               </button>

@@ -13,7 +13,7 @@ export async function getResourceRecommendations(req: AuthRequest, res: Response
     if (profileResult.rows.length === 0) { res.status(404).json({ error: "User not found" }); return; }
 
     const candidatesResult = await pool.query(
-      `SELECT r.id, r.title, r.type, r.downloads, g.subject, g.name AS group_name, u.name AS uploaded_by_name
+      `SELECT r.id, r.title, r.type, r.url, r.downloads, g.subject, g.name AS group_name, u.name AS uploaded_by_name
        FROM resources r
        JOIN groups g ON g.id = r.group_id
        JOIN users u ON u.id = r.uploaded_by

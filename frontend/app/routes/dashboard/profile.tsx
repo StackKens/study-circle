@@ -325,29 +325,43 @@ export default function ProfilePage() {
             Active Groups
           </p>
         </div>
-        <div className="divide-y divide-slate-100">
-          {recentGroups.map((group) => (
-            <div
-              key={group.id}
-              className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
-            >
-              <div>
-                <p className="font-medium text-slate-900 text-sm">
-                  {group.name}
-                </p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {group.subject} · {group.memberCount} members
-                </p>
-              </div>
-              <Link
-                to={`/dashboard/groups?focus=${group.id}`}
-                className="text-xs text-teal-600 font-semibold cursor-pointer hover:text-teal-700"
+        {recentGroups.length > 0 ? (
+          <div className="divide-y divide-slate-100">
+            {recentGroups.map((group) => (
+              <div
+                key={group.id}
+                className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
               >
-                View
-              </Link>
+                <div>
+                  <p className="font-medium text-slate-900 text-sm">{group.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {group.subject} · {group.memberCount} members
+                  </p>
+                </div>
+                <Link
+                  to={`/dashboard/groups?focus=${group.id}`}
+                  className="text-xs text-teal-600 font-semibold cursor-pointer hover:text-teal-700"
+                >
+                  View
+                </Link>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-5 py-10 flex flex-col items-center text-center">
+            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
+              <Users size={20} className="text-slate-400" />
             </div>
-          ))}
-        </div>
+            <p className="font-medium text-slate-700 text-sm mb-1">No active groups yet</p>
+            <p className="text-xs text-slate-400 mb-4">Join or create a study group to start collaborating with peers.</p>
+            <Link
+              to="/dashboard/groups"
+              className="text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+            >
+              Browse Groups →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
