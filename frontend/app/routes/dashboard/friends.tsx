@@ -1,176 +1,250 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  UserPlus,
-  UserCheck,
-  UserMinus,
-  Search,
-  MessageCircle,
-  X,
-  Check,
+  UserPlus, UserMinus, Search, X, Check, Loader2, Users,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 interface Friend {
   id: string;
   name: string;
   email: string;
-  avatar?: string;
-  mutualGroups: number;
+  university: string;
+  course: string;
   since: string;
+  mutual_groups: number;
 }
 
 interface FriendRequest {
-  id: string;
-  fromUserId: string;
-  fromUserName: string;
-  fromUserEmail: string;
-  createdAt: string;
+  from_user_id: string;
+  from_user_name: string;
+  from_user_email: string;
+  university: string;
+  created_at: string;
 }
 
-// Mock data
-const mockFriends: Friend[] = [
-  {
-    id: "2",
-    name: "Michael Okello",
-    email: "michael@example.com",
-    mutualGroups: 2,
-    since: "2026-04-10T00:00:00Z",
-  },
-  {
-    id: "3",
-    name: "Aisha Namubiru",
-    email: "aisha@example.com",
-    mutualGroups: 3,
-    since: "2026-04-15T00:00:00Z",
-  },
-  {
-    id: "4",
-    name: "John Muwanga",
-    email: "john@example.com",
-    mutualGroups: 1,
-    since: "2026-05-01T00:00:00Z",
-  },
-];
+interface SearchResult {
+  id: string;
+  name: string;
+  email: string;
+  university: string;
+  course: string;
+  friendship_status: "pending" | "accepted" | "declined" | null;
+}
 
-const mockRequests: FriendRequest[] = [
-  {
-    id: "req1",
-    fromUserId: "5",
-    fromUserName: "Grace Asiimwe",
-    fromUserEmail: "grace@example.com",
-    createdAt: "2026-05-17T10:00:00Z",
-  },
-  {
-    id: "req2",
-    fromUserId: "6",
-    fromUserName: "Peter Ochieng",
-    fromUserEmail: "peter@example.com",
-    createdAt: "2026-05-16T15:30:00Z",
-  },
-];
-
-function formatDate(isoString: string) {
-  const date = new Date(isoString);
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 export default function FriendsPage() {
-  const [friends] = useState(mockFriends);
-  const [requests, setRequests] = useState(mockRequests);
+  const { token } = useAuth();
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const fetchFriends = useCallback(async () => {
+    try {
+      const [friendsRes, requestsRes] = await Promise.all([
+        fetch(`${API_URL}/friends`, { headers }),
+        fetch(`${API_URL}/friends/requests`, { headers }),
+      ]);
+      const [friendsData, requestsData] = await Promise.all([
+        friendsRes.json(), requestsRes.json(),
+      ]);
+      if (Array.isArray(friendsData)) setFriends(friendsData);
+      if (Array.isArray(requestsData)) setRequests(requestsData);
+    } catch (err) {
+      console.error("fetchFriends error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) fetchFriends();
+  }, [token, fetchFriends]);
+
+  // Debounced search
+  useEffect(() => {
+    if (searchQuery.length < 2) { setSearchResults([]); return; }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`${API_URL}/friends/search?q=${encodeURIComponent(searchQuery)}`, { headers });
+        const data = await res.json();
+        if (Array.isArray(data)) setSearchResults(data);
+      } catch (err) {
+        console.error("search error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, token]);
+
+  const handleSendRequest = async (userId: string) => {
+    setLoadingId(userId);
+    try {
+      await fetch(`${API_URL}/friends/request/${userId}`, { method: "POST", headers });
+      setSearchResults((prev) =>
+        prev.map((u) => u.id === userId ? { ...u, friendship_status: "pending" } : u)
+      );
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleAccept = async (fromId: string) => {
+    setLoadingId(fromId);
+    try {
+      await fetch(`${API_URL}/friends/request/${fromId}/accept`, { method: "PATCH", headers });
+      setRequests((prev) => prev.filter((r) => r.from_user_id !== fromId));
+      fetchFriends();
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleDecline = async (fromId: string) => {
+    setLoadingId(fromId);
+    try {
+      await fetch(`${API_URL}/friends/request/${fromId}/decline`, { method: "PATCH", headers });
+      setRequests((prev) => prev.filter((r) => r.from_user_id !== fromId));
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleRemove = async (friendId: string) => {
+    setLoadingId(friendId);
+    try {
+      await fetch(`${API_URL}/friends/${friendId}`, { method: "DELETE", headers });
+      setFriends((prev) => prev.filter((f) => f.id !== friendId));
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
   const filteredFriends = friends.filter(
-    (friend) =>
-      friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchQuery.toLowerCase()),
+    (f) =>
+      f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      f.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAcceptRequest = (requestId: string, fromUserName: string) => {
-    // API call comming soon
-    setRequests((prev) => prev.filter((r) => r.id !== requestId));
-    // Also would add to friends list
-    alert(`Accepted request from ${fromUserName}`);
-  };
-
-  const handleDeclineRequest = (requestId: string, fromUserName: string) => {
-    setRequests((prev) => prev.filter((r) => r.id !== requestId));
-    alert(`Declined request from ${fromUserName}`);
-  };
-
-  const handleRemoveFriend = (friendName: string) => {
-    alert(`Remove ${friendName} from friends? (API call)`);
-  };
-
-  const handleMessageFriend = (friendName: string) => {
-    alert(`Start chat with ${friendName}`);
-  };
+  const showSearch = searchQuery.length >= 2;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Friends</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Connect with classmates and study partners
+    <div className="max-w-4xl mx-auto px-1">
+      <div className="mb-8">
+        <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
+          Network
         </p>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Friends</h1>
+        <p className="text-slate-500 text-sm mt-1">Connect with classmates and study partners</p>
       </div>
 
-      {/* Search & Add Friend */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search friends by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400"
-          />
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          type="text"
+          placeholder="Search by name or email to add friends…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-teal-400 transition-all"
+        />
+        {searchQuery && (
+          <button onClick={() => { setSearchQuery(""); setSearchResults([]); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <X size={15} />
+          </button>
+        )}
+      </div>
+
+      {/* Search Results */}
+      {showSearch && (
+        <div className="mb-6 bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] px-5 py-3 border-b border-slate-100">
+            Search Results
+          </p>
+          {isSearching ? (
+            <div className="flex items-center justify-center py-8 text-slate-400">
+              <Loader2 size={18} className="animate-spin" />
+            </div>
+          ) : searchResults.length === 0 ? (
+            <p className="text-sm text-slate-400 text-center py-8">No users found</p>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {searchResults.map((user) => (
+                <div key={user.id} className="px-5 py-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                      {user.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900 text-sm">{user.name}</p>
+                      <p className="text-xs text-slate-400">{user.university} · {user.course}</p>
+                    </div>
+                  </div>
+                  {user.friendship_status === "accepted" ? (
+                    <span className="text-xs text-teal-600 font-medium">Friends</span>
+                  ) : user.friendship_status === "pending" ? (
+                    <span className="text-xs text-slate-400 font-medium">Pending</span>
+                  ) : (
+                    <button
+                      onClick={() => handleSendRequest(user.id)}
+                      disabled={loadingId === user.id}
+                      className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      {loadingId === user.id ? <Loader2 size={12} className="animate-spin" /> : <><UserPlus size={12} /> Add</>}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-        <button className="flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-          <UserPlus size={16} /> Add Friend
-        </button>
-      </div>
+      )}
 
-      {/* Pending Friend Requests */}
+      {/* Pending Requests */}
       {requests.length > 0 && (
         <div className="mb-6">
-          <h2 className="font-semibold text-slate-700 mb-3">
-            Friend Requests ({requests.length})
-          </h2>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
+            Friend Requests <span className="text-teal-600 ml-1">{requests.length}</span>
+          </p>
           <div className="space-y-2">
             {requests.map((req) => (
-              <div
-                key={req.id}
-                className="bg-white rounded-xl border border-slate-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-              >
+              <div key={req.from_user_id} className="bg-white rounded-xl border border-slate-200 px-5 py-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-medium flex-shrink-0">
-                    {req.fromUserName.charAt(0)}
+                  <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-semibold text-sm flex-shrink-0">
+                    {req.from_user_name.charAt(0)}
                   </div>
                   <div>
-                    <p className="font-medium text-slate-800">
-                      {req.fromUserName}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {req.fromUserEmail}
-                    </p>
+                    <p className="font-medium text-slate-900 text-sm">{req.from_user_name}</p>
+                    <p className="text-xs text-slate-400">{req.university} · {formatDate(req.created_at)}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() =>
-                      handleAcceptRequest(req.id, req.fromUserName)
-                    }
-                    className="flex items-center gap-1 bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    onClick={() => handleAccept(req.from_user_id)}
+                    disabled={loadingId === req.from_user_id}
+                    className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                   >
-                    <Check size={14} /> Accept
+                    {loadingId === req.from_user_id ? <Loader2 size={12} className="animate-spin" /> : <><Check size={12} /> Accept</>}
                   </button>
                   <button
-                    onClick={() =>
-                      handleDeclineRequest(req.id, req.fromUserName)
-                    }
-                    className="flex items-center gap-1 border border-slate-200 text-slate-500 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    onClick={() => handleDecline(req.from_user_id)}
+                    disabled={loadingId === req.from_user_id}
+                    className="flex items-center gap-1.5 border border-slate-200 text-slate-500 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
                   >
-                    <X size={14} /> Decline
+                    <X size={12} /> Decline
                   </button>
                 </div>
               </div>
@@ -180,65 +254,50 @@ export default function FriendsPage() {
       )}
 
       {/* Friends List */}
-      <div>
-        <h2 className="font-semibold text-slate-700 mb-3">
-          All Friends ({filteredFriends.length})
-        </h2>
-        <div className="space-y-2">
-          {filteredFriends.map((friend) => (
-            <div
-              key={friend.id}
-              className="bg-white rounded-xl border border-slate-200 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center text-teal-700 font-semibold flex-shrink-0">
-                  {friend.name.charAt(0)}
+      {!showSearch && (
+        <div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
+            Friends <span className="text-teal-600 ml-1">{friends.length}</span>
+          </p>
+          {isLoading ? (
+            <div className="text-center py-20 text-slate-400 text-sm">Loading...</div>
+          ) : filteredFriends.length > 0 ? (
+            <div className="divide-y divide-slate-100 bg-white rounded-xl border border-slate-200 overflow-hidden">
+              {filteredFriends.map((friend) => (
+                <div key={friend.id} className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
+                      {friend.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900 text-sm">{friend.name}</p>
+                      <p className="text-xs text-slate-400">
+                        {friend.university} · {Number(friend.mutual_groups)} mutual group{Number(friend.mutual_groups) !== 1 ? "s" : ""} · Since {formatDate(friend.since)}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(friend.id)}
+                    disabled={loadingId === friend.id}
+                    className="p-1.5 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    title="Remove friend"
+                  >
+                    {loadingId === friend.id ? <Loader2 size={15} className="animate-spin" /> : <UserMinus size={15} />}
+                  </button>
                 </div>
-                <div>
-                  <p className="font-medium text-slate-800">{friend.name}</p>
-                  <p className="text-xs text-slate-400">
-                    {friend.mutualGroups} mutual group
-                    {friend.mutualGroups !== 1 ? "s" : ""} • Friend since{" "}
-                    {formatDate(friend.since)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleMessageFriend(friend.name)}
-                  className="p-1.5 text-slate-500 hover:text-teal-600 transition-colors"
-                  title="Message"
-                >
-                  <MessageCircle size={16} />
-                </button>
-                <button
-                  onClick={() => handleRemoveFriend(friend.name)}
-                  className="p-1.5 text-slate-500 hover:text-red-600 transition-colors"
-                  title="Remove friend"
-                >
-                  <UserMinus size={16} />
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
+          ) : (
+            <div className="text-center py-20 bg-white rounded-xl border border-slate-200">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <Users size={22} className="text-slate-400" />
+              </div>
+              <p className="font-medium text-slate-700 mb-1">No friends yet</p>
+              <p className="text-sm text-slate-400">Search for classmates above to get started</p>
+            </div>
+          )}
         </div>
-
-        {filteredFriends.length === 0 && (
-          <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
-            <UserPlus size={48} className="mx-auto text-slate-300 mb-3" />
-            <p className="text-slate-500">
-              {searchQuery
-                ? "No friends match your search."
-                : "No friends yet. Add classmates to get started!"}
-            </p>
-            {!searchQuery && (
-              <button className="mt-3 text-teal-600 text-sm font-medium">
-                Find friends →
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
