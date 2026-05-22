@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Outlet, NavLink, useNavigate, Link } from "react-router";
 import { ProtectedRoute } from "../components/ProtectedRote";
+import { useAuth } from "../context/AuthContext";
 
 import {
   LayoutDashboard,
@@ -15,6 +16,54 @@ import {
   UserPlus,
   Book,
 } from "lucide-react";
+
+function LogoutConfirmModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ animation: "fadeIn 0.15s ease" }}
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onCancel}
+      />
+      <div
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+        style={{ animation: "slideUp 0.2s ease" }}
+      >
+        <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mx-auto mb-4">
+          <LogOut size={20} className="text-red-500" />
+        </div>
+        <h3 className="text-base font-bold text-slate-900 text-center mb-1">
+          Sign out?
+        </h3>
+        <p className="text-sm text-slate-400 text-center mb-6">
+          You'll need to sign back in to access your dashboard.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-semibold transition-colors cursor-pointer"
+          >
+            Sign out
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Bottom tab items for mobile
 const bottomTabs = [
@@ -39,15 +88,23 @@ const sidebarItems = [
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem("auth_token");
+    logout();
     navigate("/");
   };
 
   return (
     <ProtectedRoute>
+      {showLogoutModal && (
+        <LogoutConfirmModal
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutModal(false)}
+        />
+      )}
       <div className="flex h-screen bg-slate-50">
         {/* DESKTOP SIDEBAR - visible on md and up */}
         <aside className="hidden md:flex md:w-64 lg:w-72 bg-white border-r border-slate-200 flex-col shrink-0">
@@ -78,7 +135,7 @@ export default function DashboardLayout() {
           </nav>
           <div className="p-4 border-t border-slate-200">
             <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutModal(true)}
               className="w-full flex cursor-pointer items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut size={18} /> Logout
@@ -100,7 +157,7 @@ export default function DashboardLayout() {
             </div>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               aria-label="Menu"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -133,10 +190,10 @@ export default function DashboardLayout() {
               </NavLink>
               <button
                 onClick={() => {
-                  handleLogout();
+                  setShowLogoutModal(true);
                   setMobileMenuOpen(false);
                 }}
-                className="block w-full text-left py-2 text-sm text-red-600 hover:text-red-700 "
+                className="block w-full text-left py-2 text-sm text-red-600 hover:text-red-700"
               >
                 Logout
               </button>

@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.middleware";
-import { getUserStats, getUserGroups, getUserBadges, getUserBio, updateUserBio, getUserProgress, updateUserAvatar } from "../controllers/user.controller";
+import { getUserStats, getUserGroups, getUserBadges, getUserBio, updateUserBio, getUserProgress, updateUserAvatar, getHomeStats } from "../controllers/user.controller";
 
 const router = Router();
 
-// JWT via Authorization header — inherently CSRF-safe
+// Public — no auth
+router.get("/home-stats", getHomeStats);
 
-// All routes require authentication
+// JWT via Authorization header — inherently CSRF-safe
 router.use(authenticateToken);
 
 // User's own data
