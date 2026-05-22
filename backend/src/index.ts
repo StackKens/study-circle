@@ -17,15 +17,24 @@ const PORT = process.env.PORT || 5000;
 //  Middleware
 app.use(express.json());
 
-// CORS — allow your React frontend to call this API
-// In development allow localhost:5173
-// In production allow your Vercel URL
+// Validates FRONTEND_URL is a proper http/https origin
+const getAllowedOrigin = () => {
+  if (process.env.NODE_ENV !== "production") return "http://localhost:5173";
+  const url = process.env.FRONTEND_URL;
+  if (!url) throw new Error("FRONTEND_URL env var is required in production");
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
+      throw new Error("FRONTEND_URL must use http or https");
+    return parsed.origin;
+  } catch {
+    throw new Error(`Invalid FRONTEND_URL: ${url}`);
+  }
+};
+
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL
-        : "http://localhost:5173",
+    origin: getAllowedOrigin(),
     credentials: true,
   }),
 );

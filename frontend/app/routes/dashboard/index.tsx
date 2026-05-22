@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   Users,
@@ -9,6 +10,10 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { useAuth } from "../../context/AuthContext";
+import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
+
+// Mock data – will be replaced with real data later
 const stats = [
   { label: "Active Groups", value: "4", icon: Users, change: "+2 this month" },
   {
@@ -98,33 +103,6 @@ const activities = [
   },
 ];
 
-const quickActions = [
-  {
-    label: "Create Group",
-    icon: PlusCircle,
-    path: "/dashboard/groups/new",
-    color: "teal",
-  },
-  {
-    label: "Schedule Session",
-    icon: Calendar,
-    path: "/dashboard/sessions/new",
-    color: "blue",
-  },
-  {
-    label: "Upload Resource",
-    icon: FolderOpen,
-    path: "/dashboard/resources/upload",
-    color: "amber",
-  },
-  {
-    label: "Find Friends",
-    icon: Users,
-    path: "/dashboard/friends",
-    color: "purple",
-  },
-];
-
 const recommendedGroups = [
   {
     id: "rec1",
@@ -156,7 +134,38 @@ const colorMap: Record<string, string> = {
   purple: "bg-purple-50 text-purple-600",
 };
 
+// Quick actions – "Create Group" uses modal, others use navigation
+const quickActions = [
+  { label: "Create Group", icon: PlusCircle, modal: true, color: "teal" },
+  {
+    label: "Schedule Session",
+    icon: Calendar,
+    path: "/dashboard/sessions/new",
+    color: "blue",
+  },
+  {
+    label: "Upload Resource",
+    icon: FolderOpen,
+    path: "/dashboard/resources/upload",
+    color: "amber",
+  },
+  {
+    label: "Find Friends",
+    icon: Users,
+    path: "/dashboard/friends",
+    color: "purple",
+  },
+];
+
 export default function DashboardHome() {
+  const { user } = useAuth();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const refreshGroups = () => {
+    console.log("Group created – you can refetch groups here");
+    // Later: fetch real groups and update state
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-1">
       <div className="mb-8">
@@ -164,7 +173,7 @@ export default function DashboardHome() {
           Overview
         </p>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Welcome back, Sarah
+          Welcome back, {user?.name || "Guest"}
         </h1>
         <p className="text-slate-500 text-sm mt-1">
           Here's what's happening in your study circle
@@ -200,22 +209,43 @@ export default function DashboardHome() {
           Quick Actions
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {quickActions.map((action) => (
-            <Link
-              key={action.label}
-              to={action.path}
-              className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
-            >
-              <div
-                className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}
-              >
-                <action.icon size={17} />
-              </div>
-              <span className="text-sm font-medium text-slate-700">
-                {action.label}
-              </span>
-            </Link>
-          ))}
+          {quickActions.map((action) => {
+            if ("modal" in action && action.modal) {
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => setShowCreateModal(true)}
+                  className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300  cursor-pointer  hover:shadow-sm transition-all w-full text-left"
+                >
+                  <div
+                    className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}
+                  >
+                    <action.icon size={17} />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">
+                    {action.label}
+                  </span>
+                </button>
+              );
+            } else {
+              return (
+                <Link
+                  key={action.label}
+                  to={action.path!}
+                  className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all"
+                >
+                  <div
+                    className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}
+                  >
+                    <action.icon size={17} />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">
+                    {action.label}
+                  </span>
+                </Link>
+              );
+            }
+          })}
         </div>
       </div>
 
@@ -367,6 +397,13 @@ export default function DashboardHome() {
           </div>
         </div>
       </div>
+
+      {/* Group creation modal */}
+      <CreateGroupModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={refreshGroups}
+      />
     </div>
   );
 }

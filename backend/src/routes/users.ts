@@ -10,7 +10,9 @@ import {
 
 const router = Router();
 
-// All routes require authentication (except GET bio – it's public, but we still need token for identification)
+// JWT via Authorization header — inherently CSRF-safe
+
+// All routes require authentication
 router.use(authenticateToken);
 
 // User's own data

@@ -4,6 +4,8 @@ import { authenticateToken } from "../middleware/auth.middleware";
 
 const router = Router();
 
+// JWT via Authorization header — inherently CSRF-safe
+
 // Public routes — no token needed
 router.post("/register", register);
 router.post("/login", login);
