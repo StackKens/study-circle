@@ -8,6 +8,7 @@ interface SessionStore {
   isLoading: boolean;
   fetchSessions: (token: string) => Promise<void>;
   addSession: (session: Session) => void;
+  updateParticipantCount: (sessionId: string, count: number) => void;
 }
 
 export const useSessionStore = create<SessionStore>((set) => ({
@@ -31,4 +32,11 @@ export const useSessionStore = create<SessionStore>((set) => ({
 
   addSession: (session) =>
     set((state) => ({ sessions: [session, ...state.sessions] })),
+
+  updateParticipantCount: (sessionId, count) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.id === sessionId ? { ...s, participant_count: count } : s
+      ),
+    })),
 }));

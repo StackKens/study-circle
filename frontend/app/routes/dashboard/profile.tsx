@@ -11,6 +11,8 @@ import {
   Award,
 } from "lucide-react";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 // Define types for the data we fetch
 interface UserStats {
   groups: number;
@@ -46,13 +48,13 @@ export default function ProfilePage() {
     const fetchProfileData = async () => {
       try {
         const [statsRes, groupsRes, badgesRes] = await Promise.all([
-          fetch("/api/users/me/stats", {
+          fetch(`${API_URL}/users/me/stats`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("/api/users/me/groups?limit=3", {
+          fetch(`${API_URL}/users/me/groups?limit=3`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("/api/users/me/badges", {
+          fetch(`${API_URL}/users/me/badges`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -74,7 +76,7 @@ export default function ProfilePage() {
   // Fetch bio separately
   useEffect(() => {
     if (user?.id && token) {
-      fetch(`/api/users/${user.id}/bio`, {
+      fetch(`${API_URL}/users/${user.id}/bio`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
@@ -136,7 +138,7 @@ export default function ProfilePage() {
                   <div className="flex gap-2">
                     <button
                       onClick={async () => {
-                        await fetch(`/api/users/${user.id}/bio`, {
+                        await fetch(`${API_URL}/users/${user.id}/bio`, {
                           method: "PATCH",
                           headers: {
                             "Content-Type": "application/json",
