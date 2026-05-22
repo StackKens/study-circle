@@ -52,6 +52,41 @@ export async function createSession(req: AuthRequest, res: Response) {
   }
 }
 
+export async function joinSession(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  try {
+    // Session must exist and user must be a group member
+    const session = await pool.query(
+      `SELECT s.group_id FROM sessions s
+       JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
+       WHERE s.id = $2`,
+      [userId, id]
+    );
+    if (session.rows.length === 0) {
+      res.status(403).json({ error: "Session not found or you are not a group member" });
+      return;
+    }
+
+    // Insert — ignore if already joined
+    await pool.query(
+      `INSERT INTO session_attendees (session_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [id, userId]
+    );
+
+    const updated = await pool.query(
+      `SELECT COUNT(*) AS participant_count FROM session_attendees WHERE session_id = $1`,
+      [id]
+    );
+
+    res.json({ joined: true, participant_count: parseInt(updated.rows[0].participant_count, 10) });
+  } catch (err) {
+    console.error("joinSession error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 export async function getMySessions(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
 

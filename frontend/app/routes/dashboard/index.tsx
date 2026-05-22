@@ -10,6 +10,15 @@ import { useGroupStore } from "../../store/groupStore";
 import { useSessionStore } from "../../store/sessionStore";
 import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+interface UserStats {
+  groups: number;
+  sessions: number;
+  resources: number;
+  studyHours: number;
+}
+
 const colorMap: Record<string, string> = {
   teal:   "bg-teal-50 text-teal-600",
   blue:   "bg-blue-50 text-blue-600",
@@ -45,11 +54,18 @@ export default function DashboardHome() {
   const { groups, fetchGroups } = useGroupStore();
   const { sessions, fetchSessions } = useSessionStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
 
   useEffect(() => {
     if (!token) return;
     fetchGroups(token);
     fetchSessions(token);
+    fetch(`${API_URL}/users/me/stats`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => setUserStats(data))
+      .catch(console.error);
   }, [token]);
 
   const upcomingSessions = sessions
@@ -59,10 +75,10 @@ export default function DashboardHome() {
   const recentGroups = groups.slice(0, 3);
 
   const stats = [
-    { label: "Active Groups",       value: groups.length,                                                    icon: Users,      change: groups.length > 0 ? `${groups.length} joined` : "None yet"         },
-    { label: "Sessions This Week",  value: upcomingSessions.length,                                          icon: Calendar,   change: upcomingSessions.length > 0 ? "Upcoming" : "None scheduled"         },
-    { label: "Resources Shared",    value: "—",                                                              icon: FolderOpen, change: "Coming soon"                                                        },
-    { label: "Study Hours",         value: "—",                                                              icon: Clock,      change: "Coming soon"                                                        },
+    { label: "Active Groups",      value: groups.length,                    icon: Users,      change: groups.length > 0 ? `${groups.length} joined` : "None yet"              },
+    { label: "Sessions This Week", value: upcomingSessions.length,          icon: Calendar,   change: upcomingSessions.length > 0 ? "Upcoming" : "None scheduled"              },
+    { label: "Resources Shared",   value: userStats?.resources ?? "—",      icon: FolderOpen, change: userStats ? `${userStats.resources} uploaded` : "Loading..."            },
+    { label: "Study Hours",        value: userStats ? `${userStats.studyHours}h` : "—", icon: Clock, change: userStats ? `${userStats.studyHours}h total` : "Loading..." },
   ];
 
   return (

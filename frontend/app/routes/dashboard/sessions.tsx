@@ -46,8 +46,10 @@ function getStatus(start: string, end: string): SessionStatus {
 
 export default function SessionsPage() {
   const { token } = useAuth();
-  const { sessions, isLoading, fetchSessions, addSession } = useSessionStore();
+  const { sessions, isLoading, fetchSessions, addSession, updateParticipantCount } = useSessionStore();
   const { groups, fetchGroups } = useGroupStore();
+
+  const [joining, setJoining] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,6 +111,22 @@ export default function SessionsPage() {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleJoin = async (sessionId: string) => {
+    setJoining(sessionId);
+    try {
+      const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) updateParticipantCount(sessionId, data.participant_count);
+    } catch (err) {
+      console.error("joinSession error:", err);
+    } finally {
+      setJoining(null);
     }
   };
 
@@ -192,8 +210,12 @@ export default function SessionsPage() {
                             {session.group_name}
                           </p>
                         </div>
-                        <button className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors">
-                          Join
+                        <button
+                          onClick={() => handleJoin(session.id)}
+                          disabled={joining === session.id}
+                          className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors flex items-center gap-1.5"
+                        >
+                          {joining === session.id ? <Loader2 size={13} className="animate-spin" /> : "Join"}
                         </button>
                       </div>
                     </div>
