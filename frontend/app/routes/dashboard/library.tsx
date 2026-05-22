@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileText, Link, Video, Download, Search, X } from "lucide-react";
+import { FileText, Link, Video, Download, Search, X, Sparkles, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import type { Resource } from "../../types/resource";
 
@@ -15,6 +15,19 @@ const typeConfig: Record<Resource["type"], { bg: string; text: string; label: st
   video:    { bg: "bg-purple-50", text: "text-purple-500", label: "Video"    },
   document: { bg: "bg-teal-50",   text: "text-teal-500",   label: "Document" },
 };
+
+interface ResourceRecommendation {
+  id: string;
+  title: string;
+  type: Resource["type"];
+  url: string;
+  subject: string;
+  group_name: string;
+  uploaded_by_name: string;
+  downloads: number;
+  score: number;
+  reason: string;
+}
 
 const typeFilters = ["all", "pdf", "document", "video", "link"] as const;
 
@@ -42,6 +55,24 @@ export default function LibraryPage() {
   const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState<typeof typeFilters[number]>("all");
   const [activeCourse, setActiveCourse] = useState("all");
+  const [recommendations, setRecommendations] = useState<ResourceRecommendation[]>([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+
+  async function fetchRecommendations() {
+    if (!token) return;
+    setRecommendationsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/resources/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setRecommendations(data);
+    } catch (err) {
+      console.error("fetchRecommendations error:", err);
+    } finally {
+      setRecommendationsLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!token) return;
@@ -52,6 +83,10 @@ export default function LibraryPage() {
       .then((data) => { if (Array.isArray(data)) setResources(data); })
       .catch(console.error)
       .finally(() => setIsLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    if (token) fetchRecommendations();
   }, [token]);
 
   const courses = useMemo(() => {
@@ -85,6 +120,76 @@ export default function LibraryPage() {
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">All Materials</h1>
         <p className="text-slate-500 text-sm mt-1">Everything shared across all groups</p>
       </div>
+
+      {/* Recommendations */}
+      <section className="mb-8 bg-white rounded-xl border border-slate-200 p-5">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+              <Sparkles size={18} />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Recommended for You</p>
+              <p className="text-sm text-slate-500 mt-0.5">Materials matched to your course from across all groups</p>
+            </div>
+          </div>
+          <button
+            onClick={fetchRecommendations}
+            disabled={recommendationsLoading}
+            className="w-9 h-9 rounded-lg border border-slate-200 text-slate-500 hover:text-teal-600 hover:border-teal-200 disabled:opacity-60 flex items-center justify-center transition-colors"
+            title="Refresh recommendations"
+          >
+            {recommendationsLoading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+          </button>
+        </div>
+
+        {recommendationsLoading ? (
+          <div className="py-8 flex items-center justify-center text-sm text-slate-400 gap-2">
+            <Loader2 size={16} className="animate-spin" /> Finding relevant materials...
+          </div>
+        ) : recommendations.length > 0 ? (
+          <div className="grid md:grid-cols-2 gap-3">
+            {recommendations.map((rec) => {
+              const Icon = iconMap[rec.type] ?? FileText;
+              const config = typeConfig[rec.type] ?? typeConfig.document;
+              return (
+                <div key={rec.id} className="rounded-lg border border-slate-200 p-4 bg-slate-50/60">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-9 h-9 ${config.bg} ${config.text} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                      <Icon size={15} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-semibold text-slate-900 text-sm leading-snug">{rec.title}</p>
+                        <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2 py-1 rounded-md shrink-0">
+                          {rec.score}% match
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-1">{config.label} · {rec.group_name} · {rec.subject}</p>
+                      <p className="text-sm text-slate-500 leading-relaxed mt-2">{rec.reason}</p>
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Download size={11} /> {rec.downloads}
+                        </span>
+                        <a
+                          href={rec.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+                        >
+                          View
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 py-5 text-center">No recommendations yet. Join more groups to get better matches.</p>
+        )}
+      </section>
 
       {/* Search */}
       <div className="relative mb-4">

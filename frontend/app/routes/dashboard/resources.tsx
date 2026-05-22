@@ -32,7 +32,7 @@ interface ResourceRecommendation {
   downloads: number;
   score: number;
   reason: string;
-  url?: string;
+  url: string;
 }
 
 const iconMap: Record<Resource["type"], React.ElementType> = {
@@ -243,16 +243,14 @@ export default function ResourcesPage() {
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                           <Download size={11} /> {rec.downloads}
                         </span>
-                        {rec.url && (
-                          <a
-                            href={rec.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors"
-                          >
-                            View
-                          </a>
-                        )}
+                        <a
+                          href={rec.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-teal-600 hover:text-teal-700 transition-colors"
+                        >
+                          View
+                        </a>
                       </div>
                     </div>
                   </div>
