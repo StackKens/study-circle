@@ -8,6 +8,7 @@ interface User {
   course: string;
   year_of_study: number;
   created_at: string;
+  avatar_url?: string;
 }
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
+  updateUser: (updated: Partial<User>) => void;
 }
 
 interface RegisterData {
@@ -37,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load token from localStorage on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     const storedToken = localStorage.getItem("auth_token");
@@ -63,8 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error();
-      const data = await res.json();
-      return data;
+      return await res.json();
     } catch {
       return null;
     }
@@ -78,10 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed");
-    const { token, user } = data;
-    localStorage.setItem("auth_token", token);
-    setToken(token);
-    setUser(user);
+    localStorage.setItem("auth_token", data.token);
+    setToken(data.token);
+    setUser(data.user);
   }
 
   async function register(registerData: RegisterData) {
@@ -92,10 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Registration failed");
-    const { token, user } = data;
-    localStorage.setItem("auth_token", token);
-    setToken(token);
-    setUser(user);
+    localStorage.setItem("auth_token", data.token);
+    setToken(data.token);
+    setUser(data.user);
+  }
+
+  function updateUser(updated: Partial<User>) {
+    setUser((prev) => (prev ? { ...prev, ...updated } : prev));
   }
 
   function logout() {
@@ -106,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout }}
+      value={{ user, token, isLoading, login, register, logout, updateUser }}
     >
       {children}
     </AuthContext.Provider>

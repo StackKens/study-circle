@@ -14,6 +14,7 @@ interface Friend {
   course: string;
   since: string;
   mutual_groups: number;
+  avatar_url?: string;
 }
 
 interface FriendRequest {
@@ -22,6 +23,7 @@ interface FriendRequest {
   from_user_email: string;
   university: string;
   created_at: string;
+  avatar_url?: string;
 }
 
 interface SearchResult {
@@ -31,6 +33,14 @@ interface SearchResult {
   university: string;
   course: string;
   friendship_status: "pending" | "accepted" | "declined" | null;
+  avatar_url?: string;
+}
+
+function Avatar({ name, url, size = 9 }: { name: string; url?: string; size?: number }) {
+  const cls = `w-${size} h-${size} rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-sm font-semibold`;
+  return url
+    ? <img src={url} alt={name} className={`${cls} object-cover`} />
+    : <div className={`${cls} bg-teal-600 text-white`}>{name.charAt(0)}</div>;
 }
 
 function formatDate(iso: string) {
@@ -185,9 +195,7 @@ export default function FriendsPage() {
               {searchResults.map((user) => (
                 <div key={user.id} className="px-5 py-3.5 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                      {user.name.charAt(0)}
-                    </div>
+                    <Avatar name={user.name} url={user.avatar_url} />
                     <div>
                       <p className="font-medium text-slate-900 text-sm">{user.name}</p>
                       <p className="text-xs text-slate-400">{user.university} · {user.course}</p>
@@ -223,9 +231,7 @@ export default function FriendsPage() {
             {requests.map((req) => (
               <div key={req.from_user_id} className="bg-white rounded-xl border border-slate-200 px-5 py-3.5 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-semibold text-sm flex-shrink-0">
-                    {req.from_user_name.charAt(0)}
-                  </div>
+                  <Avatar name={req.from_user_name} url={req.avatar_url} />
                   <div>
                     <p className="font-medium text-slate-900 text-sm">{req.from_user_name}</p>
                     <p className="text-xs text-slate-400">{req.university} · {formatDate(req.created_at)}</p>
@@ -266,9 +272,7 @@ export default function FriendsPage() {
               {filteredFriends.map((friend) => (
                 <div key={friend.id} className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                      {friend.name.charAt(0)}
-                    </div>
+                    <Avatar name={friend.name} url={friend.avatar_url} />
                     <div>
                       <p className="font-medium text-slate-900 text-sm">{friend.name}</p>
                       <p className="text-xs text-slate-400">

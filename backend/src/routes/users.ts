@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.middleware";
-import { getUserStats, getUserGroups, getUserBadges, getUserBio, updateUserBio, getUserProgress } from "../controllers/user.controller";
+import { getUserStats, getUserGroups, getUserBadges, getUserBio, updateUserBio, getUserProgress, updateUserAvatar } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -17,5 +17,6 @@ router.get("/me/progress", getUserProgress);
 
 router.get("/:id/bio", getUserBio);
 router.patch("/:id/bio", updateUserBio);
+router.patch("/:id/avatar", updateUserAvatar);
 
 export default router;

@@ -7,7 +7,7 @@ export async function getFriends(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
   try {
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.university, u.course, f.created_at AS since,
+      `SELECT u.id, u.name, u.email, u.university, u.course, u.avatar_url, f.created_at AS since,
         (SELECT COUNT(*) FROM group_members gm1
          JOIN group_members gm2 ON gm1.group_id = gm2.group_id
          WHERE gm1.user_id = $1 AND gm2.user_id = u.id) AS mutual_groups
@@ -56,7 +56,7 @@ export async function searchUsers(req: AuthRequest, res: Response) {
 
   try {
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.university, u.course,
+      `SELECT u.id, u.name, u.email, u.university, u.course, u.avatar_url,
         (SELECT status FROM friendships
          WHERE (user_id = $1 AND friend_id = u.id)
             OR (user_id = u.id AND friend_id = $1)
