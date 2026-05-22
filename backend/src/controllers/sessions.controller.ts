@@ -2,6 +2,12 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 
+function generateMeetLink() {
+  const chars = "abcdefghijklmnopqrstuvwxyz";
+  const seg = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  return `https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`;
+}
+
 export async function createSession(req: AuthRequest, res: Response) {
   const { group_id, title, start_time, end_time } = req.body;
   const userId = req.user!.id;
@@ -26,18 +32,20 @@ export async function createSession(req: AuthRequest, res: Response) {
       return;
     }
 
+    const meet_link = generateMeetLink();
+
     const result = await pool.query(
-      `INSERT INTO sessions (group_id, title, start_time, end_time, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO sessions (group_id, title, start_time, end_time, created_by, meet_link)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [group_id, title.trim(), start_time, end_time, userId]
+      [group_id, title.trim(), start_time, end_time, userId, meet_link]
     );
 
     const session = result.rows[0];
 
     // Fetch group_name and participant_count to match getMySessions shape
     const enriched = await pool.query(
-      `SELECT s.*, g.name AS group_name,
+      `SELECT s.*, g.name AS group_name, s.meet_link,
         (SELECT COUNT(*) FROM session_attendees WHERE session_id = s.id) AS participant_count
        FROM sessions s
        JOIN groups g ON g.id = s.group_id
