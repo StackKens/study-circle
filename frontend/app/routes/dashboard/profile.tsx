@@ -1,93 +1,101 @@
-import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { useState, useEffect } from "react";
 import {
-  BookOpen,
-  Users,
-  Clock,
-  Award,
-  Edit3,
-  Camera,
   Mail,
   MapPin,
   GraduationCap,
+  Edit3,
+  Users,
+  BookOpen,
+  Clock,
+  Award,
 } from "lucide-react";
 
-const mockUser = {
-  name: "Sarah Nakitto",
-  email: "sarah@example.com",
-  university: "Makerere University",
-  course: "BSc Computer Science",
-  year: "Year 3",
-  bio: "Passionate about algorithms and building things with code. Always looking for focused study partners.",
-  joinedAt: "2026-01-05T00:00:00Z",
-  stats: {
-    groups: 4,
-    sessions: 23,
-    studyHours: 147,
-    resources: 18,
-  },
-  badges: [
-    {
-      label: "Top Contributor",
-      color: "bg-amber-50 text-amber-600 border-amber-100",
-    },
-    {
-      label: "Study Streak 7d",
-      color: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    },
-    {
-      label: "Resource Star",
-      color: "bg-blue-50 text-blue-600 border-blue-100",
-    },
-  ],
-  recentGroups: [
-    {
-      id: "g1",
-      name: "Data Structures & Algorithms",
-      subject: "CS 301",
-      members: 12,
-    },
-    { id: "g2", name: "Database Systems", subject: "CS 250", members: 8 },
-    { id: "g3", name: "Web Development", subject: "CS 380", members: 15 },
-  ],
-};
+// Define types for the data we fetch
+interface UserStats {
+  groups: number;
+  sessions: number;
+  studyHours: number;
+  resources: number;
+}
 
-function formatJoined(isoString: string) {
-  return new Date(isoString).toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-  });
+interface RecentGroup {
+  id: string;
+  name: string;
+  subject: string;
+  memberCount: number;
+}
+
+interface Badge {
+  label: string;
+  color: string;
 }
 
 export default function ProfilePage() {
-  const [user] = useState(mockUser);
+  const { user, token } = useAuth();
+  const [bio, setBio] = useState<string>("");
   const [editing, setEditing] = useState(false);
-  const [bio, setBio] = useState(user.bio);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [recentGroups, setRecentGroups] = useState<RecentGroup[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch profile data (stats, groups, badges)
+  useEffect(() => {
+    if (!user || !token) return;
+    const fetchProfileData = async () => {
+      try {
+        const [statsRes, groupsRes, badgesRes] = await Promise.all([
+          fetch("/api/users/me/stats", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("/api/users/me/groups?limit=3", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("/api/users/me/badges", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+        const statsData: UserStats = await statsRes.json();
+        const groupsData: RecentGroup[] = await groupsRes.json();
+        const badgesData: Badge[] = await badgesRes.json();
+        setStats(statsData);
+        setRecentGroups(groupsData);
+        setBadges(badgesData);
+      } catch (err) {
+        console.error("Failed to fetch profile data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfileData();
+  }, [user, token]);
+
+  // Fetch bio separately
+  useEffect(() => {
+    if (user?.id && token) {
+      fetch(`/api/users/${user.id}/bio`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data: { bio?: string }) => setBio(data.bio || ""))
+        .catch(() => setBio(""));
+    }
+  }, [user, token]);
+
+  if (loading) return <div className="p-4">Loading profile...</div>;
+  if (!user) return <div className="p-4">Please log in</div>;
 
   return (
     <div className="max-w-3xl mx-auto px-1">
-      <div className="mb-8">
-        <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
-          Account
-        </p>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Profile
-        </h1>
-      </div>
-
       {/* Identity card */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-5">
         <div className="flex items-start gap-5">
-          {/* Avatar */}
           <div className="relative flex-shrink-0">
             <div className="w-16 h-16 bg-teal-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
               {user.name.charAt(0)}
             </div>
-            <button className="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-500 hover:text-teal-600 transition-colors shadow-sm">
-              <Camera size={11} />
-            </button>
           </div>
-
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -102,7 +110,8 @@ export default function ProfilePage() {
                     <MapPin size={12} /> {user.university}
                   </span>
                   <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <GraduationCap size={12} /> {user.course} · {user.year}
+                    <GraduationCap size={12} /> {user.course} · Year{" "}
+                    {user.year_of_study}
                   </span>
                 </div>
               </div>
@@ -126,16 +135,23 @@ export default function ProfilePage() {
                   />
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setEditing(false)}
+                      onClick={async () => {
+                        await fetch(`/api/users/${user.id}/bio`, {
+                          method: "PATCH",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({ bio }),
+                        });
+                        setEditing(false);
+                      }}
                       className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                     >
                       Save
                     </button>
                     <button
-                      onClick={() => {
-                        setBio(user.bio);
-                        setEditing(false);
-                      }}
+                      onClick={() => setEditing(false)}
                       className="border border-slate-200 text-slate-500 px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 transition-colors"
                     >
                       Cancel
@@ -143,85 +159,94 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 leading-relaxed">{bio}</p>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {bio || "No bio yet. Click edit to add one."}
+                </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Member since */}
         <p className="text-xs text-slate-400 mt-5 pt-5 border-t border-slate-100">
-          Member since {formatJoined(user.joinedAt)}
+          Member since{" "}
+          {new Date(user.created_at).toLocaleDateString(undefined, {
+            month: "long",
+            year: "numeric",
+          })}
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        {[
-          {
-            icon: Users,
-            value: user.stats.groups,
-            label: "Groups",
-            color: "text-teal-600",
-            bg: "bg-teal-50",
-          },
-          {
-            icon: BookOpen,
-            value: user.stats.sessions,
-            label: "Sessions",
-            color: "text-blue-500",
-            bg: "bg-blue-50",
-          },
-          {
-            icon: Clock,
-            value: `${user.stats.studyHours}h`,
-            label: "Study Hours",
-            color: "text-amber-500",
-            bg: "bg-amber-50",
-          },
-          {
-            icon: Award,
-            value: user.stats.resources,
-            label: "Resources",
-            color: "text-purple-500",
-            bg: "bg-purple-50",
-          },
-        ].map(({ icon: Icon, value, label, color, bg }) => (
-          <div
-            key={label}
-            className="bg-white rounded-xl border border-slate-200 p-4 text-center"
-          >
+      {/* Stats grid */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          {[
+            {
+              icon: Users,
+              value: stats.groups,
+              label: "Groups",
+              color: "text-teal-600",
+              bg: "bg-teal-50",
+            },
+            {
+              icon: BookOpen,
+              value: stats.sessions,
+              label: "Sessions",
+              color: "text-blue-500",
+              bg: "bg-blue-50",
+            },
+            {
+              icon: Clock,
+              value: `${stats.studyHours}h`,
+              label: "Study Hours",
+              color: "text-amber-500",
+              bg: "bg-amber-50",
+            },
+            {
+              icon: Award,
+              value: stats.resources,
+              label: "Resources",
+              color: "text-purple-500",
+              bg: "bg-purple-50",
+            },
+          ].map(({ icon: Icon, value, label, color, bg }) => (
             <div
-              className={`w-9 h-9 ${bg} ${color} rounded-lg flex items-center justify-center mx-auto mb-2`}
+              key={label}
+              className="bg-white rounded-xl border border-slate-200 p-4 text-center"
             >
-              <Icon size={16} />
+              <div
+                className={`w-9 h-9 ${bg} ${color} rounded-lg flex items-center justify-center mx-auto mb-2`}
+              >
+                <Icon size={16} />
+              </div>
+              <p className="text-xl font-bold text-slate-900 tracking-tight">
+                {value}
+              </p>
+              <p className="text-xs text-slate-400 mt-0.5">{label}</p>
             </div>
-            <p className="text-xl font-bold text-slate-900 tracking-tight">
-              {value}
-            </p>
-            <p className="text-xs text-slate-400 mt-0.5">{label}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Badges */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
-          Badges
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {user.badges.map((badge) => (
-            <span
-              key={badge.label}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${badge.color}`}
-            >
-              {badge.label}
-            </span>
           ))}
         </div>
-      </div>
+      )}
 
-      {/* Groups */}
+      {/* Badges */}
+      {badges.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
+            Badges
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {badges.map((badge) => (
+              <span
+                key={badge.label}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border ${badge.color}`}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent groups */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
@@ -229,7 +254,7 @@ export default function ProfilePage() {
           </p>
         </div>
         <div className="divide-y divide-slate-100">
-          {user.recentGroups.map((group) => (
+          {recentGroups.map((group) => (
             <div
               key={group.id}
               className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
@@ -239,11 +264,11 @@ export default function ProfilePage() {
                   {group.name}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {group.subject} · {group.members} members
+                  {group.subject} · {group.memberCount} members
                 </p>
               </div>
-              <button className="text-xs text-teal-600 font-semibold hover:text-teal-700">
-                View →
+              <button className="text-xs text-teal-600 font-semibold  cursor-pointer hover:text-teal-700">
+                View
               </button>
             </div>
           ))}

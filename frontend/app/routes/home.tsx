@@ -7,8 +7,7 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react";
-import { useAuthModal } from "../context/AuthContext";
-
+import { useAuthModal } from "../context/AuthModalContext";
 export function meta() {
   return [
     { title: "StudyCycle • Study Together" },

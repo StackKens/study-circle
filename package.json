@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npx react-router dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "react-router build",
-    "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
   },
@@ -29,10 +31,13 @@
     "@react-router/dev": "7.15.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/bcryptjs": "^3.0.0",
-    "@types/node": "^22",
+    "@types/node": "^22.19.19",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14",
     "tailwindcss": "^4.2.2",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "vite": "^8.0.3"
   }

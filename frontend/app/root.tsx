@@ -7,6 +7,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { AuthProvider } from "./context/AuthContext";
+import { AuthModalProvider } from "./context/AuthModalContext";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -15,11 +17,12 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "preconnect",
     href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
+    crossOrigin: "anonymous" as const,
   },
   {
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap",
+    // crossOrigin not needed on stylesheet — only on preconnect to gstatic
   },
 ];
 
@@ -39,7 +42,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <AuthProvider>
+          <AuthModalProvider>{children}</AuthModalProvider>
+        </AuthProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -1,12 +1,9 @@
 import { Navigate } from "react-router";
+import { useAuth } from "../context/AuthContext";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = localStorage.getItem("auth_token") !== null;
-
-  if (!isAuthenticated) {
-    // Redirect to home and optionally open login modal
-    return <Navigate to="/?openAuth=login" replace />;
-  }
-
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }

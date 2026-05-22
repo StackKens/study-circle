@@ -1,10 +1,12 @@
 export interface Resource {
   id: string;
-  groupId: string;
+  group_id: string;
+  group_name: string;
   title: string;
   type: "pdf" | "link" | "video" | "document";
-  uploadedBy: string;
+  url: string;
+  uploaded_by: string;
+  uploaded_by_name: string;
   downloads: number;
-  ratings: number;
-  createdAt: string;
+  created_at: string;
 }
