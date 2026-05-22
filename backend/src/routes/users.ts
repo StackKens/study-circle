@@ -1,12 +1,6 @@
 import { Router } from "express";
 import { authenticateToken } from "../middleware/auth.middleware";
-import {
-  getUserStats,
-  getUserGroups,
-  getUserBadges,
-  getUserBio,
-  updateUserBio,
-} from "../controllers/user.controller";
+import { getUserStats, getUserGroups, getUserBadges, getUserBio, updateUserBio, getUserProgress } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -19,6 +13,7 @@ router.use(authenticateToken);
 router.get("/me/stats", getUserStats);
 router.get("/me/groups", getUserGroups);
 router.get("/me/badges", getUserBadges);
+router.get("/me/progress", getUserProgress);
 
 router.get("/:id/bio", getUserBio);
 router.patch("/:id/bio", updateUserBio);
