@@ -1,42 +1,23 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Users, Calendar, Plus, ArrowRight } from "lucide-react";
-import type { Group } from "../../types/group";
 import { useAuth } from "../../context/AuthContext";
+import { useGroupStore } from "../../store/groupStore";
 import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
-function formatDate(isoString: string) {
-  return new Date(isoString).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short", day: "numeric", year: "numeric",
   });
 }
 
 export default function GroupsPage() {
   const { token } = useAuth();
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { groups, isLoading, fetchGroups } = useGroupStore();
   const [showModal, setShowModal] = useState(false);
 
-  const fetchGroups = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_URL}/groups`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (res.ok) setGroups(data);
-    } catch (err) {
-      console.error("Failed to fetch groups:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token]);
-
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    if (token) fetchGroups(token);
+  }, [token]);
 
   return (
     <div className="max-w-5xl mx-auto px-1">
@@ -61,9 +42,7 @@ export default function GroupsPage() {
       </div>
 
       {isLoading ? (
-        <div className="text-center py-20 text-slate-400 text-sm">
-          Loading groups...
-        </div>
+        <div className="text-center py-20 text-slate-400 text-sm">Loading...</div>
       ) : groups.length > 0 ? (
         <div className="grid md:grid-cols-2 gap-4">
           {groups.map((group) => (
@@ -107,7 +86,7 @@ export default function GroupsPage() {
           </div>
           <p className="font-medium text-slate-700 mb-1">No groups yet</p>
           <p className="text-sm text-slate-400 mb-5">
-            Create a group to get started
+            Create a group to start collaborating
           </p>
           <button
             onClick={() => setShowModal(true)}
@@ -121,10 +100,7 @@ export default function GroupsPage() {
       <CreateGroupModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onSuccess={() => {
-          setShowModal(false);
-          fetchGroups();
-        }}
+        onSuccess={() => setShowModal(false)}
       />
     </div>
   );

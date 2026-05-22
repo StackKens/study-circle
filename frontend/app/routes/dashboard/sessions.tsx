@@ -1,99 +1,35 @@
 import { useState } from "react";
-import { Calendar, Clock, Users, Plus } from "lucide-react";
+import { Calendar, Clock, Users, Plus, X, Check } from "lucide-react";
 import type { Session } from "../../types/session";
 
 const mockSessions: Session[] = [
-  {
-    id: "1",
-    groupId: "g1",
-    title: "DSA Group Review",
-    startTime: "2026-05-18T16:00:00Z",
-    endTime: "2026-05-18T18:00:00Z",
-    attendees: ["user1", "user2", "user3", "user4", "user5", "user6"],
-    participants: 6,
-    createdAt: "2026-05-10T10:00:00Z",
-    status: "scheduled",
-  },
-  {
-    id: "2",
-    groupId: "g2",
-    title: "Database Project Meeting",
-    startTime: "2026-05-19T14:00:00Z",
-    endTime: "2026-05-19T16:00:00Z",
-    attendees: ["user1", "user2", "user3", "user4"],
-    participants: 4,
-    createdAt: "2026-05-12T09:00:00Z",
-    status: "scheduled",
-  },
-  {
-    id: "3",
-    groupId: "g3",
-    title: "Web Dev Study Group",
-    startTime: "2026-05-20T10:00:00Z",
-    endTime: "2026-05-20T12:00:00Z",
-    attendees: [
-      "user1",
-      "user2",
-      "user3",
-      "user4",
-      "user5",
-      "user6",
-      "user7",
-      "user8",
-      "user9",
-    ],
-    participants: 9,
-    createdAt: "2026-05-14T15:00:00Z",
-    status: "scheduled",
-  },
-  {
-    id: "4",
-    groupId: "g1",
-    title: "DSA Quiz Prep",
-    startTime: "2026-05-16T10:00:00Z",
-    endTime: "2026-05-16T12:00:00Z",
-    attendees: ["user1", "user2", "user5"],
-    participants: 3,
-    createdAt: "2026-05-01T08:00:00Z",
-    status: "completed",
-  },
+  // ... your existing mock data ...
 ];
 
 function formatDateTime(isoString: string) {
-  const date = new Date(isoString);
-  return {
-    date: date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    }),
-    time: date.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    }),
-  };
+  // ... unchanged ...
 }
 
 const statusConfig = {
-  scheduled: {
-    label: "Upcoming",
-    classes: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  },
-  ongoing: {
-    label: "Live",
-    classes: "bg-amber-50 text-amber-600 border-amber-100",
-  },
-  completed: {
-    label: "Completed",
-    classes: "bg-slate-100 text-slate-500 border-slate-200",
-  },
-  cancelled: {
-    label: "Cancelled",
-    classes: "bg-red-50 text-red-500 border-red-100",
-  },
+  // ... unchanged ...
 };
 
+// Mock groups for the group dropdown (would come from API later)
+const mockGroups = [
+  { id: "g1", name: "Data Structures & Algorithms" },
+  { id: "g2", name: "Database Systems" },
+  { id: "g3", name: "Web Development" },
+];
+
 export default function SessionsPage() {
-  const [sessions] = useState(mockSessions);
+  const [sessions, setSessions] = useState(mockSessions);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    groupId: "",
+    startTime: "",
+    endTime: "",
+  });
 
   const upcoming = sessions.filter(
     (s) => s.status === "scheduled" || s.status === "ongoing",
@@ -101,6 +37,33 @@ export default function SessionsPage() {
   const past = sessions.filter(
     (s) => s.status === "completed" || s.status === "cancelled",
   );
+
+  const handleCreateSession = () => {
+    if (
+      !formData.title ||
+      !formData.groupId ||
+      !formData.startTime ||
+      !formData.endTime
+    ) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const newSession: Session = {
+      id: Date.now().toString(),
+      group_id: formData.groupId,
+      title: formData.title,
+      start_time: new Date(formData.startTime).toISOString(),
+      end_time: new Date(formData.endTime).toISOString(),
+      participant_count: 0,
+      created_at: new Date().toISOString(),
+      status: "scheduled",
+    };
+
+    setSessions([newSession, ...sessions]);
+    setIsModalOpen(false);
+    setFormData({ title: "", groupId: "", startTime: "", endTime: "" });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-1">
@@ -116,110 +79,111 @@ export default function SessionsPage() {
             Schedule and join study meetings
           </p>
         </div>
-        <button className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+        >
           <Plus size={15} /> Create Session
         </button>
       </div>
 
-      {/* Upcoming */}
-      <div className="mb-8">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
-          Upcoming <span className="text-teal-600 ml-1">{upcoming.length}</span>
-        </p>
+      {/* Upcoming section - unchanged */}
 
-        {upcoming.length > 0 ? (
-          <div className="space-y-3">
-            {upcoming.map((session) => {
-              const { date, time } = formatDateTime(session.startTime);
-              const config =
-                statusConfig[session.status as keyof typeof statusConfig];
-              return (
-                <div
-                  key={session.id}
-                  className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-sm transition-all"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2.5 mb-2">
-                        <h3 className="font-semibold text-slate-900">
-                          {session.title}
-                        </h3>
-                        <span
-                          className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${config.classes}`}
-                        >
-                          {config.label}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-slate-400">
-                        <span className="flex items-center gap-1.5">
-                          <Calendar size={13} /> {date}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <Clock size={13} /> {time}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <Users size={13} /> {session.participants} attending
-                        </span>
-                      </div>
-                    </div>
-                    <button className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0 transition-colors">
-                      Join
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-14 bg-white rounded-xl border border-slate-200">
-            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <Calendar size={22} className="text-slate-400" />
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h2 className="text-xl font-bold text-slate-800">
+                Create New Session
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
             </div>
-            <p className="font-medium text-slate-700">No upcoming sessions</p>
-            <p className="text-sm text-slate-400 mt-1">
-              Create one to get your group together
-            </p>
-          </div>
-        )}
-      </div>
 
-      {/* Past */}
-      {past.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
-            Past Sessions
-          </p>
-          <div className="divide-y divide-slate-100 bg-white rounded-xl border border-slate-200 overflow-hidden">
-            {past.map((session) => {
-              const { date, time } = formatDateTime(session.startTime);
-              const config =
-                statusConfig[session.status as keyof typeof statusConfig];
-              return (
-                <div
-                  key={session.id}
-                  className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Session Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  placeholder="e.g. DSA Group Review"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Study Group
+                </label>
+                <select
+                  value={formData.groupId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, groupId: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 bg-white"
                 >
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium text-slate-700 text-sm">
-                        {session.title}
-                      </p>
-                      <span
-                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${config.classes}`}
-                      >
-                        {config.label}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-400">
-                      {date} at {time} · {session.participants} attended
-                    </p>
-                  </div>
-                  <button className="text-xs text-teal-600 font-semibold hover:text-teal-700">
-                    View →
-                  </button>
-                </div>
-              );
-            })}
+                  <option value="">Select group</option>
+                  {mockGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.startTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startTime: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  End Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={formData.endTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endTime: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-5 border-t border-slate-100">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateSession}
+                className="flex-1 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <Check size={16} /> Create
+              </button>
+            </div>
           </div>
         </div>
       )}

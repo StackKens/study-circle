@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Loader2, Plus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useGroupStore } from "../../store/groupStore";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const PREDEFINED_UNIVERSITIES = [
@@ -24,6 +25,7 @@ export function CreateGroupModal({
   onSuccess,
 }: CreateGroupModalProps) {
   const { token } = useAuth();
+  const addGroup = useGroupStore((s) => s.addGroup);
   const [formData, setFormData] = useState({
     name: "",
     subject: "",
@@ -86,7 +88,8 @@ export function CreateGroupModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create group");
 
-      onSuccess(); // refresh parent
+      addGroup(data);
+      onSuccess();
       handleClose();
     } catch (err: any) {
       setError(err.message);

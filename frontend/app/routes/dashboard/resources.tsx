@@ -1,5 +1,15 @@
+// app/routes/dashboard/resources.tsx
 import { useState } from "react";
-import { FileText, Link, Video, Download, Star, Upload } from "lucide-react";
+import {
+  FileText,
+  Link,
+  Video,
+  Download,
+  Star,
+  Upload,
+  X,
+  Check,
+} from "lucide-react";
 import type { Resource } from "../../types/resource";
 
 const mockResources: Resource[] = [
@@ -47,20 +57,13 @@ const mockResources: Resource[] = [
 
 const iconMap = { pdf: FileText, link: Link, video: Video, document: FileText };
 
-const typeConfig: Record<
-  string,
-  { icon: string; bg: string; text: string; label: string }
-> = {
-  pdf: { icon: "", bg: "bg-red-50", text: "text-red-500", label: "PDF" },
-  link: { icon: "", bg: "bg-blue-50", text: "text-blue-500", label: "Link" },
-  video: {
-    icon: "",
-    bg: "bg-purple-50",
-    text: "text-purple-500",
-    label: "Video",
-  },
-  document: { icon: "", bg: "bg-teal-50", text: "text-teal-500", label: "Doc" },
-};
+const typeConfig: Record<string, { bg: string; text: string; label: string }> =
+  {
+    pdf: { bg: "bg-red-50", text: "text-red-500", label: "PDF" },
+    link: { bg: "bg-blue-50", text: "text-blue-500", label: "Link" },
+    video: { bg: "bg-purple-50", text: "text-purple-500", label: "Video" },
+    document: { bg: "bg-teal-50", text: "text-teal-500", label: "Doc" },
+  };
 
 function formatDate(isoString: string) {
   return new Date(isoString).toLocaleDateString(undefined, {
@@ -86,8 +89,44 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+// Mock groups for dropdown (would come from API)
+const mockGroups = [
+  { id: "g1", name: "Data Structures & Algorithms" },
+  { id: "g2", name: "Database Systems" },
+  { id: "g3", name: "Web Development" },
+];
+
 export default function ResourcesPage() {
-  const [resources] = useState(mockResources);
+  const [resources, setResources] = useState(mockResources);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    type: "pdf" as "pdf" | "link" | "video" | "document",
+    groupId: "",
+    url: "",
+  });
+
+  const handleUpload = () => {
+    if (!formData.title || !formData.groupId || !formData.url) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const newResource: Resource = {
+      id: Date.now().toString(),
+      groupId: formData.groupId,
+      title: formData.title,
+      type: formData.type,
+      uploadedBy: "You", // would come from auth context
+      downloads: 0,
+      ratings: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    setResources([newResource, ...resources]);
+    setIsModalOpen(false);
+    setFormData({ title: "", type: "pdf", groupId: "", url: "" });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-1">
@@ -103,7 +142,10 @@ export default function ResourcesPage() {
             Shared materials from your study groups
           </p>
         </div>
-        <button className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+        >
           <Upload size={15} /> Upload
         </button>
       </div>
@@ -168,9 +210,116 @@ export default function ResourcesPage() {
           <p className="text-sm text-slate-400 mb-5">
             Be the first to share something useful
           </p>
-          <button className="text-sm text-teal-600 font-semibold">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="text-sm text-teal-600 font-semibold"
+          >
             Upload resource →
           </button>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h2 className="text-xl font-bold text-slate-800">
+                Upload Resource
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <X size={20} className="text-slate-500" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Resource Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  placeholder="e.g. Lecture Notes Week 10"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Type
+                </label>
+                <select
+                  value={formData.type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, type: e.target.value as any })
+                  }
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 bg-white"
+                >
+                  <option value="pdf">PDF</option>
+                  <option value="document">Document</option>
+                  <option value="video">Video</option>
+                  <option value="link">Link</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Study Group
+                </label>
+                <select
+                  value={formData.groupId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, groupId: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400 bg-white"
+                >
+                  <option value="">Select group</option>
+                  {mockGroups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  File URL or Link
+                </label>
+                <input
+                  type="text"
+                  value={formData.url}
+                  onChange={(e) =>
+                    setFormData({ ...formData, url: e.target.value })
+                  }
+                  placeholder="https://example.com/file.pdf"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-teal-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-5 border-t border-slate-100">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpload}
+                className="flex-1 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+              >
+                <Check size={16} /> Upload
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

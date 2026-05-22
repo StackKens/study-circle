@@ -1,11 +1,11 @@
 export interface Session {
   id: string;
-  groupId: string;
+  group_id: string;
   title: string;
-  startTime: string;
-  endTime: string;
-  attendees: string[];
-  participants: number;
-  createdAt: string;
+  start_time: string;
+  end_time: string;
+  participant_count: number;
+  created_by?: string;
+  created_at: string;
   status: string;
 }

@@ -1,9 +1,13 @@
 import { Router } from "express";
+import { authenticateToken } from "../middleware/auth.middleware";
+import { createSession, getMySessions } from "../controllers/sessions.controller";
 
 const router = Router();
 
-router.get("/", (req, res) => {
-  res.json({ message: "Sessions endpoint - to be implemented" });
-});
+// JWT via Authorization header — inherently CSRF-safe
+router.use(authenticateToken);
+
+router.get("/", getMySessions);
+router.post("/", createSession);
 
 export default router;
