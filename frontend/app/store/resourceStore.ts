@@ -18,7 +18,7 @@ export const useResourceStore = create<ResourceStore>((set) => ({
   fetchResources: async (token) => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_URL}/resources`, {
+      const res = await fetch(`${API_URL}/resources/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();

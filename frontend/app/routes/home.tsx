@@ -1,3 +1,4 @@
+import { useEffect, useState, useRef } from "react";
 import {
   BookOpen,
   Calendar,
@@ -8,13 +9,84 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useAuthModal } from "../context/AuthModalContext";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export function meta() {
   return [
-    { title: "StudyCycle • Study Together" },
+    { title: "StudyCircle • Study Together" },
     { name: "description", content: "The modern study platform for students" },
   ];
 }
 
+//  AI carousel phrases
+const aiPhrases = [
+  "AI-Powered Recommendations",
+  "Smart Group Matching",
+  "AI Study Partner Finder",
+  "Intelligent Resource Curation",
+  "AI-Driven Progress Insights",
+];
+
+function AiCarousel() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % aiPhrases.length);
+        setVisible(true);
+      }, 400);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mb-6 inline-flex items-center gap-2.5 bg-teal-500/10 border border-teal-500/20 px-4 py-2 rounded-full">
+      <span className="relative flex h-2 w-2 shrink-0">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-60" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
+      </span>
+      <span
+        className="text-xs text-teal-300 font-semibold tracking-wide transition-opacity duration-300"
+        style={{ opacity: visible ? 1 : 0 }}
+      >
+        {aiPhrases[index]}
+      </span>
+    </div>
+  );
+}
+
+//  Types
+interface TopUser {
+  id: string;
+  name: string;
+  university: string;
+  course: string;
+  year_of_study: number;
+  avatar_url?: string;
+}
+
+interface HomeStats {
+  student_count: number;
+  top_users: TopUser[];
+  universities: string[];
+  live_group: {
+    name: string;
+    member_count: number;
+    resource_count: number;
+    session_count: number;
+  } | null;
+  next_session: {
+    title: string;
+    start_time: string;
+    attendee_count: number;
+  } | null;
+}
+
+//  Static content
 const features = [
   {
     icon: BookOpen,
@@ -66,39 +138,6 @@ const steps = [
   },
 ];
 
-const testimonials = [
-  {
-    quote:
-      "StudyCycle turned my chaotic WhatsApp groups into an organized, productive space. My CGPA improved this semester.",
-    name: "Alex Stackkens",
-    role: "Makerere University • Year 3 CS",
-    initials: "AS",
-  },
-  {
-    quote:
-      "The best study tool I've used in university. The progress tracker keeps everyone motivated and on track.",
-    name: "Mushabenta Linic",
-    role: "Victoria University • Year 2",
-    initials: "ML",
-  },
-  {
-    quote:
-      "Finding serious students studying the same course has never been easier. This is what we needed.",
-    name: "Odoi Simon Chidz",
-    role: "Makerere University • Year 1",
-    initials: "OS",
-  },
-];
-
-const universities = [
-  "Victoria University",
-  "Makerere University",
-  "Kyambogo University",
-  "Uganda Christian University",
-  "Ndejje University",
-  "MUBS",
-];
-
 const footerCols = [
   {
     heading: "Product",
@@ -111,32 +150,51 @@ const footerCols = [
   },
 ];
 
+//  Component
 export default function Home() {
   const { openAuthModal } = useAuthModal();
+  const [stats, setStats] = useState<HomeStats | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/users/home-stats`)
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch(console.error);
+  }, []);
+
+  const studentCount = stats?.student_count ?? null;
+  const topUsers = stats?.top_users ?? [];
+  const universities = stats?.universities ?? [];
+  const liveGroup = stats?.live_group ?? null;
+  const nextSession = stats?.next_session ?? null;
+
+  function formatSessionTime(iso: string) {
+    const d = new Date(iso);
+    const isToday = d.toDateString() === new Date().toDateString();
+    const time = d.toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return isToday
+      ? `Today at ${time}`
+      : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} at ${time}`;
+  }
+
+  // Use top users as testimonials — show max 3
+  const testimonials = topUsers.slice(0, 3);
 
   return (
     <main className="bg-white font-sans">
       {/*  HERO  */}
       <section className="min-h-screen flex flex-col justify-center bg-[#0a0f1e] text-white relative overflow-hidden">
-        {/* Single, subtle ambient glow — no noise */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-teal-500/[0.07] blur-[120px]" />
         </div>
-
-        {/* Thin top rule */}
         <div className="absolute top-0 inset-x-0 h-px bg-white/[0.06]" />
 
         <div className="max-w-6xl mx-auto px-8 py-32 relative z-10 w-full">
-          {/* Status pill — minimal */}
-          <div className="mb-12 flex items-center gap-2.5 w-fit">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-            </span>
-            <span className="text-xs text-slate-400 tracking-[0.12em] uppercase font-medium">
-              Live in 12+ Ugandan Universities
-            </span>
-          </div>
+          {/* AI carousel pill */}
+          <AiCarousel />
 
           {/* Headline */}
           <h1 className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.06] tracking-[-0.03em] text-white max-w-3xl mb-7">
@@ -156,91 +214,135 @@ export default function Home() {
               onClick={() => openAuthModal("register")}
               className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-7 py-3.5 rounded-lg font-semibold text-sm tracking-wide shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px cursor-pointer"
             >
-              Join Free
-              <ArrowRight size={15} />
+              Join Free <ArrowRight size={15} />
             </button>
             <button
               onClick={() => openAuthModal("login")}
-              className="inline-flex items-center gap-2 text-slate-400  cursor-pointer hover:text-white text-sm font-medium transition-colors duration-200 group"
+              className="inline-flex items-center gap-2 text-slate-400 cursor-pointer hover:text-white text-sm font-medium transition-colors duration-200 group"
             >
               Sign in
               <ArrowRight
                 size={14}
-                className="group-hover:translate-x-0.5 cursor-pointer transition-transform duration-200"
+                className="group-hover:translate-x-0.5 transition-transform duration-200"
               />
             </button>
           </div>
 
-          {/* Social proof */}
+          {/* Social proof — real avatars */}
           <div className="flex items-center gap-4 border-t border-white/[0.07] pt-8">
             <div className="flex -space-x-2">
-              {[
-                "bg-rose-400",
-                "bg-blue-400",
-                "bg-amber-400",
-                "bg-teal-400",
-              ].map((c, i) => (
-                <div
-                  key={i}
-                  className={`w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] ${c}`}
-                />
-              ))}
+              {topUsers.length > 0
+                ? topUsers.map((u) =>
+                    u.avatar_url ? (
+                      <img
+                        key={u.id}
+                        src={u.avatar_url}
+                        alt={u.name}
+                        className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] object-cover"
+                      />
+                    ) : (
+                      <div
+                        key={u.id}
+                        className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] bg-teal-600 flex items-center justify-center text-white text-[10px] font-bold"
+                      >
+                        {u.name.charAt(0)}
+                      </div>
+                    ),
+                  )
+                : [
+                    "bg-rose-400",
+                    "bg-blue-400",
+                    "bg-amber-400",
+                    "bg-teal-400",
+                  ].map((c, i) => (
+                    <div
+                      key={i}
+                      className={`w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] ${c}`}
+                    />
+                  ))}
             </div>
             <p className="text-slate-500 text-sm">
-              <span className="text-slate-200 font-semibold">12,000+</span>{" "}
+              <span className="text-slate-200 font-semibold">
+                {studentCount !== null
+                  ? `${studentCount.toLocaleString()}+`
+                  : "..."}
+              </span>{" "}
               students studying right now
             </p>
           </div>
         </div>
 
-        {/* App preview — right side, desktop only */}
+        {/* App preview — right side desktop */}
         <div className="hidden lg:flex flex-col gap-3 absolute right-10 top-1/2 -translate-y-1/2 w-[320px]">
-          {/* Group card */}
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 backdrop-blur-sm">
-            <div className="flex items-start justify-between mb-4">
+          {liveGroup && (
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 backdrop-blur-sm">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="font-semibold text-sm text-white">
+                    {liveGroup.name}
+                  </p>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    {liveGroup.member_count} members
+                  </p>
+                </div>
+                <span className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />{" "}
+                  Live
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-teal-400 rounded-full"
+                    style={{
+                      width: `${Math.min(100, Number(liveGroup.session_count) * 10)}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-teal-400 text-xs font-semibold">
+                  {liveGroup.session_count} sessions
+                </span>
+              </div>
+            </div>
+          )}
+
+          {nextSession && (
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 backdrop-blur-sm flex items-center gap-3">
+              <div className="w-9 h-9 bg-teal-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Calendar size={16} className="text-teal-400" />
+              </div>
               <div>
-                <p className="font-semibold text-sm text-white">
-                  Data Structures & Algorithms
+                <p className="text-[11px] text-slate-500 uppercase tracking-wide font-medium">
+                  Next session
                 </p>
-                <p className="text-slate-500 text-xs mt-0.5">12 members</p>
+                <p className="text-white font-semibold text-sm">
+                  {nextSession.title}
+                </p>
+                <p className="text-teal-400 text-xs mt-0.5">
+                  {formatSessionTime(nextSession.start_time)} ·{" "}
+                  {nextSession.attendee_count} attending
+                </p>
               </div>
-              <span className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live
-              </span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full w-3/4 bg-teal-400 rounded-full" />
-              </div>
-              <span className="text-teal-400 text-xs font-semibold">75%</span>
-            </div>
-          </div>
+          )}
 
-          {/* Session card */}
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 backdrop-blur-sm flex items-center gap-3">
-            <div className="w-9 h-9 bg-teal-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Calendar size={16} className="text-teal-400" />
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-500 uppercase tracking-wide font-medium">
-                Next session
-              </p>
-              <p className="text-white font-semibold text-sm">
-                Database Systems Review
-              </p>
-              <p className="text-teal-400 text-xs mt-0.5">
-                Today at 4:00 PM · 9 attending
-              </p>
-            </div>
-          </div>
-
-          {/* Mini stats */}
           <div className="grid grid-cols-3 gap-2.5">
             {[
-              { val: "4", label: "Groups", color: "text-teal-400" },
-              { val: "52", label: "Resources", color: "text-amber-400" },
-              { val: "7", label: "Online", color: "text-emerald-400" },
+              {
+                val: String(liveGroup?.member_count ?? "—"),
+                label: "Members",
+                color: "text-teal-400",
+              },
+              {
+                val: String(liveGroup?.resource_count ?? "—"),
+                label: "Resources",
+                color: "text-amber-400",
+              },
+              {
+                val: String(studentCount ?? "—"),
+                label: "Students",
+                color: "text-emerald-400",
+              },
             ].map((s) => (
               <div
                 key={s.label}
@@ -254,26 +356,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/*  UNIVERSITIES  */}
-      <section className="border-y border-slate-100 py-10">
-        <div className="max-w-5xl mx-auto px-8">
-          <p className="text-center text-slate-400 text-[11px] tracking-[0.18em] uppercase mb-7 font-medium">
+      {/*  UNIVERSITIES ─ */}
+      <section className="border-y border-slate-100 py-10 overflow-hidden">
+        <div className="max-w-5xl mx-auto px-8 mb-5">
+          <p className="text-center text-slate-400 text-[11px] tracking-[0.18em] uppercase font-medium">
             Trusted at
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-x-10 gap-y-3">
-            {universities.map((uni) => (
-              <p
-                key={uni}
-                className="text-slate-400 text-sm font-medium hover:text-teal-700 transition-colors duration-200 cursor-default"
-              >
-                {uni}
-              </p>
-            ))}
-          </div>
         </div>
+        {universities.length > 0 && (
+          <div className="relative">
+            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            <div
+              className="flex gap-14 items-center"
+              style={{
+                animation: "scroll-unis 18s linear infinite",
+                width: "max-content",
+              }}
+            >
+              {[...universities, ...universities].map((uni, i) => (
+                <p
+                  key={i}
+                  className="text-slate-400 text-sm font-medium whitespace-nowrap"
+                >
+                  {uni}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
-      {/*  HOW IT WORKS  */}
+      {/*  HOW IT WORKS ─ */}
       <section id="how" className="py-28 px-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-16">
@@ -284,7 +398,6 @@ export default function Home() {
               Three steps to studying smarter
             </h2>
           </div>
-
           <div className="grid md:grid-cols-3 gap-12">
             {steps.map((step, i) => (
               <div key={step.num}>
@@ -325,8 +438,6 @@ export default function Home() {
               Built for serious students. No bloat — just the tools that help.
             </p>
           </div>
-
-          {/* Grid with dividers instead of individual cards */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-slate-200 rounded-2xl overflow-hidden border border-slate-200">
             {features.map(({ icon: Icon, title, desc }) => (
               <div
@@ -349,7 +460,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/*  TESTIMONIALS  */}
+      {/*  TESTIMONIALS — real users  */}
       <section id="testimonials" className="py-28 px-8">
         <div className="max-w-5xl mx-auto">
           <div className="mb-16">
@@ -362,9 +473,34 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
+            {(testimonials.length > 0
+              ? testimonials
+              : ([
+                  {
+                    id: "1",
+                    name: "Alex Stackkens",
+                    university: "Makerere University",
+                    course: "Computer Science",
+                    year_of_study: 3,
+                  },
+                  {
+                    id: "2",
+                    name: "Mushabenta Linic",
+                    university: "Victoria University",
+                    course: "Business",
+                    year_of_study: 2,
+                  },
+                  {
+                    id: "3",
+                    name: "Odoi Simon Chidz",
+                    university: "Makerere University",
+                    course: "Engineering",
+                    year_of_study: 1,
+                  },
+                ] as TopUser[])
+            ).map((u) => (
               <div
-                key={t.name}
+                key={u.id}
                 className="flex flex-col justify-between p-7 rounded-2xl border border-slate-200 bg-white hover:border-teal-200 hover:shadow-sm transition-all duration-300"
               >
                 <div>
@@ -372,7 +508,7 @@ export default function Home() {
                     {[...Array(5)].map((_, i) => (
                       <svg
                         key={i}
-                        className="w-3.5 h-3.5 text-amber-400 fill-amber-400"
+                        className="w-3.5 h-3.5 text-amber-400  fill-amber-400"
                         viewBox="0 0 20 20"
                       >
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -380,18 +516,29 @@ export default function Home() {
                     ))}
                   </div>
                   <p className="text-slate-600 leading-relaxed text-sm">
-                    "{t.quote}"
+                    "StudyCircle helped me find serious students in my course.
+                    My grades and productivity improved significantly."
                   </p>
                 </div>
                 <div className="mt-8 flex items-center gap-3 pt-6 border-t border-slate-100">
-                  <div className="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
-                    {t.initials}
-                  </div>
+                  {u.avatar_url ? (
+                    <img
+                      src={u.avatar_url}
+                      alt={u.name}
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                      {u.name.charAt(0)}
+                    </div>
+                  )}
                   <div>
                     <p className="font-semibold text-slate-900 text-sm">
-                      {t.name}
+                      {u.name}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">{t.role}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {u.university} · Year {u.year_of_study} {u.course}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -414,10 +561,9 @@ export default function Home() {
           </p>
           <button
             onClick={() => openAuthModal("register")}
-            className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-8 py-4 rounded-lg font-semibold text-base shadow-xl shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px"
+            className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-8 py-4 rounded-lg font-semibold text-base shadow-xl shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px cursor-pointer"
           >
-            Get Started Free
-            <ArrowRight size={16} />
+            Get Started Free <ArrowRight size={16} />
           </button>
           <p className="text-slate-700 text-xs mt-5">
             No credit card required · Takes less than 30 seconds
@@ -439,7 +585,7 @@ export default function Home() {
                   />
                 </div>
                 <span className="text-white font-bold">
-                  Study<span className="text-teal-400">Cycle</span>
+                  Study<span className="text-teal-400">Circle</span>
                 </span>
               </div>
               <p className="text-sm leading-relaxed max-w-xs text-slate-500">
@@ -468,7 +614,7 @@ export default function Home() {
             ))}
           </div>
           <div className="border-t border-white/[0.05] pt-8 text-xs flex flex-col md:flex-row justify-between items-center gap-3 text-slate-700">
-            <p>© 2026 StudyCycle Uganda. All rights reserved.</p>
+            <p>© 2026 StudyCircle Uganda. All rights reserved.</p>
             <p>Made with love for students, by students.</p>
           </div>
         </div>

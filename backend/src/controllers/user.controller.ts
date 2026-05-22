@@ -1,6 +1,49 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db/index";
+
+// Public endpoint — no auth required
+export async function getHomeStats(req: Request, res: Response) {
+  try {
+    const [countResult, usersResult, universitiesResult, liveGroupResult, nextSessionResult] = await Promise.all([
+      pool.query(`SELECT COUNT(*) FROM users`),
+      pool.query(
+        `SELECT id, name, university, course, year_of_study, avatar_url
+         FROM users ORDER BY created_at DESC LIMIT 5`
+      ),
+      pool.query(
+        `SELECT DISTINCT university FROM users WHERE university IS NOT NULL AND university != '' ORDER BY university`
+      ),
+      pool.query(
+        `SELECT g.name,
+           (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS member_count,
+           (SELECT COUNT(*) FROM resources WHERE group_id = g.id)::int AS resource_count,
+           (SELECT COUNT(*) FROM sessions WHERE group_id = g.id)::int AS session_count
+         FROM groups g
+         ORDER BY (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) DESC
+         LIMIT 1`
+      ),
+      pool.query(
+        `SELECT s.title, s.start_time,
+           (SELECT COUNT(*) FROM session_attendees WHERE session_id = s.id)::int AS attendee_count
+         FROM sessions s
+         ORDER BY ABS(EXTRACT(EPOCH FROM (s.start_time - NOW())))
+         LIMIT 1`
+      ),
+    ]);
+
+    res.json({
+      student_count: parseInt(countResult.rows[0].count, 10),
+      top_users: usersResult.rows,
+      universities: universitiesResult.rows.map((r: { university: string }) => r.university),
+      live_group: liveGroupResult.rows[0] || null,
+      next_session: nextSessionResult.rows[0] || null,
+    });
+  } catch (err) {
+    console.error("getHomeStats error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
 
 // Returns group count, session count, resource count, total study hours
 export async function getUserStats(req: AuthRequest, res: Response) {
