@@ -19,27 +19,12 @@ const PORT = parseInt(process.env.PORT || "5000");
 //  Middleware
 app.use(express.json());
 
-// Validates FRONTEND_URL is a proper http/https origin
-const getAllowedOrigin = () => {
-  if (process.env.NODE_ENV !== "production") return "http://localhost:5173";
-  const url = process.env.FRONTEND_URL;
-  if (!url) throw new Error("FRONTEND_URL env var is required in production");
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
-      throw new Error("FRONTEND_URL must use http or https");
-    return parsed.origin;
-  } catch {
-    throw new Error(`Invalid FRONTEND_URL: ${url}`);
-  }
-};
+const allowedOrigin =
+  process.env.NODE_ENV === "production"
+    ? process.env.FRONTEND_URL || "https://studycircle2026.netlify.app"
+    : "http://localhost:5173";
 
-app.use(
-  cors({
-    origin: getAllowedOrigin(),
-    credentials: true,
-  }),
-);
+app.use(cors({ origin: allowedOrigin, credentials: true }));
 
 //  Routes
 app.use("/api/auth", authRoutes);
