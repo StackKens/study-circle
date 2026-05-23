@@ -1,0 +1,9 @@
+[build]
+  base = "frontend"
+  command = "npx react-router build"
+  publish = "build/client"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
