@@ -22,16 +22,33 @@ export const links: Route.LinksFunction = () => [
   {
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap",
-    // crossOrigin not needed on stylesheet — only on preconnect to gstatic
   },
+  { rel: "manifest", href: "/manifest.json" },
+  { rel: "apple-touch-icon", href: "/logo.jpeg" },
 ];
 
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "StudyCircle" },
-    { name: "description", content: "Learn, Connect,Grow" },
+    { name: "description", content: "Learn, Connect, Grow" },
+    { name: "theme-color", content: "#0d9488" },
+    { name: "apple-mobile-web-app-capable", content: "yes" },
+    {
+      name: "apple-mobile-web-app-status-bar-style",
+      content: "black-translucent",
+    },
+    { name: "apple-mobile-web-app-title", content: "StudyCircle" },
+    { name: "mobile-web-app-capable", content: "yes" },
+    { property: "og:title", content: "StudyCircle" },
+    {
+      property: "og:description",
+      content: "Study together. Succeed together.",
+    },
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: "https://studycircle2026.netlify.app" },
   ];
 }
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">

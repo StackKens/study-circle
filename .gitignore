@@ -7,3 +7,6 @@
 /build/
 /frontend/.react-router/
 /frontend/build/
+
+# Local learning guide
+/learn/
