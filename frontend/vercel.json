@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd frontend && npx react-router build",
+  "outputDirectory": "frontend/build/client",
+  "installCommand": "npm install",
+  "framework": null
+}
