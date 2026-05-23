@@ -4,6 +4,12 @@
   publish = "build/client"
 
 [[redirects]]
+  from = "/api/*"
+  to = "https://study-circle-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
