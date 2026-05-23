@@ -1,0 +1,44 @@
+{
+  "name": "study-circle",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npx react-router dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build": "cd frontend && react-router build",
+    "start": "react-router-serve ./frontend/build/server/index.js",
+    "typecheck": "cd frontend && react-router typegen && tsc"
+  },
+  "dependencies": {
+    "@react-router/node": "7.15.0",
+    "@react-router/serve": "7.15.0",
+    "@tanstack/react-query": "^5.100.10",
+    "axios": "^1.16.1",
+    "bcryptjs": "^3.0.3",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.38.0",
+    "isbot": "^5.1.36",
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router": "7.15.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "zustand": "^5.0.13"
+  },
+  "devDependencies": {
+    "@react-router/dev": "7.15.0",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^22.19.19",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14",
+    "tailwindcss": "^4.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.3"
+  }
+}
