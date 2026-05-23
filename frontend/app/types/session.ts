@@ -7,7 +7,6 @@ export interface Session {
   participant_count: number;
   created_by?: string;
   created_at: string;
-  status: string;
   group_name: string;
   has_joined?: boolean;
   meet_link?: string;

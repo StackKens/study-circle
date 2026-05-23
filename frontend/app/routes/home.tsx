@@ -141,12 +141,27 @@ const steps = [
 const footerCols = [
   {
     heading: "Product",
-    links: ["Features", "For Students", "For Universities"],
+    links: [
+      { label: "Features", href: "/#features" },
+      { label: "For Students", href: "/#how" },
+      { label: "For Universities", href: "/#testimonials" },
+    ],
   },
-  { heading: "Company", links: ["About Us", "Blog", "Careers", "Contact"] },
+  {
+    heading: "Company",
+    links: [
+      { label: "About Us", href: "/about" },
+      { label: "Blog", href: "/blog" },
+      { label: "Contact", href: "/contact" },
+    ],
+  },
   {
     heading: "Legal",
-    links: ["Privacy Policy", "Terms of Service", "Community Guidelines"],
+    links: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Community Guidelines", href: "/guidelines" },
+    ],
   },
 ];
 
@@ -600,12 +615,12 @@ export default function Home() {
                 </h4>
                 <ul className="space-y-3">
                   {col.links.map((link) => (
-                    <li key={link}>
+                    <li key={link.label}>
                       <a
-                        href="#"
+                        href={link.href}
                         className="text-sm hover:text-slate-200 transition-colors duration-200"
                       >
-                        {link}
+                        {link.label}
                       </a>
                     </li>
                   ))}

@@ -7,7 +7,15 @@ import {
 
 export default [
   // Public routes
-  layout("layout/app_layout.tsx", [index("routes/home.tsx")]),
+  layout("layout/app_layout.tsx", [
+    index("routes/home.tsx"),
+    route("about", "routes/about.tsx"),
+    route("blog", "routes/blog.tsx"),
+    route("contact", "routes/contact.tsx"),
+    route("privacy", "routes/legal/privacy.tsx"),
+    route("terms", "routes/legal/terms.tsx"),
+    route("guidelines", "routes/legal/guidelines.tsx"),
+  ]),
 
   // Private routes, protected by a component
   layout("layout/dashboard_layout.tsx", [

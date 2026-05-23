@@ -1,5 +1,16 @@
 import { useEffect, useState } from "react";
-import { Calendar, Clock, Users, Plus, X, Check, Loader2, Video } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Users,
+  Plus,
+  X,
+  Check,
+  Loader2,
+  Video,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useSessionStore } from "../../store/sessionStore";
 import { useGroupStore } from "../../store/groupStore";
@@ -46,7 +57,8 @@ function getStatus(start: string, end: string): SessionStatus {
 
 export default function SessionsPage() {
   const { token } = useAuth();
-  const { sessions, isLoading, fetchSessions, addSession, markSessionJoined } = useSessionStore();
+  const { sessions, isLoading, fetchSessions, addSession, markSessionJoined } =
+    useSessionStore();
   const { groups, fetchGroups } = useGroupStore();
 
   const [joining, setJoining] = useState<string | null>(null);
@@ -56,7 +68,10 @@ export default function SessionsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    title: "", group_id: "", start_time: "", end_time: "",
+    title: "",
+    group_id: "",
+    start_time: "",
+    end_time: "",
   });
 
   const adminGroups = groups.filter((g) => g.role === "admin");
@@ -136,7 +151,11 @@ export default function SessionsPage() {
     }
   };
 
-  const getJoinAction = (session: { start_time: string; end_time: string; has_joined?: boolean }) => {
+  const getJoinAction = (session: {
+    start_time: string;
+    end_time: string;
+    has_joined?: boolean;
+  }) => {
     const status = getStatus(session.start_time, session.end_time);
     if (status === "completed") {
       return { label: "Ended", disabled: true };
@@ -171,7 +190,7 @@ export default function SessionsPage() {
         {isAdmin && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            className="flex items-center cursor-pointer gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
           >
             <Plus size={15} /> Create Session
           </button>
@@ -239,19 +258,23 @@ export default function SessionsPage() {
                           </p>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {session.meet_link && getStatus(session.start_time, session.end_time) !== "completed" && (
-                            <a
-                              href={session.meet_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                            >
-                              <Video size={13} /> Join Meet
-                            </a>
-                          )}
+                          {session.meet_link &&
+                            getStatus(session.start_time, session.end_time) !==
+                              "completed" && (
+                              <a
+                                href={session.meet_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                              >
+                                <Video size={13} /> Join Meet
+                              </a>
+                            )}
                           <button
                             onClick={() => handleJoin(session.id)}
-                            disabled={joining === session.id || joinAction.disabled}
+                            disabled={
+                              joining === session.id || joinAction.disabled
+                            }
                             className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                           >
                             {joining === session.id ? (
@@ -314,7 +337,7 @@ export default function SessionsPage() {
                           {date} at {time} · {session.group_name}
                         </p>
                       </div>
-                      <button className="text-xs text-teal-600 font-semibold hover:text-teal-700">
+                      <button className="text-xs text-teal-600 font-semibold hover:text-teal-700 cursor-pointer">
                         View →
                       </button>
                     </div>
@@ -374,7 +397,9 @@ export default function SessionsPage() {
                 >
                   <option value="">Select a group</option>
                   {adminGroups.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
                   ))}
                 </select>
                 {groups.length === 0 && (

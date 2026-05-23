@@ -14,6 +14,24 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/about": {
+    params: {};
+  };
+  "/blog": {
+    params: {};
+  };
+  "/contact": {
+    params: {};
+  };
+  "/privacy": {
+    params: {};
+  };
+  "/terms": {
+    params: {};
+  };
+  "/guidelines": {
+    params: {};
+  };
   "/dashboard": {
     params: {};
   };
@@ -43,15 +61,39 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/dashboard" | "/dashboard/groups" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
+    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/dashboard" | "/dashboard/groups" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
   };
   "layout/app_layout.tsx": {
     id: "layout/app_layout";
-    page: "/";
+    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines";
   };
   "routes/home.tsx": {
     id: "routes/home";
     page: "/";
+  };
+  "routes/about.tsx": {
+    id: "routes/about";
+    page: "/about";
+  };
+  "routes/blog.tsx": {
+    id: "routes/blog";
+    page: "/blog";
+  };
+  "routes/contact.tsx": {
+    id: "routes/contact";
+    page: "/contact";
+  };
+  "routes/legal/privacy.tsx": {
+    id: "routes/legal/privacy";
+    page: "/privacy";
+  };
+  "routes/legal/terms.tsx": {
+    id: "routes/legal/terms";
+    page: "/terms";
+  };
+  "routes/legal/guidelines.tsx": {
+    id: "routes/legal/guidelines";
+    page: "/guidelines";
   };
   "layout/dashboard_layout.tsx": {
     id: "layout/dashboard_layout";
@@ -95,6 +137,12 @@ type RouteModules = {
   "root": typeof import("./app/root.tsx");
   "layout/app_layout": typeof import("./app/layout/app_layout.tsx");
   "routes/home": typeof import("./app/routes/home.tsx");
+  "routes/about": typeof import("./app/routes/about.tsx");
+  "routes/blog": typeof import("./app/routes/blog.tsx");
+  "routes/contact": typeof import("./app/routes/contact.tsx");
+  "routes/legal/privacy": typeof import("./app/routes/legal/privacy.tsx");
+  "routes/legal/terms": typeof import("./app/routes/legal/terms.tsx");
+  "routes/legal/guidelines": typeof import("./app/routes/legal/guidelines.tsx");
   "layout/dashboard_layout": typeof import("./app/layout/dashboard_layout.tsx");
   "routes/dashboard/index": typeof import("./app/routes/dashboard/index.tsx");
   "routes/dashboard/groups": typeof import("./app/routes/dashboard/groups.tsx");

@@ -108,6 +108,35 @@ export async function joinSession(req: AuthRequest, res: Response) {
   }
 }
 
+export async function getSessionAttendees(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  const { id } = req.params;
+
+  try {
+    const membership = await pool.query(
+      `SELECT 1 FROM session_attendees sa
+       JOIN sessions s ON s.id = sa.session_id
+       JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
+       WHERE sa.session_id = $2 LIMIT 1`,
+      [userId, id]
+    );
+    if (membership.rows.length === 0) {
+      res.status(403).json({ error: "Not authorized" });
+      return;
+    }
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.avatar_url FROM session_attendees sa
+       JOIN users u ON u.id = sa.user_id
+       WHERE sa.session_id = $1`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getSessionAttendees error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 export async function getMySessions(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
 

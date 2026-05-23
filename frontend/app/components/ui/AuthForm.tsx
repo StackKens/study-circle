@@ -250,7 +250,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                       <button
                         type="button"
                         onClick={() => setShowCustomUniversityInput(true)}
-                        className="mt-2 text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
+                        className="mt-2 text-sm text-teal-600 cursor-pointer hover:text-teal-700 flex items-center gap-1"
                       >
                         <Plus size={14} /> Add your university if not listed
                       </button>
@@ -269,7 +269,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                         <button
                           type="button"
                           onClick={handleAddCustomUniversity}
-                          className="px-3 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700"
+                          className="px-3 py-2 bg-teal-600  cursor-pointer text-white text-sm rounded-lg hover:bg-teal-700"
                         >
                           Add
                         </button>
@@ -279,7 +279,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                             setShowCustomUniversityInput(false);
                             setCustomUniversityName("");
                           }}
-                          className="p-2 text-slate-400 hover:text-slate-600"
+                          className="p-2 text-slate-400 cursor-pointer hover:text-slate-600"
                         >
                           <X size={16} />
                         </button>
@@ -358,7 +358,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                     <button
                       type="button"
                       onClick={() => setShowCustomCourseInput(true)}
-                      className="mt-2 text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
+                      className="mt-2 text-sm cursor-pointer text-teal-600 hover:text-teal-700 flex items-center gap-1"
                     >
                       <Plus size={14} /> Add your course if not listed
                     </button>
@@ -375,7 +375,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                       <button
                         type="button"
                         onClick={handleAddCustomCourse}
-                        className="px-3 py-2 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-700"
+                        className="px-3 py-2 bg-teal-600 cursor-pointer text-white text-sm rounded-lg hover:bg-teal-700"
                       >
                         Add
                       </button>
@@ -385,7 +385,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                           setShowCustomCourseInput(false);
                           setCustomCourseName("");
                         }}
-                        className="p-2 text-slate-400 hover:text-slate-600"
+                        className="p-2 text-slate-400 cursor-pointer hover:text-slate-600"
                       >
                         <X size={16} />
                       </button>
@@ -453,7 +453,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -474,7 +474,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white py-3 rounded-xl font-semibold text-sm transition-all duration-150 mt-1"
+          className="w-full flex items-center cursor-pointer justify-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white py-3 rounded-xl font-semibold text-sm transition-all duration-150 mt-1"
         >
           {isLoading ? (
             <>
@@ -496,7 +496,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           <button
             type="button"
             onClick={onSwitch}
-            className="text-teal-600 hover:text-teal-500 font-semibold"
+            className="text-teal-600  cursor-pointer hover:text-teal-500 font-semibold"
           >
             {type === "login" ? "Create one free" : "Sign in"}
           </button>
