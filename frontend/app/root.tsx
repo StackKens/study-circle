@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { AuthProvider } from "./context/AuthContext";
 import { AuthModalProvider } from "./context/AuthModalContext";
@@ -25,15 +25,16 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap",
   },
+  { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+  { rel: "apple-touch-icon", href: "/icon-192.png" },
   { rel: "manifest", href: "/manifest.json" },
-  { rel: "apple-touch-icon", href: "/logo.jpeg" },
 ];
 
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "StudyCircle" },
     { name: "description", content: "Learn, Connect, Grow" },
-    { name: "theme-color", content: "#0d9488" },
+    { name: "theme-color", content: "#0a0f1e" },
     { name: "apple-mobile-web-app-capable", content: "yes" },
     {
       name: "apple-mobile-web-app-status-bar-style",
@@ -57,7 +58,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" type="image/jpeg" href="/logo.jpeg" />
         <Meta />
         <Links />
       </head>
@@ -72,11 +72,39 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
+function useSplashCheck(): [boolean, () => void] {
   const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent,
+      );
+
+    if (!isMobile) {
+      // Desktop: skip splash entirely
+      setShowSplash(false);
+      return;
+    }
+
+    // Mobile: show only once (first visit)
+    const visited = localStorage.getItem("sc_splash_seen");
+    if (visited) {
+      setShowSplash(false);
+    } else {
+      localStorage.setItem("sc_splash_seen", "true");
+      setShowSplash(true);
+    }
+  }, []);
+
+  return [showSplash, () => setShowSplash(false)];
+}
+
+export default function App() {
+  const [showSplash, dismissSplash] = useSplashCheck();
   return (
     <>
-      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      {showSplash && <SplashScreen onDone={dismissSplash} />}
       <Outlet />
     </>
   );

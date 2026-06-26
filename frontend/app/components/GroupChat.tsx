@@ -232,7 +232,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   return (
     <div className="flex flex-col h-full bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-white">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center">
             <MessageCircle size={15} className="text-teal-600" />
@@ -306,7 +306,6 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             <Send size={14} className="text-white" />
           </button>
         </div>
-        <p className="text-[10px] text-slate-400 mt-1 px-1">Enter · Shift+Enter for new line</p>
       </div>
     </div>
   );

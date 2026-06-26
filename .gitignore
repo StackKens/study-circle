@@ -10,3 +10,6 @@
 
 # Local learning guide
 /learn/
+
+.codex/
+.agents/

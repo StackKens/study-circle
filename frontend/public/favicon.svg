@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Circle background — matches hero bg #0a0f1e -->
+  <circle cx="256" cy="256" r="240" fill="#0a0f1e" stroke="#14b8a6" stroke-width="14"/>
+  <!-- Inner glow ring -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#2dd4bf" stroke-width="2" opacity="0.15"/>
+
+  <!-- Open book (teal + green blend) -->
+  <path d="M136 190 L256 156 L376 190 L376 350 L256 326 L136 350 Z" fill="#14b8a6" opacity="0.9"/>
+  <!-- Left page shade (deeper teal) -->
+  <path d="M136 190 L256 156 L256 326 L136 350 Z" fill="#0d9488" opacity="0.35"/>
+  <!-- Book spine -->
+  <line x1="256" y1="156" x2="256" y2="326" stroke="#0a0f1e" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Page lines (umber/bronze warm contrast) -->
+  <path d="M196 210 L256 190 L316 210" fill="none" stroke="#f4a261" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+  <path d="M196 240 L256 220 L316 240" fill="none" stroke="#f4a261" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+  <path d="M196 270 L256 250 L316 270" fill="none" stroke="#f4a261" stroke-width="5" stroke-linecap="round" opacity="0.25"/>
+
+  <!-- Star/achievement above (amber - umber blend) -->
+  <polygon points="256,96 262,114 280,114 266,126 272,144 256,134 240,144 246,126 232,114 250,114" fill="#f4a261"/>
+
+  <!-- Decorative dots (teal) -->
+  <circle cx="180" cy="180" r="4.5" fill="#2dd4bf" opacity="0.6"/>
+  <circle cx="332" cy="180" r="4.5" fill="#2dd4bf" opacity="0.6"/>
+  <circle cx="170" cy="310" r="3" fill="#2dd4bf" opacity="0.35"/>
+  <circle cx="342" cy="310" r="3" fill="#2dd4bf" opacity="0.35"/>
+</svg>

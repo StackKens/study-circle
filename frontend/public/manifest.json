@@ -1,21 +1,23 @@
 {
-  "name": "StudyCycle",
-  "short_name": "StudyCycle",
+  "name": "StudyCircle",
+  "short_name": "StudyCircle",
   "description": "Study together. Succeed together.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0d9488",
+  "background_color": "#0a0f1e",
+  "theme_color": "#0a0f1e",
   "icons": [
     {
-      "src": "/logo.jpeg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/logo.jpeg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
