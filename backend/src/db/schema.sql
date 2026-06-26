@@ -75,3 +75,18 @@ CREATE INDEX IF NOT EXISTS idx_group_members_group ON group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_group ON sessions(group_id);
 CREATE INDEX IF NOT EXISTS idx_resources_group ON resources(group_id);
 CREATE INDEX IF NOT EXISTS idx_friendships_user ON friendships(user_id);
+
+
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+  sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- The index that matters most
+-- group_id + created_at together because every query is:
+-- "messages WHERE group_id = ? ORDER BY created_at DESC LIMIT 50"
+CREATE INDEX IF NOT EXISTS idx_messages_group_created 
+  ON messages(group_id, created_at DESC);

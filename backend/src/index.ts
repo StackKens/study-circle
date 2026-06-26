@@ -13,6 +13,9 @@ import userRoutes from "./routes/users";
 import friendRoutes from "./routes/friends";
 import notificationRoutes from "./routes/notifications";
 
+import { createServer } from "http";
+import { initChat } from "./sockets/chat.socket";
+
 const app = express();
 const PORT = parseInt(process.env.PORT || "5000");
 
@@ -48,7 +51,9 @@ app.use((req, res) => {
   res.status(404).json({ error: "Route not found" });
 });
 
-//  Start server
-app.listen(PORT, "0.0.0.0", () => {
+const httpServer = createServer(app);
+initChat(httpServer);
+
+httpServer.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
