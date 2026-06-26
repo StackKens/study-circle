@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
 import { Crown, Loader2, Users } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import type { GroupMember } from "../../types/groupMemeber";
+import type { GroupMember } from "../../types/groupMember";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-
-interface GroupMemberWithUser extends GroupMember {
-  userName: string;
-  userEmail: string;
-  userAvatar?: string;
-}
 
 interface GroupMembersProps {
   groupId: string;
@@ -31,7 +25,7 @@ export function GroupMembers({
   currentUserRole,
 }: GroupMembersProps) {
   const { token } = useAuth();
-  const [members, setMembers] = useState<GroupMemberWithUser[]>([]);
+  const [members, setMembers] = useState<GroupMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -106,25 +100,25 @@ export function GroupMembers({
 
         {!isLoading && !error && members.map((member) => (
           <div
-            key={member.userId}
+            key={member.user_id}
             className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
           >
             <div className="flex items-center gap-3">
-              {member.userAvatar ? (
+              {member.avatar_url ? (
                 <img
-                  src={member.userAvatar}
-                  alt={member.userName}
+                  src={member.avatar_url}
+                  alt={member.name}
                   className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
                 <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {member.userName.charAt(0)}
+                  {member.name.charAt(0)}
                 </div>
               )}
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-slate-900 text-sm">
-                    {member.userName}
+                    {member.name}
                   </p>
                   {member.role === "admin" && (
                     <span className="flex items-center gap-1 text-[11px] text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full font-semibold">
@@ -133,7 +127,8 @@ export function GroupMembers({
                   )}
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {member.userEmail} · Joined {formatDate(member.joinedAt)}
+                  {member.course} · Y{member.year_of_study} ·{" "}
+                  {member.university} · Joined {formatDate(member.joined_at)}
                 </p>
               </div>
             </div>

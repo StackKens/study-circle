@@ -41,7 +41,7 @@ export async function getMyGroups(req: AuthRequest, res: Response) {
   try {
     const result = await pool.query(
       `SELECT g.*, gm.role,
-        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS total_members
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS total_members
        FROM groups g
        JOIN group_members gm ON gm.group_id = g.id
        WHERE gm.user_id = $1
@@ -63,7 +63,7 @@ export async function getGroup(req: AuthRequest, res: Response) {
   try {
     const result = await pool.query(
       `SELECT g.*,
-        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS total_members,
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS total_members,
         gm.role
        FROM groups g
        LEFT JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $2
@@ -174,9 +174,9 @@ export async function getGroupRecommendations(req: AuthRequest, res: Response) {
         g.subject,
         g.university,
         g.created_at,
-        COUNT(DISTINCT gm.user_id) AS total_members,
-        COUNT(DISTINCT s.id) AS session_count,
-        COUNT(DISTINCT r.id) AS resource_count
+        COUNT(DISTINCT gm.user_id)::int AS total_members,
+        COUNT(DISTINCT s.id)::int AS session_count,
+        COUNT(DISTINCT r.id)::int AS resource_count
        FROM groups g
        LEFT JOIN group_members gm ON gm.group_id = g.id
        LEFT JOIN sessions s ON s.group_id = g.id
@@ -231,7 +231,7 @@ export async function joinGroup(req: AuthRequest, res: Response) {
 
     const result = await pool.query(
       `SELECT g.*, gm.role,
-        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS total_members
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS total_members
        FROM groups g
        JOIN group_members gm ON gm.group_id = g.id
        WHERE g.id = $1 AND gm.user_id = $2`,

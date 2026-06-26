@@ -86,14 +86,6 @@ export default function GroupsPage() {
     }
   }
 
-  function handleToggleGroup(groupId: string) {
-    setOpenGroupId((current) => {
-      if (current === groupId) return null;
-      setActiveTab("chat");
-      return groupId;
-    });
-  }
-
   useEffect(() => {
     if (!token) return;
     fetchGroups(token);

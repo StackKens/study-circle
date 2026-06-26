@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -16,19 +16,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import type { Group } from "../../types/group";
+import type { GroupMember } from "../../types/groupMember";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-
-interface Member {
-  user_id: string;
-  name: string;
-  university: string;
-  course: string;
-  year_of_study: number;
-  role: "admin" | "member";
-  joined_at: string;
-  avatar_url?: string;
-}
 
 function getInitials(name: string) {
   return name
@@ -94,42 +84,64 @@ export default function GroupDetailPage() {
   const navigate = useNavigate();
 
   const [group, setGroup] = useState<Group | null>(null);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<GroupMember[]>([]);
   const [isLoadingGroup, setIsLoadingGroup] = useState(true);
   const [isLoadingMembers, setIsLoadingMembers] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [pageError, setPageError] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  const fetchGroup = useCallback(async () => {
+    if (!groupId || !token) return;
+    setIsLoadingGroup(true);
+    setPageError("");
+
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load group");
+      setGroup(data);
+    } catch (err) {
+      setPageError(err instanceof Error ? err.message : "Failed to load group");
+    } finally {
+      setIsLoadingGroup(false);
+    }
+  }, [groupId, token]);
+
+  const fetchMembers = useCallback(async () => {
+    if (!groupId || !token) return;
+    setIsLoadingMembers(true);
+
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}/members`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load members");
+      setMembers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("fetchMembers error:", err);
+      setMembers([]);
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }, [groupId, token]);
 
   // Fetch group details
   useEffect(() => {
-    if (!groupId || !token) return;
-    setIsLoadingGroup(true);
-    fetch(`${API_URL}/groups/${groupId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) setError(data.error);
-        else setGroup(data);
-      })
-      .catch(() => setError("Failed to load group"))
-      .finally(() => setIsLoadingGroup(false));
-  }, [groupId, token]);
+    fetchGroup();
+  }, [fetchGroup]);
 
   // Fetch members
   useEffect(() => {
-    if (!groupId || !token) return;
-    setIsLoadingMembers(true);
-    fetch(`${API_URL}/groups/${groupId}/members`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data)) setMembers(data);
-      })
-      .catch(console.error)
-      .finally(() => setIsLoadingMembers(false));
-  }, [groupId, token]);
+    if (group?.role) fetchMembers();
+    else {
+      setMembers([]);
+      setIsLoadingMembers(false);
+    }
+  }, [fetchMembers, group?.role]);
 
   const isMember = !!group?.role;
   const isAdmin = group?.role === "admin";
@@ -137,6 +149,7 @@ export default function GroupDetailPage() {
   const handleJoin = async () => {
     if (!token || !groupId) return;
     setActionLoading(true);
+    setActionError("");
     try {
       const res = await fetch(`${API_URL}/groups/${groupId}/join`, {
         method: "POST",
@@ -144,11 +157,10 @@ export default function GroupDetailPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to join");
-      setGroup((g) =>
-        g ? { ...g, role: "member", total_members: g.total_members + 1 } : g,
-      );
-    } catch (err: any) {
-      setError(err.message);
+      setGroup(data);
+      await fetchMembers();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to join");
     } finally {
       setActionLoading(false);
     }
@@ -157,6 +169,7 @@ export default function GroupDetailPage() {
   const handleLeave = async () => {
     if (!token || !groupId) return;
     setActionLoading(true);
+    setActionError("");
     try {
       const res = await fetch(`${API_URL}/groups/${groupId}/leave`, {
         method: "DELETE",
@@ -171,12 +184,13 @@ export default function GroupDetailPage() {
           ? {
               ...g,
               role: undefined,
-              total_members: Math.max(0, g.total_members - 1),
+              total_members: Math.max(0, Number(g.total_members) - 1),
             }
           : g,
       );
-    } catch (err: any) {
-      setError(err.message);
+      setMembers([]);
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Failed to leave");
     } finally {
       setActionLoading(false);
     }
@@ -193,13 +207,13 @@ export default function GroupDetailPage() {
     );
   }
 
-  if (error || !group) {
+  if (pageError || !group) {
     return (
       <div className="max-w-3xl mx-auto">
         <div className="bg-red-50 border border-red-100 rounded-2xl p-8 flex flex-col items-center text-center gap-3">
           <AlertCircle size={28} className="text-red-400" />
           <p className="text-sm font-medium text-red-700">
-            {error || "Group not found"}
+            {pageError || "Group not found"}
           </p>
           <button
             onClick={() => navigate("/dashboard/groups")}
@@ -211,8 +225,6 @@ export default function GroupDetailPage() {
       </div>
     );
   }
-
-  const admin = members.find((m) => m.role === "admin");
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -316,9 +328,9 @@ export default function GroupDetailPage() {
             )}
           </div>
 
-          {error && (
+          {actionError && (
             <p className="mt-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-              {error}
+              {actionError}
             </p>
           )}
         </div>
