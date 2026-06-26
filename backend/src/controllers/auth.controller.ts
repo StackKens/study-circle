@@ -58,7 +58,12 @@ export async function register(req: Request, res: Response) {
 
     // Create JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        university: user.university,
+      },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }, // token expires in 7 days
     );
@@ -104,7 +109,12 @@ export async function login(req: Request, res: Response) {
 
     // Create token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        university: user.university,
+      },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" },
     );
