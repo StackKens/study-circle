@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
-  Users, Calendar, FolderOpen, Clock,
-  PlusCircle, BookOpen, ArrowRight, Loader2,
+  Users,
+  Calendar,
+  FolderOpen,
+  Clock,
+  PlusCircle,
+  BookOpen,
+  ArrowRight,
+  Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -20,17 +26,32 @@ interface UserStats {
 }
 
 const colorMap: Record<string, string> = {
-  teal:   "bg-teal-50 text-teal-600",
-  blue:   "bg-blue-50 text-blue-600",
-  amber:  "bg-amber-50 text-amber-600",
+  teal: "bg-teal-50 text-teal-600",
+  blue: "bg-blue-50 text-blue-600",
+  amber: "bg-amber-50 text-amber-600",
   purple: "bg-purple-50 text-purple-600",
 };
 
 const quickActions = [
-  { label: "Create Group",      icon: PlusCircle, modal: true,                          color: "teal"   },
-  { label: "Schedule Session",  icon: Calendar,   path: "/dashboard/sessions",           color: "blue"   },
-  { label: "Upload Resource",   icon: FolderOpen, path: "/dashboard/resources",          color: "amber"  },
-  { label: "Find Friends",      icon: Users,      path: "/dashboard/friends",            color: "purple" },
+  { label: "Create Group", icon: PlusCircle, modal: true, color: "teal" },
+  {
+    label: "Schedule Session",
+    icon: Calendar,
+    path: "/dashboard/sessions",
+    color: "blue",
+  },
+  {
+    label: "Upload Resource",
+    icon: FolderOpen,
+    path: "/dashboard/resources",
+    color: "amber",
+  },
+  {
+    label: "Find Friends",
+    icon: Users,
+    path: "/dashboard/friends",
+    color: "purple",
+  },
 ];
 
 function getStatus(start: string, end: string) {
@@ -44,8 +65,10 @@ function getStatus(start: string, end: string) {
 
 function formatSessionTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, {
-    month: "short", day: "numeric",
-    hour: "numeric", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
@@ -89,6 +112,11 @@ export default function DashboardHome() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to join session");
       markSessionJoined(sessionId, data.participant_count);
+
+      // Auto-open the Google Meet link in a new tab
+      if (data.meet_link) {
+        window.open(data.meet_link, "_blank", "noopener");
+      }
     } catch (err) {
       console.error("joinSession error:", err);
       setJoinError(
@@ -101,15 +129,36 @@ export default function DashboardHome() {
 
   function getJoinLabel(session: (typeof sessions)[number]) {
     const status = getStatus(session.start_time, session.end_time);
-    if (session.has_joined) return status === "ongoing" ? "Checked in" : "Reserved";
+    if (session.has_joined)
+      return status === "ongoing" ? "Checked in" : "Reserved";
     return status === "ongoing" ? "Join now" : "Reserve";
   }
 
   const stats = [
-    { label: "Active Groups",      value: groups.length,                    icon: Users,      change: groups.length > 0 ? `${groups.length} joined` : "None yet"              },
-    { label: "Sessions This Week", value: upcomingSessions.length,          icon: Calendar,   change: upcomingSessions.length > 0 ? "Upcoming" : "None scheduled"              },
-    { label: "Resources Shared",   value: userStats?.resources ?? "—",      icon: FolderOpen, change: userStats ? `${userStats.resources} uploaded` : "Loading..."            },
-    { label: "Study Hours",        value: userStats ? `${userStats.studyHours}h` : "—", icon: Clock, change: userStats ? `${userStats.studyHours}h total` : "Loading..." },
+    {
+      label: "Active Groups",
+      value: groups.length,
+      icon: Users,
+      change: groups.length > 0 ? `${groups.length} joined` : "None yet",
+    },
+    {
+      label: "Sessions This Week",
+      value: upcomingSessions.length,
+      icon: Calendar,
+      change: upcomingSessions.length > 0 ? "Upcoming" : "None scheduled",
+    },
+    {
+      label: "Resources Shared",
+      value: userStats?.resources ?? "—",
+      icon: FolderOpen,
+      change: userStats ? `${userStats.resources} uploaded` : "Loading...",
+    },
+    {
+      label: "Study Hours",
+      value: userStats ? `${userStats.studyHours}h` : "—",
+      icon: Clock,
+      change: userStats ? `${userStats.studyHours}h total` : "Loading...",
+    },
   ];
 
   return (
@@ -129,22 +178,31 @@ export default function DashboardHome() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-5">
+          <div
+            key={stat.label}
+            className="bg-white rounded-xl border border-slate-200 p-5"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
                 <stat.icon size={17} className="text-slate-600" />
               </div>
             </div>
-            <p className="text-2xl font-bold text-slate-900 tracking-tight">{stat.value}</p>
+            <p className="text-2xl font-bold text-slate-900 tracking-tight">
+              {stat.value}
+            </p>
             <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
-            <p className="text-[11px] text-emerald-600 mt-2 font-medium">{stat.change}</p>
+            <p className="text-[11px] text-emerald-600 mt-2 font-medium">
+              {stat.change}
+            </p>
           </div>
         ))}
       </div>
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <p className="text-sm font-semibold text-slate-700 mb-3">Quick Actions</p>
+        <p className="text-sm font-semibold text-slate-700 mb-3">
+          Quick Actions
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {quickActions.map((action) =>
             "modal" in action && action.modal ? (
@@ -153,10 +211,14 @@ export default function DashboardHome() {
                 onClick={() => setShowCreateModal(true)}
                 className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all w-full text-left cursor-pointer"
               >
-                <div className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                <div
+                  className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}
+                >
                   <action.icon size={17} />
                 </div>
-                <span className="text-sm font-medium text-slate-700">{action.label}</span>
+                <span className="text-sm font-medium text-slate-700">
+                  {action.label}
+                </span>
               </button>
             ) : (
               <Link
@@ -164,12 +226,16 @@ export default function DashboardHome() {
                 to={action.path!}
                 className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
               >
-                <div className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                <div
+                  className={`w-9 h-9 ${colorMap[action.color]} rounded-lg flex items-center justify-center flex-shrink-0`}
+                >
                   <action.icon size={17} />
                 </div>
-                <span className="text-sm font-medium text-slate-700">{action.label}</span>
+                <span className="text-sm font-medium text-slate-700">
+                  {action.label}
+                </span>
               </Link>
-            )
+            ),
           )}
         </div>
       </div>
@@ -181,28 +247,42 @@ export default function DashboardHome() {
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="font-semibold text-slate-900">Your Study Groups</p>
-              <Link to="/dashboard/groups" className="text-xs text-teal-600 font-medium flex items-center gap-1 hover:gap-1.5 transition-all">
+              <Link
+                to="/dashboard/groups"
+                className="text-xs text-teal-600 font-medium flex items-center gap-1 hover:gap-1.5 transition-all"
+              >
                 View all <ArrowRight size={12} />
               </Link>
             </div>
             {recentGroups.length > 0 ? (
               <div className="divide-y divide-slate-100">
                 {recentGroups.map((group) => (
-                  <div key={group.id} className="py-3.5 flex items-center justify-between">
+                  <div
+                    key={group.id}
+                    className="py-3.5 flex items-center justify-between"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-slate-800">{group.name}</p>
+                      <p className="text-sm font-medium text-slate-800">
+                        {group.name}
+                      </p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {group.total_members} member{group.total_members !== 1 ? "s" : ""} · {group.subject}
+                        {group.total_members} member
+                        {group.total_members !== 1 ? "s" : ""} · {group.subject}
                       </p>
                     </div>
-                    <Link to="/dashboard/groups" className="text-xs text-teal-600 font-medium hover:text-teal-700">
+                    <Link
+                      to="/dashboard/groups"
+                      className="text-xs text-teal-600 font-medium hover:text-teal-700"
+                    >
                       View →
                     </Link>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 py-4 text-center">No groups yet — create one to get started.</p>
+              <p className="text-sm text-slate-400 py-4 text-center">
+                No groups yet — create one to get started.
+              </p>
             )}
           </div>
 
@@ -210,7 +290,10 @@ export default function DashboardHome() {
           <div className="bg-white rounded-xl border border-slate-200 p-5">
             <div className="flex items-center justify-between mb-4">
               <p className="font-semibold text-slate-900">Upcoming Sessions</p>
-              <Link to="/dashboard/sessions" className="text-xs text-teal-600 font-medium flex items-center gap-1 hover:gap-1.5 transition-all">
+              <Link
+                to="/dashboard/sessions"
+                className="text-xs text-teal-600 font-medium flex items-center gap-1 hover:gap-1.5 transition-all"
+              >
                 View all <ArrowRight size={12} />
               </Link>
             </div>
@@ -222,16 +305,24 @@ export default function DashboardHome() {
                   </p>
                 )}
                 {upcomingSessions.map((session) => (
-                  <div key={session.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors">
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
                     <div>
-                      <p className="text-sm font-medium text-slate-800">{session.title}</p>
+                      <p className="text-sm font-medium text-slate-800">
+                        {session.title}
+                      </p>
                       <p className="text-xs text-slate-400 mt-0.5">
-                        {formatSessionTime(session.start_time)} · {session.participant_count} attending
+                        {formatSessionTime(session.start_time)} ·{" "}
+                        {session.participant_count} attending
                       </p>
                     </div>
                     <button
                       onClick={() => handleJoinSession(session.id)}
-                      disabled={joiningSessionId === session.id || session.has_joined}
+                      disabled={
+                        joiningSessionId === session.id || session.has_joined
+                      }
                       className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
                     >
                       {joiningSessionId === session.id ? (
@@ -244,7 +335,9 @@ export default function DashboardHome() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 py-4 text-center">No upcoming sessions — schedule one from your groups.</p>
+              <p className="text-sm text-slate-400 py-4 text-center">
+                No upcoming sessions — schedule one from your groups.
+              </p>
             )}
           </div>
         </div>
@@ -257,7 +350,8 @@ export default function DashboardHome() {
               <p className="font-semibold text-slate-800 text-sm">Study Tip</p>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Break sessions into 50-minute blocks with 10-minute breaks. The Pomodoro technique keeps you sharp and consistent.
+              Break sessions into 50-minute blocks with 10-minute breaks. The
+              Pomodoro technique keeps you sharp and consistent.
             </p>
           </div>
         </div>

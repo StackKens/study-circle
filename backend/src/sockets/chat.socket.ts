@@ -81,7 +81,8 @@ async function getRecentMessages(groupId: string, limit = 50) {
        m.created_at,
        m.sender_id,
        u.name AS sender_name,
-       u.university AS sender_university
+       u.university AS sender_university,
+       u.avatar_url AS sender_avatar_url
      FROM messages m
      JOIN users u ON u.id = m.sender_id
      WHERE m.group_id = $1
@@ -119,7 +120,8 @@ async function getRecentGeneralMessages(limit = 50) {
        gm.created_at,
        gm.sender_id,
        u.name AS sender_name,
-       u.university AS sender_university
+       u.university AS sender_university,
+       u.avatar_url AS sender_avatar_url
      FROM general_messages gm
      JOIN users u ON u.id = gm.sender_id
      ORDER BY gm.created_at DESC
@@ -263,6 +265,7 @@ export function initChat(httpServer: HTTPServer) {
             // University is on the user object from the JWT — avoids a JOIN
             // on every message. If you ever update university, re-issue the token.
             sender_university: (user as any).university ?? "",
+            sender_avatar_url: (user as any).avatar_url ?? null,
           };
 
           // Broadcast to all sockets in the room, including the sender
@@ -315,6 +318,7 @@ export function initChat(httpServer: HTTPServer) {
             ...saved,
             sender_name: user.name,
             sender_university: (user as any).university ?? "",
+            sender_avatar_url: (user as any).avatar_url ?? null,
           };
 
           // Broadcast to ALL connected sockets (the entire platform)

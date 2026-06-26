@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import {
-  BookOpen,
   Calendar,
   BarChart2,
   Users,
   Bell,
   Lock,
   ArrowRight,
+  BookOpen,
 } from "lucide-react";
 import { useAuthModal } from "../context/AuthModalContext";
 
@@ -84,6 +84,68 @@ interface HomeStats {
     start_time: string;
     attendee_count: number;
   } | null;
+}
+
+// Inline SVG logo matchign the favicon (book + star)
+function StudyCircleLogo({
+  size = 14,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
+  const s = size;
+  return (
+    <svg width={s} height={s} viewBox="0 0 512 512" className={className}>
+      <path
+        d="M136 190 L256 156 L376 190 L376 350 L256 326 L136 350 Z"
+        fill="#14b8a6"
+        opacity="0.9"
+      />
+      <path
+        d="M136 190 L256 156 L256 326 L136 350 Z"
+        fill="#0d9488"
+        opacity="0.35"
+      />
+      <line
+        x1="256"
+        y1="156"
+        x2="256"
+        y2="326"
+        stroke="#0a0f1e"
+        strokeWidth="10"
+        strokeLinecap="round"
+      />
+      <path
+        d="M196 210 L256 190 L316 210"
+        fill="none"
+        stroke="#f4a261"
+        strokeWidth="5"
+        strokeLinecap="round"
+        opacity="0.7"
+      />
+      <path
+        d="M196 240 L256 220 L316 240"
+        fill="none"
+        stroke="#f4a261"
+        strokeWidth="5"
+        strokeLinecap="round"
+        opacity="0.45"
+      />
+      <path
+        d="M196 270 L256 250 L316 270"
+        fill="none"
+        stroke="#f4a261"
+        strokeWidth="5"
+        strokeLinecap="round"
+        opacity="0.25"
+      />
+      <polygon
+        points="256,96 262,114 280,114 266,126 272,144 256,134 240,144 246,126 232,114 250,114"
+        fill="#f4a261"
+      />
+    </svg>
+  );
 }
 
 //  Static content
@@ -593,11 +655,7 @@ export default function Home() {
             <div className="md:col-span-2">
               <div className="flex items-center gap-2.5 mb-5">
                 <div className="w-7 h-7 bg-teal-600 rounded-md flex items-center justify-center">
-                  <BookOpen
-                    size={14}
-                    className="text-white"
-                    strokeWidth={2.5}
-                  />
+                  <StudyCircleLogo size={16} className="text-white" />
                 </div>
                 <span className="text-white font-bold">
                   Study<span className="text-teal-400">Circle</span>

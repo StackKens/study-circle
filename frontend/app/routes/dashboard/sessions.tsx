@@ -141,6 +141,11 @@ export default function SessionsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to join session");
       markSessionJoined(sessionId, data.participant_count);
+
+      // Auto-open the Google Meet link in a new tab
+      if (data.meet_link) {
+        window.open(data.meet_link, "_blank", "noopener");
+      }
     } catch (err) {
       console.error("joinSession error:", err);
       setJoinError(

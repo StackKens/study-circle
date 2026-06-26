@@ -63,6 +63,7 @@ export async function register(req: Request, res: Response) {
         email: user.email,
         name: user.name,
         university: user.university,
+        avatar_url: user.avatar_url || null,
       },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }, // token expires in 7 days
@@ -114,6 +115,7 @@ export async function login(req: Request, res: Response) {
         email: user.email,
         name: user.name,
         university: user.university,
+        avatar_url: user.avatar_url || null,
       },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" },

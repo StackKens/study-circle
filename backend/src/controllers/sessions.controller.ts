@@ -4,7 +4,11 @@ import { AuthRequest } from "../middleware/auth.middleware";
 
 function generateMeetLink() {
   const chars = "abcdefghijklmnopqrstuvwxyz";
-  const seg = (n: number) => Array.from({ length: n }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+  const seg = (n: number) =>
+    Array.from(
+      { length: n },
+      () => chars[Math.floor(Math.random() * chars.length)],
+    ).join("");
   return `https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`;
 }
 
@@ -13,7 +17,9 @@ export async function createSession(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
 
   if (!group_id || !title || !start_time || !end_time) {
-    res.status(400).json({ error: "group_id, title, start_time and end_time are required" });
+    res
+      .status(400)
+      .json({ error: "group_id, title, start_time and end_time are required" });
     return;
   }
 
@@ -21,7 +27,7 @@ export async function createSession(req: AuthRequest, res: Response) {
     // Verify user is an admin of the group
     const membership = await pool.query(
       `SELECT role FROM group_members WHERE user_id = $1 AND group_id = $2`,
-      [userId, group_id]
+      [userId, group_id],
     );
     if (membership.rows.length === 0) {
       res.status(403).json({ error: "You are not a member of this group" });
@@ -38,7 +44,7 @@ export async function createSession(req: AuthRequest, res: Response) {
       `INSERT INTO sessions (group_id, title, start_time, end_time, created_by, meet_link)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [group_id, title.trim(), start_time, end_time, userId, meet_link]
+      [group_id, title.trim(), start_time, end_time, userId, meet_link],
     );
 
     const session = result.rows[0];
@@ -50,7 +56,7 @@ export async function createSession(req: AuthRequest, res: Response) {
        FROM sessions s
        JOIN groups g ON g.id = s.group_id
        WHERE s.id = $1`,
-      [session.id]
+      [session.id],
     );
 
     res.status(201).json(enriched.rows[0]);
@@ -70,10 +76,12 @@ export async function joinSession(req: AuthRequest, res: Response) {
       `SELECT s.group_id, s.start_time, s.end_time FROM sessions s
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
        WHERE s.id = $2`,
-      [userId, id]
+      [userId, id],
     );
     if (session.rows.length === 0) {
-      res.status(403).json({ error: "Session not found or you are not a group member" });
+      res
+        .status(403)
+        .json({ error: "Session not found or you are not a group member" });
       return;
     }
 
@@ -89,18 +97,25 @@ export async function joinSession(req: AuthRequest, res: Response) {
     // Insert — ignore if already joined
     await pool.query(
       `INSERT INTO session_attendees (session_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [id, userId]
+      [id, userId],
     );
 
     const updated = await pool.query(
       `SELECT COUNT(*) AS participant_count FROM session_attendees WHERE session_id = $1`,
-      [id]
+      [id],
+    );
+
+    // Fetch meet_link to send back so the frontend can open it
+    const sessionLink = await pool.query(
+      `SELECT meet_link, start_time, end_time FROM sessions WHERE id = $1`,
+      [id],
     );
 
     res.json({
       joined: true,
       status: now < startTime ? "reserved" : "checked_in",
       participant_count: parseInt(updated.rows[0].participant_count, 10),
+      meet_link: sessionLink.rows[0]?.meet_link || null,
     });
   } catch (err) {
     console.error("joinSession error:", err);
@@ -118,7 +133,7 @@ export async function getSessionAttendees(req: AuthRequest, res: Response) {
        JOIN sessions s ON s.id = sa.session_id
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
        WHERE sa.session_id = $2 LIMIT 1`,
-      [userId, id]
+      [userId, id],
     );
     if (membership.rows.length === 0) {
       res.status(403).json({ error: "Not authorized" });
@@ -128,12 +143,60 @@ export async function getSessionAttendees(req: AuthRequest, res: Response) {
       `SELECT u.id, u.name, u.avatar_url FROM session_attendees sa
        JOIN users u ON u.id = sa.user_id
        WHERE sa.session_id = $1`,
-      [id]
+      [id],
     );
     res.json(result.rows);
   } catch (err) {
     console.error("getSessionAttendees error:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function getRecentActivity(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+
+  try {
+    // Combine recent sessions + resources + group joins into one timeline
+    const recentSessions = await pool.query(
+      `SELECT 'session' AS type, s.title, g.name AS group_name, g.id AS group_id, s.created_at AS timestamp
+       FROM sessions s
+       JOIN groups g ON g.id = s.group_id
+       JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+       ORDER BY s.created_at DESC LIMIT 5`,
+      [userId],
+    );
+
+    const recentResources = await pool.query(
+      `SELECT 'resource' AS type, r.title, g.name AS group_name, g.id AS group_id, r.created_at AS timestamp
+       FROM resources r
+       JOIN groups g ON g.id = r.group_id
+       JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $1
+       ORDER BY r.created_at DESC LIMIT 5`,
+      [userId],
+    );
+
+    const recentJoins = await pool.query(
+      `SELECT 'join' AS type, g.name AS title, g.name AS group_name, g.id AS group_id, gm.joined_at AS timestamp
+       FROM group_members gm
+       JOIN groups g ON g.id = gm.group_id
+       WHERE gm.user_id = $1
+       ORDER BY gm.joined_at DESC LIMIT 3`,
+      [userId],
+    );
+
+    const combined = [
+      ...recentSessions.rows,
+      ...recentResources.rows,
+      ...recentJoins.rows,
+    ].sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+    );
+
+    res.json(combined.slice(0, 10));
+  } catch (err) {
+    console.error("getRecentActivity error:", err);
+    res.json([]);
   }
 }
 
@@ -152,7 +215,7 @@ export async function getMySessions(req: AuthRequest, res: Response) {
        JOIN groups g ON g.id = s.group_id
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
        ORDER BY s.start_time ASC`,
-      [userId]
+      [userId],
     );
 
     res.json(result.rows);
