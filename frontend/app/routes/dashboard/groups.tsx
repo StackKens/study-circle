@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useGroupStore } from "../../store/groupStore";
 import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
 import { GroupMembers } from "./group_members";
+import GroupChat from "../../components/GroupChat";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -49,6 +50,7 @@ export default function GroupsPage() {
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
   const [openGroupId, setOpenGroupId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"members" | "chat">("chat");
   const focusedGroupId = searchParams.get("focus");
 
   async function fetchRecommendations() {
@@ -90,8 +92,11 @@ export default function GroupsPage() {
   }
 
   function handleToggleGroup(groupId: string) {
-    // Only one group can be open at a time — clicking the open one closes it
-    setOpenGroupId((current) => (current === groupId ? null : groupId));
+    setOpenGroupId((current) => {
+      if (current === groupId) return null;
+      setActiveTab("chat");
+      return groupId;
+    });
   }
 
   useEffect(() => {
@@ -299,7 +304,37 @@ export default function GroupsPage() {
                 </button>
               </div>
 
-              {user && (
+              {/* Tabs */}
+              <div className="flex gap-1 border-b border-slate-100 pb-0">
+                <button
+                  onClick={() => setActiveTab("chat")}
+                  className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
+                    activeTab === "chat"
+                      ? "bg-teal-50 text-teal-700 border border-b-white border-slate-200"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  Chat
+                </button>
+                <button
+                  onClick={() => setActiveTab("members")}
+                  className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
+                    activeTab === "members"
+                      ? "bg-teal-50 text-teal-700 border border-b-white border-slate-200"
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  Members
+                </button>
+              </div>
+
+              {activeTab === "chat" && (
+                <div className="h-[500px]">
+                  <GroupChat groupId={openGroup.id} groupName={openGroup.name} />
+                </div>
+              )}
+
+              {activeTab === "members" && user && (
                 <GroupMembers
                   groupId={openGroup.id}
                   groupName={openGroup.name}

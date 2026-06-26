@@ -6,9 +6,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { useState } from "react";
 
 import { AuthProvider } from "./context/AuthContext";
 import { AuthModalProvider } from "./context/AuthModalContext";
+import SplashScreen from "./components/SplashScreen";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -71,7 +73,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const [showSplash, setShowSplash] = useState(true);
+  return (
+    <>
+      {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

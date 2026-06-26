@@ -98,7 +98,9 @@ async function getRecentMessages(groupId: string, limit = 50) {
 export function initChat(httpServer: HTTPServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:5173",
+      origin: process.env.NODE_ENV === "production"
+        ? process.env.FRONTEND_URL || "https://studycircle2026.netlify.app"
+        : /^http:\/\/localhost:\d+$/,
       credentials: true,
     },
     // Useful for students on spotty connections — try WebSocket first,

@@ -28,7 +28,7 @@ const allowedOrigins =
         process.env.FRONTEND_URL || "https://studycircle2026.netlify.app",
         /\.netlify\.app$/,
       ]
-    : ["http://localhost:5173"];
+    : [/^http:\/\/localhost:\d+$/];
 
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 
