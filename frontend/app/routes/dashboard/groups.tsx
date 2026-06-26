@@ -344,6 +344,12 @@ export default function GroupsPage() {
 
               <div className="flex flex-wrap gap-2 pt-1">
                 <Link
+                  to={`/dashboard/groups/${openGroup.id}`}
+                  className="text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Group Details
+                </Link>
+                <Link
                   to={`/dashboard/sessions?group=${openGroup.id}`}
                   className="text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 rounded-lg transition-colors"
                 >
