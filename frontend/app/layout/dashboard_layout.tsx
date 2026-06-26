@@ -2,11 +2,26 @@ import { useState, useEffect, useRef } from "react";
 import { Outlet, NavLink, useNavigate, Link } from "react-router";
 import { ProtectedRoute } from "../components/ProtectedRote";
 import { useAuth } from "../context/AuthContext";
+import { useChatStore } from "../store/chatStore";
 
 import {
-  LayoutDashboard, Users, Calendar, User, LogOut, Menu, X,
-  FolderOpen, TrendingUp, UserPlus, Book, Bell, Calendar as CalendarIcon,
-  FileText, UserPlus as UserPlusIcon, Sparkles,
+  LayoutDashboard,
+  Users,
+  Calendar,
+  User,
+  LogOut,
+  Menu,
+  X,
+  FolderOpen,
+  TrendingUp,
+  UserPlus,
+  Book,
+  Bell,
+  MessageCircle,
+  Calendar as CalendarIcon,
+  FileText,
+  UserPlus as UserPlusIcon,
+  Sparkles,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -21,13 +36,27 @@ interface Notification {
 }
 
 const notifIconMap = {
-  session:              { icon: CalendarIcon, bg: "bg-blue-50",   text: "text-blue-500"  },
-  resource:             { icon: FileText,     bg: "bg-teal-50",   text: "text-teal-600"  },
-  friend_request:       { icon: UserPlusIcon, bg: "bg-amber-50",  text: "text-amber-500" },
-  group_recommendation: { icon: Sparkles,     bg: "bg-purple-50", text: "text-purple-500"},
+  session: { icon: CalendarIcon, bg: "bg-blue-50", text: "text-blue-500" },
+  resource: { icon: FileText, bg: "bg-teal-50", text: "text-teal-600" },
+  friend_request: {
+    icon: UserPlusIcon,
+    bg: "bg-amber-50",
+    text: "text-amber-500",
+  },
+  group_recommendation: {
+    icon: Sparkles,
+    bg: "bg-purple-50",
+    text: "text-purple-500",
+  },
 };
 
-function NotificationPanel({ token, onNavigate }: { token: string; onNavigate: (link: string) => void }) {
+function NotificationPanel({
+  token,
+  onNavigate,
+}: {
+  token: string;
+  onNavigate: (link: string) => void;
+}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,24 +65,30 @@ function NotificationPanel({ token, onNavigate }: { token: string; onNavigate: (
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setNotifications(data); })
+      .then((data) => {
+        if (Array.isArray(data)) setNotifications(data);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [token]);
 
-  if (loading) return (
-    <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
-  );
+  if (loading)
+    return (
+      <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+    );
 
-  if (notifications.length === 0) return (
-    <div className="py-10 flex flex-col items-center text-center px-4">
-      <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
-        <Bell size={18} className="text-slate-400" />
+  if (notifications.length === 0)
+    return (
+      <div className="py-10 flex flex-col items-center text-center px-4">
+        <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
+          <Bell size={18} className="text-slate-400" />
+        </div>
+        <p className="text-sm font-medium text-slate-700 mb-1">All caught up</p>
+        <p className="text-xs text-slate-400">
+          No new notifications right now.
+        </p>
       </div>
-      <p className="text-sm font-medium text-slate-700 mb-1">All caught up</p>
-      <p className="text-xs text-slate-400">No new notifications right now.</p>
-    </div>
-  );
+    );
 
   return (
     <div className="divide-y divide-slate-100">
@@ -66,12 +101,16 @@ function NotificationPanel({ token, onNavigate }: { token: string; onNavigate: (
             onClick={() => onNavigate(n.link)}
             className="w-full flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors text-left cursor-pointer"
           >
-            <div className={`w-8 h-8 ${cfg.bg} ${cfg.text} rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}>
+            <div
+              className={`w-8 h-8 ${cfg.bg} ${cfg.text} rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5`}
+            >
               <Icon size={14} />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-700">{n.title}</p>
-              <p className="text-xs text-slate-500 leading-relaxed mt-0.5">{n.message}</p>
+              <p className="text-xs text-slate-500 leading-relaxed mt-0.5">
+                {n.message}
+              </p>
             </div>
           </button>
         );
@@ -128,7 +167,32 @@ function LogoutConfirmModal({
   );
 }
 
-// Bottom tab items for mobile
+/** Chat link with badge for the mobile drawer */
+function MobileDrawerChatLink({ onClick }: { onClick: () => void }) {
+  const count = useChatStore((s) => s.generalMessageCount);
+  return (
+    <NavLink
+      to="/dashboard/chat"
+      onClick={onClick}
+      className={({ isActive }) =>
+        `flex items-center justify-between py-2 text-sm ${
+          isActive
+            ? "text-teal-600 font-semibold"
+            : "text-slate-600 hover:text-teal-600"
+        }`
+      }
+    >
+      <span>Chat</span>
+      {count > 0 && (
+        <span className="inline-flex items-center justify-center min-w-[1.25rem] h-[1.25rem] px-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold leading-none">
+          {count}
+        </span>
+      )}
+    </NavLink>
+  );
+}
+
+// Bottom tab items for mobile — 5 max to avoid overflow on small phones
 const bottomTabs = [
   { name: "Home", path: "/dashboard", icon: LayoutDashboard },
   { name: "Groups", path: "/dashboard/groups", icon: Users },
@@ -140,6 +204,7 @@ const bottomTabs = [
 // Sidebar items for desktop
 const sidebarItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
   { name: "My Groups", path: "/dashboard/groups", icon: Users },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Resources", path: "/dashboard/resources", icon: FolderOpen },
@@ -227,13 +292,18 @@ export default function DashboardLayout() {
                   style={{ animation: "slideUp 0.18s ease" }}
                 >
                   <div className="px-4 py-3 border-b border-slate-100">
-                    <p className="text-xs font-semibold text-slate-700 uppercase tracking-[0.12em]">Notifications</p>
+                    <p className="text-xs font-semibold text-slate-700 uppercase tracking-[0.12em]">
+                      Notifications
+                    </p>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {token && (
                       <NotificationPanel
                         token={token}
-                        onNavigate={(link) => { navigate(link); setShowNotifications(false); }}
+                        onNavigate={(link) => {
+                          navigate(link);
+                          setShowNotifications(false);
+                        }}
                       />
                     )}
                   </div>
@@ -295,7 +365,10 @@ export default function DashboardLayout() {
                 {token && (
                   <NotificationPanel
                     token={token}
-                    onNavigate={(link) => { navigate(link); setMobileNotifOpen(false); }}
+                    onNavigate={(link) => {
+                      navigate(link);
+                      setMobileNotifOpen(false);
+                    }}
                   />
                 )}
               </div>
@@ -305,6 +378,7 @@ export default function DashboardLayout() {
           {/* Mobile drawer (extra links) */}
           {mobileMenuOpen && (
             <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-2 shadow-sm">
+              <MobileDrawerChatLink onClick={() => setMobileMenuOpen(false)} />
               <NavLink
                 to="/dashboard/resources"
                 className="block py-2 text-sm text-slate-600 hover:text-teal-600"

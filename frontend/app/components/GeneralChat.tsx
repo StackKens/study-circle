@@ -1,21 +1,16 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
+import { useChatStore } from "../store/chatStore";
 import { Send, MessageCircle } from "lucide-react";
 
-interface Message {
+interface GeneralMessage {
   id: string;
-  group_id: string;
   sender_id: string;
   sender_name: string;
   sender_university: string;
   content: string;
   created_at: string;
-}
-
-interface GroupChatProps {
-  groupId: string;
-  groupName: string;
 }
 
 function formatTime(iso: string): string {
@@ -40,9 +35,9 @@ function formatDateLabel(iso: string): string {
 }
 
 function groupByDay(
-  messages: Message[],
-): Array<{ label: string; messages: Message[] }> {
-  const groups: Array<{ label: string; messages: Message[] }> = [];
+  messages: GeneralMessage[],
+): Array<{ label: string; messages: GeneralMessage[] }> {
+  const groups: Array<{ label: string; messages: GeneralMessage[] }> = [];
   let currentLabel = "";
   for (const msg of messages) {
     const label = formatDateLabel(msg.created_at);
@@ -112,7 +107,7 @@ function MessageBubble({
   ownName,
   ownId,
 }: {
-  msg: Message;
+  msg: GeneralMessage;
   isOwn: boolean;
   ownName: string;
   ownId: string;
@@ -185,9 +180,9 @@ function StatusDot({
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8080";
 
-export default function GroupChat({ groupId, groupName }: GroupChatProps) {
+export default function GeneralChat() {
   const { user, token } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<GeneralMessage[]>([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<
     "connecting" | "connected" | "disconnected" | "error"
@@ -196,7 +191,6 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const prevGroupId = useRef<string | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -204,6 +198,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
   useEffect(() => {
     if (!token) return;
+
     const socket: Socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket", "polling"],
@@ -214,17 +209,23 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
     socket.on("connect", () => {
       setStatus("connected");
-      socket.emit("join_room", { group_id: groupId });
-      prevGroupId.current = groupId;
+      socket.emit("general_message_history");
     });
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("error"));
-    socket.on("message_history", (history: Message[]) => setMessages(history));
-    socket.on("receive_message", (msg: Message) =>
-      setMessages((prev) => [...prev, msg]),
-    );
+    socket.on("general_message_history", (history: GeneralMessage[]) => {
+      setMessages(history);
+      useChatStore.getState().setGeneralMessageCount(history.length);
+    });
+    socket.on("receive_general_message", (msg: GeneralMessage) => {
+      setMessages((prev) => {
+        const next = [...prev, msg];
+        useChatStore.getState().setGeneralMessageCount(next.length);
+        return next;
+      });
+    });
     socket.on("error", (err: { message: string }) =>
-      console.error("[chat]", err.message),
+      console.error("[general-chat]", err.message),
     );
 
     return () => {
@@ -233,24 +234,13 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     };
   }, [token]);
 
-  useEffect(() => {
-    if (socketRef.current?.connected && prevGroupId.current !== groupId) {
-      setMessages([]);
-      socketRef.current.emit("join_room", { group_id: groupId });
-      prevGroupId.current = groupId;
-    }
-  }, [groupId]);
-
   const sendMessage = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || !socketRef.current?.connected) return;
-    socketRef.current.emit("send_message", {
-      group_id: groupId,
-      content: trimmed,
-    });
+    socketRef.current.emit("send_general_message", { content: trimmed });
     setInput("");
     inputRef.current?.focus();
-  }, [input, groupId]);
+  }, [input]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -277,11 +267,11 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
           </div>
           <div>
             <p className="text-sm font-semibold text-slate-800 leading-tight">
-              {groupName}
+              General Chat
             </p>
             <div className="flex items-center gap-2 mt-0.5">
-              <p className="text-xs text-slate-400">Group chat</p>
-              <span className="inline-flex items-center justify-center min-w-[1.375rem] h-[1.375rem] px-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-600 text-[11px] font-bold leading-none">
+              <p className="text-xs text-slate-400">Everyone on the platform</p>
+              <span className="inline-flex items-center justify-center min-w-[1.375rem] h-[1.375rem] px-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-[11px] font-bold leading-none">
                 {messages.length}
               </span>
             </div>
@@ -302,7 +292,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                 No messages yet
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                Be the first to say something
+                Be the first to say something to everyone
               </p>
             </div>
           </div>
@@ -336,7 +326,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             value={input}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Message the group…"
+            placeholder="Message everyone…"
             disabled={status !== "connected"}
             className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none leading-relaxed max-h-[120px] disabled:opacity-40"
           />

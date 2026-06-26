@@ -93,14 +93,73 @@ async function getRecentMessages(groupId: string, limit = 50) {
   return result.rows.reverse();
 }
 
+// ─── General Chat (platform-wide)
+
+/**
+ * Persist a general chat message.
+ */
+async function saveGeneralMessage(senderId: string, content: string) {
+  const result = await pool.query(
+    `INSERT INTO general_messages (sender_id, content)
+     VALUES ($1, $2)
+     RETURNING id, sender_id, content, created_at`,
+    [senderId, content],
+  );
+  return result.rows[0];
+}
+
+/**
+ * Fetch the last N general messages, newest last (for rendering top→bottom).
+ */
+async function getRecentGeneralMessages(limit = 50) {
+  const result = await pool.query(
+    `SELECT
+       gm.id,
+       gm.content,
+       gm.created_at,
+       gm.sender_id,
+       u.name AS sender_name,
+       u.university AS sender_university
+     FROM general_messages gm
+     JOIN users u ON u.id = gm.sender_id
+     ORDER BY gm.created_at DESC
+     LIMIT $1`,
+    [limit],
+  );
+  return result.rows.reverse();
+}
+
+/**
+ * Auto-create the general_messages table if it doesn't exist yet.
+ */
+async function ensureGeneralTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS general_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_general_messages_created
+        ON general_messages(created_at DESC)
+    `);
+  } catch (err) {
+    console.error("[chat] failed to ensure general_messages table", err);
+  }
+}
+
 // ─── Engine
 
 export function initChat(httpServer: HTTPServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.NODE_ENV === "production"
-        ? process.env.FRONTEND_URL || "https://studycircle2026.netlify.app"
-        : /^http:\/\/localhost:\d+$/,
+      origin:
+        process.env.NODE_ENV === "production"
+          ? process.env.FRONTEND_URL || "https://studycircle2026.netlify.app"
+          : /^http:\/\/localhost:\d+$/,
       credentials: true,
     },
     // Useful for students on spotty connections — try WebSocket first,
@@ -211,6 +270,57 @@ export function initChat(httpServer: HTTPServer) {
           io.to(`group:${group_id}`).emit("receive_message", outgoing);
         } catch (err) {
           console.error("[chat] failed to save message", err);
+          socket.emit("error", { message: "Failed to send message" });
+        }
+      },
+    );
+
+    // ── GENERAL CHAT EVENTS
+    // No room needed — joining is implicit. All authenticated users participate.
+
+    // ensure the table exists on first connection
+    ensureGeneralTable();
+
+    socket.on("general_message_history", async () => {
+      try {
+        const history = await getRecentGeneralMessages();
+        socket.emit("general_message_history", history);
+      } catch (err) {
+        console.error("[chat] failed to load general history", err);
+        socket.emit("general_message_history", []);
+      }
+    });
+
+    socket.on(
+      "send_general_message",
+      async ({ content }: { content: string }) => {
+        if (!content?.trim()) {
+          socket.emit("error", { message: "content required" });
+          return;
+        }
+
+        const trimmed = content.trim();
+
+        if (trimmed.length > 2000) {
+          socket.emit("error", {
+            message: "Message too long (max 2000 chars)",
+          });
+          return;
+        }
+
+        try {
+          const saved = await saveGeneralMessage(user.id, trimmed);
+
+          const outgoing = {
+            ...saved,
+            sender_name: user.name,
+            sender_university: (user as any).university ?? "",
+          };
+
+          // Broadcast to ALL connected sockets (the entire platform)
+          io.emit("receive_general_message", outgoing);
+        } catch (err) {
+          console.error("[chat] failed to save general message", err);
           socket.emit("error", { message: "Failed to send message" });
         }
       },

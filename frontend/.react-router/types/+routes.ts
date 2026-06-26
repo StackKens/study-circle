@@ -48,6 +48,9 @@ type Pages = {
       "groupId": string;
     };
   };
+  "/dashboard/chat": {
+    params: {};
+  };
   "/dashboard/sessions": {
     params: {};
   };
@@ -71,7 +74,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
+    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
   };
   "layout/app_layout.tsx": {
     id: "layout/app_layout";
@@ -107,7 +110,7 @@ type RouteFiles = {
   };
   "layout/dashboard_layout.tsx": {
     id: "layout/dashboard_layout";
-    page: "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
+    page: "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
   };
   "routes/dashboard/index.tsx": {
     id: "routes/dashboard/index";
@@ -124,6 +127,10 @@ type RouteFiles = {
   "routes/dashboard/group_chat.tsx": {
     id: "routes/dashboard/group_chat";
     page: "/dashboard/groups/:groupId/chat";
+  };
+  "routes/dashboard/general_chat.tsx": {
+    id: "routes/dashboard/general_chat";
+    page: "/dashboard/chat";
   };
   "routes/dashboard/sessions.tsx": {
     id: "routes/dashboard/sessions";
@@ -166,6 +173,7 @@ type RouteModules = {
   "routes/dashboard/groups": typeof import("./app/routes/dashboard/groups.tsx");
   "routes/dashboard/group_detail": typeof import("./app/routes/dashboard/group_detail.tsx");
   "routes/dashboard/group_chat": typeof import("./app/routes/dashboard/group_chat.tsx");
+  "routes/dashboard/general_chat": typeof import("./app/routes/dashboard/general_chat.tsx");
   "routes/dashboard/sessions": typeof import("./app/routes/dashboard/sessions.tsx");
   "routes/dashboard/resources": typeof import("./app/routes/dashboard/resources.tsx");
   "routes/dashboard/progress": typeof import("./app/routes/dashboard/progress.tsx");
