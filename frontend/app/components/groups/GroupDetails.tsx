@@ -226,11 +226,8 @@ export default function GroupDetailPage() {
       </Link>
 
       {/* ── Hero card */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        {/* Decorative teal header strip */}
-        <div className="h-2 bg-gradient-to-r from-teal-500 to-teal-400" />
-
-        <div className="p-6 md:p-8">
+      <div className="bg-white rounded-xl border border-slate-200">
+        <div className="p-4 md:p-6">
           {/* Role badge */}
           {isMember && (
             <span
@@ -354,7 +351,7 @@ export default function GroupDetailPage() {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2 shadow-sm"
+            className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-1.5"
           >
             <div
               className={`w-8 h-8 ${stat.bg} rounded-lg flex items-center justify-center`}
@@ -370,7 +367,7 @@ export default function GroupDetailPage() {
       </div>
 
       {/* ── Members list */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-900">
             Members
