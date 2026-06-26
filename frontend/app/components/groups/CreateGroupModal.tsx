@@ -3,7 +3,7 @@ import { X, Loader2, Plus } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useGroupStore } from "../../store/groupStore";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 const PREDEFINED_UNIVERSITIES = [
   "Makerere University",
   "Kyambogo University",

@@ -5,7 +5,7 @@ import { useResourceStore } from "../../store/resourceStore";
 import { useGroupStore } from "../../store/groupStore";
 import type { Resource } from "../../types/resource";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 const CLOUDINARY_CLOUD = "db0oxbeck";
 const CLOUDINARY_PRESET = "p3mbqg5a";
 

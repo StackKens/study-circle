@@ -3,7 +3,7 @@ import { FileText, Link, Video, Download, Search, X, Sparkles, RefreshCw, Loader
 import { useAuth } from "../../context/AuthContext";
 import type { Resource } from "../../types/resource";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 const iconMap: Record<Resource["type"], React.ElementType> = {
   pdf: FileText, link: Link, video: Video, document: FileText,

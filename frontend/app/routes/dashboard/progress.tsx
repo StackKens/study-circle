@@ -3,7 +3,7 @@ import { Users, Calendar, FolderOpen, TrendingUp, Sparkles, Loader2, ArrowRight 
 import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 interface GroupProgress {
   id: string;

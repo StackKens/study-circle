@@ -3,7 +3,7 @@ import { Crown, Loader2, Users } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import type { GroupMember } from "../../types/groupMemeber";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 interface GroupMemberWithUser extends GroupMember {
   userName: string;

@@ -15,7 +15,7 @@ import { useGroupStore } from "../../store/groupStore";
 import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
 import { GroupMembers } from "./group_members";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 interface GroupRecommendation {
   id: string;

@@ -10,7 +10,7 @@ import { useGroupStore } from "../../store/groupStore";
 import { useSessionStore } from "../../store/sessionStore";
 import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 interface UserStats {
   groups: number;

@@ -15,7 +15,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useSessionStore } from "../../store/sessionStore";
 import { useGroupStore } from "../../store/groupStore";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 function formatDateTime(iso: string) {
   const d = new Date(iso);
