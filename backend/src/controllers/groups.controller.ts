@@ -56,6 +56,33 @@ export async function getMyGroups(req: AuthRequest, res: Response) {
   }
 }
 
+export async function getGroup(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  const groupId = req.params.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT g.*,
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) AS total_members,
+        gm.role
+       FROM groups g
+       LEFT JOIN group_members gm ON gm.group_id = g.id AND gm.user_id = $2
+       WHERE g.id = $1`,
+      [groupId, userId],
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Group not found" });
+      return;
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("getGroup error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 export async function getGroupMembers(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
   const groupId = req.params.id;
@@ -73,13 +100,14 @@ export async function getGroupMembers(req: AuthRequest, res: Response) {
 
     const result = await pool.query(
       `SELECT
-        gm.user_id AS "userId",
-        gm.group_id AS "groupId",
+        gm.user_id,
         gm.role,
-        gm.joined_at AS "joinedAt",
-        u.name AS "userName",
-        u.email AS "userEmail",
-        u.avatar_url AS "userAvatar"
+        gm.joined_at,
+        u.name,
+        u.university,
+        u.course,
+        u.year_of_study,
+        u.avatar_url
        FROM group_members gm
        JOIN users u ON u.id = gm.user_id
        WHERE gm.group_id = $1
@@ -92,6 +120,34 @@ export async function getGroupMembers(req: AuthRequest, res: Response) {
     res.json(result.rows);
   } catch (err) {
     console.error("getGroupMembers error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function leaveGroup(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  const groupId = req.params.id;
+
+  try {
+    // Prevent admin from leaving
+    const adminCheck = await pool.query(
+      `SELECT role FROM group_members WHERE user_id = $1 AND group_id = $2`,
+      [userId, groupId],
+    );
+
+    if (adminCheck.rows[0]?.role === "admin") {
+      res.status(400).json({ error: "Admin cannot leave the group" });
+      return;
+    }
+
+    await pool.query(
+      `DELETE FROM group_members WHERE user_id = $1 AND group_id = $2`,
+      [userId, groupId],
+    );
+
+    res.status(200).json({ message: "Left group successfully" });
+  } catch (err) {
+    console.error("leaveGroup error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }
