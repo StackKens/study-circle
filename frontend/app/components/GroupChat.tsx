@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "~/context/AuthContext";
 import { Send, MessageCircle } from "lucide-react";
 
 interface Message {
@@ -19,7 +19,10 @@ interface GroupChatProps {
 }
 
 function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatDateLabel(iso: string): string {
@@ -29,10 +32,16 @@ function formatDateLabel(iso: string): string {
   yesterday.setDate(today.getDate() - 1);
   if (date.toDateString() === today.toDateString()) return "Today";
   if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return date.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+  return date.toLocaleDateString([], {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
 }
 
-function groupByDay(messages: Message[]): Array<{ label: string; messages: Message[] }> {
+function groupByDay(
+  messages: Message[],
+): Array<{ label: string; messages: Message[] }> {
   const groups: Array<{ label: string; messages: Message[] }> = [];
   let currentLabel = "";
   for (const msg of messages) {
@@ -47,12 +56,20 @@ function groupByDay(messages: Message[]): Array<{ label: string; messages: Messa
 }
 
 function initials(name: string): string {
-  return name.split(" ").slice(0, 2).map((n) => n[0]?.toUpperCase() ?? "").join("");
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 const AVATAR_COLORS = [
-  "bg-teal-600", "bg-emerald-600", "bg-cyan-600",
-  "bg-green-700", "bg-teal-700", "bg-emerald-700",
+  "bg-teal-600",
+  "bg-emerald-600",
+  "bg-cyan-600",
+  "bg-green-700",
+  "bg-teal-700",
+  "bg-emerald-700",
 ];
 
 function avatarColor(senderId: string): string {
@@ -65,7 +82,9 @@ function avatarColor(senderId: string): string {
 
 function Avatar({ name, senderId }: { name: string; senderId: string }) {
   return (
-    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${avatarColor(senderId)}`}>
+    <div
+      className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${avatarColor(senderId)}`}
+    >
       {initials(name)}
     </div>
   );
@@ -81,14 +100,19 @@ function DateSeparator({ label }: { label: string }) {
   );
 }
 
-function MessageBubble({ msg, isOwn }: { msg: Message; isOwn: boolean }) {
+function MessageBubble({ msg, isOwn, ownName, ownId }: { msg: Message; isOwn: boolean; ownName: string; ownId: string }) {
   if (isOwn) {
     return (
-      <div className="flex flex-col items-end gap-0.5">
-        <div className="max-w-[75%] sm:max-w-[60%] bg-teal-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words shadow-sm">
-          {msg.content}
+      <div className="flex gap-2 items-end justify-end">
+        <div className="flex flex-col items-end gap-0.5">
+          <div className="max-w-[75%] sm:max-w-[60%] bg-teal-600 text-white px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words shadow-sm">
+            {msg.content}
+          </div>
+          <span className="text-xs text-slate-400 pr-1">{formatTime(msg.created_at)}</span>
         </div>
-        <span className="text-xs text-slate-400 pr-1">{formatTime(msg.created_at)}</span>
+        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold ${avatarColor(ownId)}`}>
+          {initials(ownName)}
+        </div>
       </div>
     );
   }
@@ -97,24 +121,34 @@ function MessageBubble({ msg, isOwn }: { msg: Message; isOwn: boolean }) {
       <Avatar name={msg.sender_name} senderId={msg.sender_id} />
       <div className="flex flex-col gap-0.5 max-w-[75%] sm:max-w-[60%]">
         <div className="flex items-baseline gap-2">
-          <span className="text-xs font-semibold text-slate-700">{msg.sender_name}</span>
-          <span className="text-xs text-slate-400">{msg.sender_university}</span>
+          <span className="text-xs font-semibold text-slate-700">
+            {msg.sender_name}
+          </span>
+          <span className="text-xs text-slate-400">
+            {msg.sender_university}
+          </span>
         </div>
         <div className="bg-white border border-slate-200 text-slate-800 px-4 py-2.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed break-words shadow-sm">
           {msg.content}
         </div>
-        <span className="text-xs text-slate-400 pl-1">{formatTime(msg.created_at)}</span>
+        <span className="text-xs text-slate-400 pl-1">
+          {formatTime(msg.created_at)}
+        </span>
       </div>
     </div>
   );
 }
 
-function StatusDot({ status }: { status: "connecting" | "connected" | "disconnected" | "error" }) {
+function StatusDot({
+  status,
+}: {
+  status: "connecting" | "connected" | "disconnected" | "error";
+}) {
   const map = {
     connecting: { dot: "bg-amber-400 animate-pulse", text: "Connecting…" },
-    connected:  { dot: "bg-emerald-500",             text: "Live"         },
-    disconnected:{ dot: "bg-slate-400",              text: "Reconnecting…"},
-    error:      { dot: "bg-red-500",                 text: "Error"        },
+    connected: { dot: "bg-emerald-500", text: "Live" },
+    disconnected: { dot: "bg-slate-400", text: "Reconnecting…" },
+    error: { dot: "bg-red-500", text: "Error" },
   };
   const { dot, text } = map[status];
   return (
@@ -131,11 +165,13 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const { user, token } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [status, setStatus] = useState<"connecting" | "connected" | "disconnected" | "error">("connecting");
+  const [status, setStatus] = useState<
+    "connecting" | "connected" | "disconnected" | "error"
+  >("connecting");
 
-  const socketRef   = useRef<Socket | null>(null);
-  const bottomRef   = useRef<HTMLDivElement | null>(null);
-  const inputRef    = useRef<HTMLTextAreaElement | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const prevGroupId = useRef<string | null>(null);
 
   useEffect(() => {
@@ -152,14 +188,25 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     });
     socketRef.current = socket;
 
-    socket.on("connect",       () => { setStatus("connected"); socket.emit("join_room", { group_id: groupId }); prevGroupId.current = groupId; });
-    socket.on("disconnect",    () => setStatus("disconnected"));
+    socket.on("connect", () => {
+      setStatus("connected");
+      socket.emit("join_room", { group_id: groupId });
+      prevGroupId.current = groupId;
+    });
+    socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("error"));
     socket.on("message_history", (history: Message[]) => setMessages(history));
-    socket.on("receive_message", (msg: Message) => setMessages((prev) => [...prev, msg]));
-    socket.on("error", (err: { message: string }) => console.error("[chat]", err.message));
+    socket.on("receive_message", (msg: Message) =>
+      setMessages((prev) => [...prev, msg]),
+    );
+    socket.on("error", (err: { message: string }) =>
+      console.error("[chat]", err.message),
+    );
 
-    return () => { socket.disconnect(); socketRef.current = null; };
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
   }, [token]);
 
   useEffect(() => {
@@ -173,13 +220,19 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const sendMessage = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || !socketRef.current?.connected) return;
-    socketRef.current.emit("send_message", { group_id: groupId, content: trimmed });
+    socketRef.current.emit("send_message", {
+      group_id: groupId,
+      content: trimmed,
+    });
     setInput("");
     inputRef.current?.focus();
   }, [input, groupId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -192,7 +245,6 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
   return (
     <div className="flex flex-col h-full bg-slate-50 rounded-xl overflow-hidden border border-slate-200">
-
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-white">
         <div className="flex items-center gap-3">
@@ -200,7 +252,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             <MessageCircle size={15} className="text-teal-600" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-800 leading-tight">{groupName}</p>
+            <p className="text-sm font-semibold text-slate-800 leading-tight">
+              {groupName}
+            </p>
             <p className="text-xs text-slate-400">Group chat</p>
           </div>
         </div>
@@ -215,8 +269,12 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
               <MessageCircle size={22} className="text-teal-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-600">No messages yet</p>
-              <p className="text-xs text-slate-400 mt-1">Be the first to say something</p>
+              <p className="text-sm font-semibold text-slate-600">
+                No messages yet
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Be the first to say something
+              </p>
             </div>
           </div>
         )}
@@ -226,7 +284,13 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             <DateSeparator label={group.label} />
             <div className="space-y-3">
               {group.messages.map((msg) => (
-                <MessageBubble key={msg.id} msg={msg} isOwn={msg.sender_id === user?.id} />
+                <MessageBubble
+                  key={msg.id}
+                  msg={msg}
+                  isOwn={msg.sender_id === user?.id}
+                  ownName={user?.name ?? ""}
+                  ownId={user?.id ?? ""}
+                />
               ))}
             </div>
           </div>
@@ -256,7 +320,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             <Send size={14} className="text-white" />
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-1.5 px-1">Enter to send · Shift+Enter for new line</p>
+        <p className="text-xs text-slate-400 mt-1.5 px-1">
+          Enter to send · Shift+Enter for new line
+        </p>
       </div>
     </div>
   );

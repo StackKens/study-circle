@@ -5,7 +5,6 @@ import {
   Calendar,
   Plus,
   ArrowRight,
-  ChevronUp,
   Sparkles,
   Loader2,
   RefreshCw,
@@ -13,8 +12,6 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useGroupStore } from "../../store/groupStore";
 import { CreateGroupModal } from "../../components/groups/CreateGroupModal";
-import { GroupMembers } from "./group_members";
-import GroupChat from "../../components/GroupChat";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -40,7 +37,7 @@ function formatDate(iso: string) {
 }
 
 export default function GroupsPage() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const { groups, isLoading, fetchGroups } = useGroupStore();
   const [searchParams] = useSearchParams();
   const [showModal, setShowModal] = useState(false);
@@ -49,8 +46,6 @@ export default function GroupsPage() {
   );
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
-  const [openGroupId, setOpenGroupId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"members" | "chat">("chat");
   const focusedGroupId = searchParams.get("focus");
 
   async function fetchRecommendations() {
@@ -104,12 +99,6 @@ export default function GroupsPage() {
     fetchGroups(token);
     fetchRecommendations();
   }, [token]);
-
-  useEffect(() => {
-    if (focusedGroupId) setOpenGroupId(focusedGroupId);
-  }, [focusedGroupId]);
-
-  const openGroup = groups.find((g) => g.id === openGroupId) ?? null;
 
   return (
     <div className="max-w-5xl mx-auto px-1">
@@ -231,18 +220,13 @@ export default function GroupsPage() {
           {/* 2-column grid of summary cards */}
           <div className="grid md:grid-cols-2 gap-4">
             {groups.map((group) => {
-              const isOpen = openGroupId === group.id;
               const isFocused = focusedGroupId === group.id;
 
               return (
                 <div
                   key={group.id}
                   className={`bg-white rounded-xl border p-5 hover:border-slate-300 hover:shadow-sm transition-all flex flex-col ${
-                    isOpen
-                      ? "border-teal-400 ring-2 ring-teal-100 shadow-sm"
-                      : isFocused
-                        ? "border-teal-300 ring-2 ring-teal-100"
-                        : "border-slate-200"
+                    isFocused ? "border-teal-300 ring-2 ring-teal-100" : "border-slate-200"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -267,103 +251,17 @@ export default function GroupsPage() {
                     <div className="flex items-center gap-1.5 text-xs text-slate-400">
                       <Calendar size={11} /> {formatDate(group.created_at)}
                     </div>
-                    <button
-                      onClick={() => handleToggleGroup(group.id)}
-                      className="text-sm text-teal-600 font-semibold flex items-center gap-1 hover:gap-1.5 transition-all cursor-pointer"
+                    <Link
+                      to={`/dashboard/groups/${group.id}`}
+                      className="text-sm text-teal-600 font-semibold flex items-center gap-1 hover:gap-1.5 transition-all"
                     >
-                      {isOpen ? "Close" : "Open"}
-                      {isOpen ? (
-                        <ChevronUp size={13} />
-                      ) : (
-                        <ArrowRight size={13} />
-                      )}
-                    </button>
+                      Open <ArrowRight size={13} />
+                    </Link>
                   </div>
                 </div>
               );
             })}
           </div>
-
-          {/* Expanded panel — renders BELOW the grid, full width, only for the open group */}
-          {openGroup && (
-            <div className="bg-white rounded-xl border border-teal-300 ring-2 ring-teal-100 p-5 space-y-4 transition-all">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-slate-900">
-                    {openGroup.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {openGroup.subject} · {openGroup.university}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setOpenGroupId(null)}
-                  className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <ChevronUp size={13} /> Close
-                </button>
-              </div>
-
-              {/* Tabs */}
-              <div className="flex gap-1 border-b border-slate-100 pb-0">
-                <button
-                  onClick={() => setActiveTab("chat")}
-                  className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
-                    activeTab === "chat"
-                      ? "bg-teal-50 text-teal-700 border border-b-white border-slate-200"
-                      : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  Chat
-                </button>
-                <button
-                  onClick={() => setActiveTab("members")}
-                  className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors cursor-pointer ${
-                    activeTab === "members"
-                      ? "bg-teal-50 text-teal-700 border border-b-white border-slate-200"
-                      : "text-slate-400 hover:text-slate-600"
-                  }`}
-                >
-                  Members
-                </button>
-              </div>
-
-              {activeTab === "chat" && (
-                <div className="h-[500px]">
-                  <GroupChat groupId={openGroup.id} groupName={openGroup.name} />
-                </div>
-              )}
-
-              {activeTab === "members" && user && (
-                <GroupMembers
-                  groupId={openGroup.id}
-                  groupName={openGroup.name}
-                  currentUserRole={openGroup.role || "member"}
-                />
-              )}
-
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Link
-                  to={`/dashboard/groups/${openGroup.id}`}
-                  className="text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  Group Details
-                </Link>
-                <Link
-                  to={`/dashboard/sessions?group=${openGroup.id}`}
-                  className="text-xs font-semibold bg-teal-600 hover:bg-teal-500 text-white px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  View Sessions
-                </Link>
-                <Link
-                  to={`/dashboard/resources?group=${openGroup.id}`}
-                  className="text-xs font-semibold border border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 px-3 py-1.5 rounded-lg transition-colors"
-                >
-                  View Resources
-                </Link>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         <div className="text-center py-20 bg-white rounded-xl border border-slate-200">

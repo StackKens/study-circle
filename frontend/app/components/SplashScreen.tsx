@@ -14,7 +14,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
       style={{
-        background: "linear-gradient(135deg, #0d1f17 0%, #1b4332 60%, #2d6a4f 100%)",
+        background: "linear-gradient(135deg, #0d1f17 0%, #111f18 60%, #162b20 100%)",
         opacity: phase === "exit" ? 0 : 1,
         transition: phase === "exit" ? "opacity 0.5s ease" : "opacity 0.4s ease",
       }}
@@ -62,19 +62,19 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <div className="relative">
           <div className="w-20 h-20 rounded-2xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center backdrop-blur-sm shadow-2xl">
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <circle cx="14" cy="14" r="5" fill="#4ade80" opacity="0.9" />
-              <circle cx="26" cy="14" r="5" fill="#2dd4bf" opacity="0.9" />
-              <circle cx="20" cy="26" r="5" fill="#34d399" opacity="0.9" />
-              <line x1="14" y1="14" x2="26" y2="14" stroke="#74c69d" strokeWidth="1.5" opacity="0.6" />
-              <line x1="14" y1="14" x2="20" y2="26" stroke="#74c69d" strokeWidth="1.5" opacity="0.6" />
-              <line x1="26" y1="14" x2="20" y2="26" stroke="#74c69d" strokeWidth="1.5" opacity="0.6" />
+              <circle cx="14" cy="14" r="5" fill="#5eead4" opacity="0.65" />
+              <circle cx="26" cy="14" r="5" fill="#99f6e4" opacity="0.65" />
+              <circle cx="20" cy="26" r="5" fill="#6ee7b7" opacity="0.65" />
+              <line x1="14" y1="14" x2="26" y2="14" stroke="#3d6b58" strokeWidth="1.5" opacity="0.5" />
+              <line x1="14" y1="14" x2="20" y2="26" stroke="#3d6b58" strokeWidth="1.5" opacity="0.5" />
+              <line x1="26" y1="14" x2="20" y2="26" stroke="#3d6b58" strokeWidth="1.5" opacity="0.5" />
             </svg>
           </div>
           {/* Sparkle dots */}
           {[
-            { top: -8, right: -8, delay: "0.8s", size: 6, color: "#4ade80" },
-            { bottom: -6, left: -10, delay: "1.1s", size: 4, color: "#2dd4bf" },
-            { top: 4, left: -14, delay: "1.4s", size: 5, color: "#34d399" },
+            { top: -8, right: -8, delay: "0.8s", size: 4, color: "#5eead4" },
+            { bottom: -6, left: -10, delay: "1.1s", size: 3, color: "#99f6e4" },
+            { top: 4, left: -14, delay: "1.4s", size: 3, color: "#6ee7b7" },
           ].map((s, i) => (
             <div
               key={i}
@@ -94,12 +94,12 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <div className="text-center">
           <h1 className="text-4xl font-display font-bold tracking-tight"
             style={{ color: "#f0f4f1", letterSpacing: "-0.02em" }}>
-            Study<span style={{ color: "#4ade80" }}>Circle</span>
+            Study<span style={{ color: "#6ee7b7" }}>Circle</span>
           </h1>
           <p
             className="text-sm font-sans mt-2 tracking-widest uppercase"
             style={{
-              color: "#74c69d",
+              color: "#4b7c68",
               opacity: phase === "hold" || phase === "exit" ? 1 : 0,
               transform: phase === "hold" || phase === "exit" ? "translateY(0)" : "translateY(6px)",
               transition: "opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s",
@@ -118,7 +118,7 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
         <div
           className="h-full rounded-full"
           style={{
-            background: "linear-gradient(90deg, #4ade80, #2dd4bf)",
+            background: "linear-gradient(90deg, #5eead4, #6ee7b7)",
             width: phase === "enter" ? "0%" : phase === "hold" ? "80%" : "100%",
             transition: phase === "enter"
               ? "width 0.6s ease"
