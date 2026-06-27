@@ -24,6 +24,9 @@ export default function VerifyEmailPage() {
   >("idle");
   const [error, setError] = useState("");
   const [resending, setResending] = useState(false);
+  const [verificationLink, setVerificationLink] = useState<string>(
+    (location.state?.verificationLink as string) || ""
+  );
 
   useEffect(() => {
     if (tokenFromUrl) {
@@ -45,10 +48,13 @@ export default function VerifyEmailPage() {
     setResending(true);
     setError("");
     try {
-      await resendVerification(email);
+      const res = await resendVerification(email);
       setStatus("idle");
       setError("");
-      alert("Verification email sent to " + email);
+      if (res?.verificationLink) {
+        setVerificationLink(res.verificationLink);
+      }
+      alert("Verification email request processed.");
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to resend verification",
@@ -121,6 +127,21 @@ export default function VerifyEmailPage() {
               <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm">
                 <p className="text-red-800 font-medium mb-1">Error</p>
                 <p className="text-red-700">{error}</p>
+              </div>
+            )}
+
+            {verificationLink && status !== "verified" && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900 space-y-2">
+                <p className="font-semibold text-amber-800">Instant Verification (Failsafe)</p>
+                <p className="text-xs text-amber-700">
+                  If the verification email did not arrive or mail services are unconfigured, click the link below to verify instantly:
+                </p>
+                <a
+                  href={verificationLink}
+                  className="inline-flex items-center gap-1.5 text-teal-600 hover:text-teal-700 font-semibold underline"
+                >
+                  Verify Account Now <ArrowRight size={14} />
+                </a>
               </div>
             )}
           </div>

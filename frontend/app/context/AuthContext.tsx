@@ -17,11 +17,11 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<any>;
   logout: () => void;
   updateUser: (updated: Partial<User>) => void;
   verifyEmail: (token: string) => Promise<void>;
-  resendVerification: (email: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<any>;
 }
 
 interface RegisterData {
@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("auth_token", data.token);
     setToken(data.token);
     setUser(data.user);
+    return data;
   }
 
   async function verifyEmail(emailToken: string) {
@@ -129,10 +130,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
+    const data = await res.json();
     if (!res.ok) {
-      const data = await res.json();
       throw new Error(data.error || "Failed to resend verification");
     }
+    return data;
   }
 
   function updateUser(updated: Partial<User>) {

@@ -296,10 +296,11 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
 
     setIsLoading(true);
     try {
+      let regRes: any = null;
       if (type === "login") {
         await login(email, password);
       } else {
-        await registerApi({
+        regRes = await registerApi({
           name,
           email,
           password,
@@ -317,7 +318,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
       }
       onClose();
       navigate(type === "register" ? "/verify-email" : "/dashboard", {
-        state: type === "register" ? { email } : undefined,
+        state: type === "register" ? { email, verificationLink: regRes?.verificationLink } : undefined,
       });
     } catch (err) {
       setErrors({

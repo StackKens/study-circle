@@ -3,7 +3,11 @@ import nodemailer from "nodemailer";
 
 const SENDGRID_KEY = process.env.SENDGRID_API_KEY || "";
 const FROM_EMAIL = process.env.FROM_EMAIL || "no-reply@studycircle.app";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL =
+  process.env.FRONTEND_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://studycircle2026.netlify.app"
+    : "http://localhost:5173");
 
 const SMTP_HOST = process.env.SMTP_HOST?.trim();
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
@@ -30,13 +34,16 @@ if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
       user: SMTP_USER,
       pass: SMTP_PASS,
     },
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 }
 
 export async function sendVerificationEmail(email: string, token: string) {
   const verifyUrl = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(
     token,
-  )}`;
+  )}&email=${encodeURIComponent(email)}`;
 
   const subject = "Verify your StudyCircle account";
   const text = `Verify your email by visiting: ${verifyUrl}`;

@@ -108,11 +108,20 @@ export async function register(req: Request, res: Response) {
     );
 
     // Send verification email (best-effort)
+    let emailSent = false;
     try {
       await sendVerificationEmail(user.email, token);
+      emailSent = true;
     } catch (e) {
       console.error("Failed to send verification email", e);
     }
+
+    const FRONTEND_URL =
+      process.env.FRONTEND_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://studycircle2026.netlify.app"
+        : "http://localhost:5173");
+    const verificationLink = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
 
     // Create JWT token for immediate use (still unverified)
     const jwtToken = jwt.sign(
@@ -127,7 +136,7 @@ export async function register(req: Request, res: Response) {
       { expiresIn: "7d" }, // token expires in 7 days
     );
 
-    res.status(201).json({ token: jwtToken, user });
+    res.status(201).json({ token: jwtToken, user, verificationLink, emailSent });
   } catch (err: any) {
     console.error("=== REGISTER ERROR ===");
     console.error("Message:", err.message);
@@ -240,12 +249,22 @@ export async function resendVerification(req: Request, res: Response) {
       `INSERT INTO email_verifications (token, user_id, expires_at) VALUES ($1, $2, $3)`,
       [token, user.id, expiresAt],
     );
+    let emailSent = false;
     try {
       await sendVerificationEmail(email.toLowerCase(), token);
+      emailSent = true;
     } catch (e) {
       console.error("Failed to send verification email", e);
     }
-    res.json({ ok: true });
+
+    const FRONTEND_URL =
+      process.env.FRONTEND_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://studycircle2026.netlify.app"
+        : "http://localhost:5173");
+    const verificationLink = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email.toLowerCase())}`;
+
+    res.json({ ok: true, verificationLink, emailSent });
   } catch (err) {
     console.error("resendVerification error", err);
     res.status(500).json({ error: "Internal server error" });
