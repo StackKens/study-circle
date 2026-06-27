@@ -71,11 +71,11 @@ export async function register(req: Request, res: Response) {
     // Hash the password — NEVER stored plain text
     const password_hash = await bcrypt.hash(password, 12);
 
-    // Insert new user
+    // Insert new user — verified by default for this version
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, university, course, year_of_study)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, name, email, university, course, year_of_study, created_at`,
+      `INSERT INTO users (name, email, password_hash, university, course, year_of_study, is_email_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+       RETURNING id, name, email, university, course, year_of_study, created_at, is_email_verified`,
       [
         name,
         email.toLowerCase(),
@@ -100,31 +100,7 @@ export async function register(req: Request, res: Response) {
       );
     }
 
-    // Create email verification token
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-    await pool.query(
-      `INSERT INTO email_verifications (token, user_id, expires_at) VALUES ($1, $2, $3)`,
-      [token, user.id, expiresAt],
-    );
-
-    // Send verification email (best-effort)
-    let emailSent = false;
-    try {
-      await sendVerificationEmail(user.email, token);
-      emailSent = true;
-    } catch (e) {
-      console.error("Failed to send verification email", e);
-    }
-
-    const FRONTEND_URL =
-      process.env.FRONTEND_URL ||
-      (process.env.NODE_ENV === "production"
-        ? "https://studycircle-2026.netlify.app"
-        : "http://localhost:5173");
-    const verificationLink = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
-
-    // Create JWT token for immediate use (still unverified)
+    // Create JWT token for immediate use (verified)
     const jwtToken = jwt.sign(
       {
         id: user.id,
@@ -137,7 +113,7 @@ export async function register(req: Request, res: Response) {
       { expiresIn: "7d" }, // token expires in 7 days
     );
 
-    res.status(201).json({ token: jwtToken, user, verificationLink, emailSent });
+    res.status(201).json({ token: jwtToken, user });
   } catch (err: any) {
     console.error("=== REGISTER ERROR ===");
     console.error("Message:", err.message);

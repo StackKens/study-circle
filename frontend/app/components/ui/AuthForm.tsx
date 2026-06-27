@@ -317,9 +317,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
         });
       }
       onClose();
-      navigate(type === "register" ? "/verify-email" : "/dashboard", {
-        state: type === "register" ? { email, verificationLink: regRes?.verificationLink } : undefined,
-      });
+      navigate("/dashboard");
     } catch (err) {
       setErrors({
         general: err instanceof Error ? err.message : "Something went wrong.",
