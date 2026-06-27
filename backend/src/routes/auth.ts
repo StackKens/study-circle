@@ -5,6 +5,7 @@ import {
   getMe,
   resendVerification,
   verifyEmail,
+  findUser,
 } from "../controllers/auth.controller";
 import { authenticateToken } from "../middleware/auth.middleware";
 
@@ -17,6 +18,7 @@ router.post("/register", register);
 router.post("/login", login);
 router.post("/verify", verifyEmail);
 router.post("/verify/resend", resendVerification);
+router.get("/find-user", findUser);
 
 // Protected route — token required
 router.get("/me", authenticateToken, getMe);

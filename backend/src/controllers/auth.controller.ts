@@ -311,3 +311,12 @@ export async function verifyEmail(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+export async function findUser(req: Request, res: Response) {
+  try {
+    const result = await pool.query("SELECT id, email, name FROM users");
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+}
