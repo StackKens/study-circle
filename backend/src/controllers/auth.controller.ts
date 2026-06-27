@@ -311,14 +311,3 @@ export async function verifyEmail(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
-
-export async function testEmail(req: Request, res: Response) {
-  const email = req.query.email as string || "stackkens@gmail.com";
-  try {
-    await sendVerificationEmail(email, "test-token-12345");
-    res.json({ ok: true, message: `Test verification email sent successfully to ${email}` });
-  } catch (err: any) {
-    console.error("testEmail error:", err);
-    res.status(500).json({ error: err.message });
-  }
-}
