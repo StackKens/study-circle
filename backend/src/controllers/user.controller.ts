@@ -12,7 +12,12 @@ export async function getHomeStats(req: Request, res: Response) {
       liveGroupResult,
       nextSessionResult,
     ] = await Promise.all([
-      pool.query(`SELECT COUNT(*) FROM users`),
+      pool.query(`
+        SELECT COALESCE(COUNT(DISTINCT sa.user_id), 0)::int AS count
+        FROM session_attendees sa
+        JOIN sessions s ON s.id = sa.session_id
+        WHERE s.start_time <= NOW() AND s.end_time >= NOW()
+      `),
       pool.query(
         `SELECT id, name, university, course, year_of_study, avatar_url
          FROM users ORDER BY created_at DESC LIMIT 5`

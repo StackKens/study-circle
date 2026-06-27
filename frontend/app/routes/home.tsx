@@ -248,7 +248,7 @@ export default function Home() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
   useEffect(() => {
-    fetch(`${API_URL}/users/home-stats`)
+    fetch(`${API_URL}/users/home-stats?t=${Date.now()}`)
       .then((r) => r.json())
       .then((data) => setStats(data))
       .catch(console.error);

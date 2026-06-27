@@ -286,6 +286,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
     }
 
     setErrors(e);
+
     return Object.keys(e).length === 0;
   }
 
