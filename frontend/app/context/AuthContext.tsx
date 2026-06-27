@@ -9,6 +9,7 @@ interface User {
   year_of_study: number;
   created_at: string;
   avatar_url?: string;
+  is_email_verified?: boolean;
 }
 
 interface AuthContextType {
@@ -19,6 +20,8 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (updated: Partial<User>) => void;
+  verifyEmail: (token: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
 }
 
 interface RegisterData {
@@ -28,6 +31,7 @@ interface RegisterData {
   university: string;
   course: string;
   year_of_study: number;
+  role?: "student" | "instructor";
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,6 +100,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
   }
 
+  async function verifyEmail(emailToken: string) {
+    const res = await fetch(`${API_URL}/auth/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: emailToken }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Verification failed");
+    }
+    // Refresh user data to get updated is_email_verified
+    if (token) {
+      const userData = await fetchMe(token);
+      if (userData) setUser(userData);
+    }
+  }
+
+  async function resendVerification(email: string) {
+    const res = await fetch(`${API_URL}/auth/verify/resend`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || "Failed to resend verification");
+    }
+  }
+
   function updateUser(updated: Partial<User>) {
     setUser((prev) => (prev ? { ...prev, ...updated } : prev));
   }
@@ -108,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout, updateUser }}
+      value={{ user, token, isLoading, login, register, logout, updateUser, verifyEmail, resendVerification }}
     >
       {children}
     </AuthContext.Provider>

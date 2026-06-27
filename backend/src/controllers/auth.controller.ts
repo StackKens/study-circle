@@ -1,11 +1,13 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import pool from "../db/index";
+import { sendVerificationEmail } from "../services/email.service";
 
 //  Register
 export async function register(req: Request, res: Response) {
-  const { name, email, password, university, course, year_of_study } = req.body;
+  const { name, email, password, university, course, year_of_study, role } = req.body;
 
   // Basic validation — never trust the client
   if (
@@ -56,8 +58,31 @@ export async function register(req: Request, res: Response) {
 
     const user = result.rows[0];
 
-    // Create JWT token
-    const token = jwt.sign(
+    // If registering as instructor, create an instructors row (profile can be updated later)
+    if (role === "instructor") {
+      await pool.query(
+        `INSERT INTO instructors (user_id) VALUES ($1) ON CONFLICT DO NOTHING`,
+        [user.id],
+      );
+    }
+
+    // Create email verification token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    await pool.query(
+      `INSERT INTO email_verifications (token, user_id, expires_at) VALUES ($1, $2, $3)`,
+      [token, user.id, expiresAt],
+    );
+
+    // Send verification email (best-effort)
+    try {
+      await sendVerificationEmail(user.email, token);
+    } catch (e) {
+      console.error("Failed to send verification email", e);
+    }
+
+    // Create JWT token for immediate use (still unverified)
+    const jwtToken = jwt.sign(
       {
         id: user.id,
         email: user.email,
@@ -69,7 +94,7 @@ export async function register(req: Request, res: Response) {
       { expiresIn: "7d" }, // token expires in 7 days
     );
 
-    res.status(201).json({ token, user });
+    res.status(201).json({ token: jwtToken, user });
   } catch (err: any) {
     console.error("=== REGISTER ERROR ===");
     console.error("Message:", err.message);
@@ -135,7 +160,7 @@ export async function login(req: Request, res: Response) {
 export async function getMe(req: any, res: Response) {
   try {
     const result = await pool.query(
-      `SELECT id, name, email, university, course, year_of_study, created_at, avatar_url
+      `SELECT id, name, email, university, course, year_of_study, created_at, avatar_url, is_email_verified
        FROM users WHERE id = $1`,
       [req.user.id],
     );
@@ -148,6 +173,91 @@ export async function getMe(req: any, res: Response) {
     res.json(result.rows[0]);
   } catch (err) {
     console.error("Get me error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Resend verification email
+export async function resendVerification(req: Request, res: Response) {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400).json({ error: "Email is required" });
+    return;
+  }
+
+  try {
+    const userRes = await pool.query(
+      `SELECT id, is_email_verified FROM users WHERE email = $1`,
+      [email.toLowerCase()],
+    );
+    if (userRes.rows.length === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    const user = userRes.rows[0];
+    if (user.is_email_verified) {
+      res.status(400).json({ error: "Email already verified" });
+      return;
+    }
+
+    // Create new token
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await pool.query(
+      `INSERT INTO email_verifications (token, user_id, expires_at) VALUES ($1, $2, $3)`,
+      [token, user.id, expiresAt],
+    );
+    try {
+      await sendVerificationEmail(email.toLowerCase(), token);
+    } catch (e) {
+      console.error("Failed to send verification email", e);
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("resendVerification error", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// Verify email token
+export async function verifyEmail(req: Request, res: Response) {
+  const { token } = req.body;
+  if (!token) {
+    res.status(400).json({ error: "Token is required" });
+    return;
+  }
+
+  try {
+    const v = await pool.query(
+      `SELECT user_id, expires_at FROM email_verifications WHERE token = $1`,
+      [token],
+    );
+    if (v.rows.length === 0) {
+      res.status(400).json({ error: "Invalid or expired token" });
+      return;
+    }
+    const { user_id, expires_at } = v.rows[0];
+    if (new Date(expires_at).getTime() < Date.now()) {
+      await pool.query(
+        `DELETE FROM email_verifications WHERE token = $1`,
+        [token],
+      );
+      res.status(400).json({ error: "Token expired" });
+      return;
+    }
+
+    await pool.query(
+      `UPDATE users SET is_email_verified = TRUE WHERE id = $1`,
+      [user_id],
+    );
+    await pool.query(
+      `DELETE FROM email_verifications WHERE token = $1`,
+      [token],
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("verifyEmail error", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }

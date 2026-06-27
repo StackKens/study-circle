@@ -79,6 +79,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
   const [university, setUniversity] = useState("");
   const [course, setCourse] = useState("");
   const [yearOfStudy, setYearOfStudy] = useState<number>(1);
+  const [role, setRole] = useState<"student" | "instructor">("student");
 
   // Custom input toggles and temporary values
   const [showCustomUniversityInput, setShowCustomUniversityInput] =
@@ -167,10 +168,15 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           university: getFinalUniversity(),
           course: getFinalCourse(),
           year_of_study: yearOfStudy,
+          role,
         });
       }
       onClose();
-      navigate("/dashboard");
+      if (type === "register") {
+        navigate("/verify-email", { state: { email } });
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setErrors({
         general: err instanceof Error ? err.message : "Something went wrong.",
@@ -214,6 +220,32 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {type === "register" && (
           <>
+            {/* Role toggle */}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRole("student")}
+                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                  role === "student"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                As Student
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("instructor")}
+                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                  role === "instructor"
+                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                As Instructor
+              </button>
+            </div>
+
             {/* Full name */}
             <Field label="Full name" error={errors.name}>
               <input

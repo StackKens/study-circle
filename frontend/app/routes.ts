@@ -15,6 +15,7 @@ export default [
     route("privacy", "routes/legal/privacy.tsx"),
     route("terms", "routes/legal/terms.tsx"),
     route("guidelines", "routes/legal/guidelines.tsx"),
+    route("verify-email", "routes/verify-email.tsx"),
   ]),
 
   // Private routes, protected by a component

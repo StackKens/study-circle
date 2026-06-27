@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, getMe } from "../controllers/auth.controller";
+import { register, login, getMe, resendVerification, verifyEmail } from "../controllers/auth.controller";
 import { authenticateToken } from "../middleware/auth.middleware";
 
 const router = Router();
@@ -9,6 +9,8 @@ const router = Router();
 // Public routes — no token needed
 router.post("/register", register);
 router.post("/login", login);
+router.post("/verify", verifyEmail);
+router.post("/verify/resend", resendVerification);
 
 // Protected route — token required
 router.get("/me", authenticateToken, getMe);

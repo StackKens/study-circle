@@ -32,6 +32,9 @@ type Pages = {
   "/guidelines": {
     params: {};
   };
+  "/verify-email": {
+    params: {};
+  };
   "/dashboard": {
     params: {};
   };
@@ -74,11 +77,11 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
+    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/profile";
   };
   "layout/app_layout.tsx": {
     id: "layout/app_layout";
-    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines";
+    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email";
   };
   "routes/home.tsx": {
     id: "routes/home";
@@ -107,6 +110,10 @@ type RouteFiles = {
   "routes/legal/guidelines.tsx": {
     id: "routes/legal/guidelines";
     page: "/guidelines";
+  };
+  "routes/verify-email.tsx": {
+    id: "routes/verify-email";
+    page: "/verify-email";
   };
   "layout/dashboard_layout.tsx": {
     id: "layout/dashboard_layout";
@@ -168,6 +175,7 @@ type RouteModules = {
   "routes/legal/privacy": typeof import("./app/routes/legal/privacy.tsx");
   "routes/legal/terms": typeof import("./app/routes/legal/terms.tsx");
   "routes/legal/guidelines": typeof import("./app/routes/legal/guidelines.tsx");
+  "routes/verify-email": typeof import("./app/routes/verify-email.tsx");
   "layout/dashboard_layout": typeof import("./app/layout/dashboard_layout.tsx");
   "routes/dashboard/index": typeof import("./app/routes/dashboard/index.tsx");
   "routes/dashboard/groups": typeof import("./app/routes/dashboard/groups.tsx");
