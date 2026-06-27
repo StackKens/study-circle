@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import url from "url";
 import pool from "../db/index";
 import { sendVerificationEmail } from "../services/email.service";
 
@@ -310,4 +311,8 @@ export async function verifyEmail(req: Request, res: Response) {
     console.error("verifyEmail error", err);
     res.status(500).json({ error: "Internal server error" });
   }
+}
+
+export async function dbInfo(req: Request, res: Response) {
+  res.json({ dbUrl: process.env.DATABASE_URL || "" });
 }
