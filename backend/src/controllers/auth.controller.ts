@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import url from "url";
 import pool from "../db/index";
 import { sendVerificationEmail } from "../services/email.service";
 
@@ -309,5 +310,20 @@ export async function verifyEmail(req: Request, res: Response) {
   } catch (err) {
     console.error("verifyEmail error", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+export async function dbInfo(req: Request, res: Response) {
+  try {
+    const dbUrl = process.env.DATABASE_URL || "";
+    const parsed = url.parse(dbUrl);
+    res.json({
+      host: parsed.hostname,
+      port: parsed.port,
+      database: parsed.pathname?.replace("/", ""),
+      username: parsed.auth?.split(":")[0],
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 }
