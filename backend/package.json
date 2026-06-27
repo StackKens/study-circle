@@ -1,6 +1,6 @@
 {
   "name": "study-circle",
-  "version": "1.0.0",
+  "version": "1.10.0",
   "description": "study-circle-backend",
   "main": "index.js",
   "scripts": {
