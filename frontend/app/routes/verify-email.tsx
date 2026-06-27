@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import { Mail, CheckCircle, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import {
+  Mail,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  ArrowRight,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 export default function VerifyEmailPage() {
@@ -9,10 +15,13 @@ export default function VerifyEmailPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  const email = (location.state?.email as string) || searchParams.get("email") || "";
+  const email =
+    (location.state?.email as string) || searchParams.get("email") || "";
   const tokenFromUrl = searchParams.get("token");
 
-  const [status, setStatus] = useState<"idle" | "verifying" | "verified" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "verifying" | "verified" | "error"
+  >("idle");
   const [error, setError] = useState("");
   const [resending, setResending] = useState(false);
 
@@ -41,7 +50,9 @@ export default function VerifyEmailPage() {
       setError("");
       alert("Verification email sent to " + email);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to resend verification");
+      setError(
+        err instanceof Error ? err.message : "Failed to resend verification",
+      );
     } finally {
       setResending(false);
     }
@@ -66,15 +77,15 @@ export default function VerifyEmailPage() {
               {status === "verified"
                 ? "Email Verified!"
                 : status === "error"
-                ? "Verification Failed"
-                : "Verify Your Email"}
+                  ? "Verification Failed"
+                  : "Verify Your Email"}
             </h1>
             <p className="text-sm text-slate-500 mt-2">
               {status === "verified"
                 ? "Your account is now active. Redirecting to dashboard..."
                 : status === "error"
-                ? "There was a problem verifying your email"
-                : `We've sent a confirmation link to ${email}`}
+                  ? "There was a problem verifying your email"
+                  : `We've sent a confirmation link to ${email}`}
             </p>
           </div>
 
@@ -84,7 +95,8 @@ export default function VerifyEmailPage() {
               <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 text-sm text-teal-800">
                 <p className="font-medium mb-2">Check your inbox</p>
                 <p>
-                  Click the verification link in the email to activate your account. The link expires in 24 hours.
+                  Click the verification link in the email to activate your
+                  account. The link expires in 24 hours.
                 </p>
               </div>
             )}
@@ -99,7 +111,9 @@ export default function VerifyEmailPage() {
             {status === "verified" && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
                 <p className="font-medium">Success!</p>
-                <p>Your email has been verified and your account is ready to use.</p>
+                <p>
+                  Your email has been verified and your account is ready to use.
+                </p>
               </div>
             )}
 

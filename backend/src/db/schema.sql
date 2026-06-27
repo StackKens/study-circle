@@ -10,6 +10,13 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS instructors (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  bio TEXT,
+  department VARCHAR(255),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Groups table
 CREATE TABLE IF NOT EXISTS groups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -32,6 +32,8 @@ interface RegisterData {
   course: string;
   year_of_study: number;
   role?: "student" | "instructor";
+  bio?: string;
+  department?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -111,9 +113,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(data.error || "Verification failed");
     }
     // Refresh user data to get updated is_email_verified
-    if (token) {
-      const userData = await fetchMe(token);
-      if (userData) setUser(userData);
+    const currentToken = token || localStorage.getItem("auth_token");
+    if (currentToken) {
+      const userData = await fetchMe(currentToken);
+      if (userData) {
+        setUser(userData);
+        setToken(currentToken);
+      }
     }
   }
 
@@ -141,7 +147,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, register, logout, updateUser, verifyEmail, resendVerification }}
+      value={{
+        user,
+        token,
+        isLoading,
+        login,
+        register,
+        logout,
+        updateUser,
+        verifyEmail,
+        resendVerification,
+      }}
     >
       {children}
     </AuthContext.Provider>

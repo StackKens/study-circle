@@ -91,8 +91,10 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
   // UI states
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [instructorDepartment, setInstructorDepartment] = useState("");
+  const [instructorBio, setInstructorBio] = useState("");
   const [errors, setErrors] = useState<
-    Partial<AuthFormData & { general: string }>
+    Partial<AuthFormData & { general: string; department: string; bio: string }>
   >({});
 
   // Helper: get final value for backend
@@ -130,7 +132,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
 
   // Validation
   function validate(): boolean {
-    const newErrors: Partial<AuthFormData & { general: string }> = {};
+    const newErrors: Partial<AuthFormData & { general: string; department: string; bio: string }> = {};
 
     if (!email.trim()) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(email))
@@ -145,6 +147,14 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
       if (!university)
         newErrors.university = "Please select or add your university";
       if (!course) newErrors.course = "Please select or add your course";
+      if (role === "instructor") {
+        if (!instructorDepartment.trim()) {
+          newErrors.department = "Department is required";
+        }
+        if (!instructorBio.trim()) {
+          newErrors.bio = "A short bio is required";
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -169,6 +179,12 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           course: getFinalCourse(),
           year_of_study: yearOfStudy,
           role,
+          ...(role === "instructor"
+            ? {
+                department: instructorDepartment.trim(),
+                bio: instructorBio.trim(),
+              }
+            : {}),
         });
       }
       onClose();
@@ -257,6 +273,29 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                 autoComplete="name"
               />
             </Field>
+
+            {role === "instructor" && (
+              <div className="grid grid-cols-1 gap-4">
+                <Field label="Department" error={errors.department}>
+                  <input
+                    type="text"
+                    value={instructorDepartment}
+                    onChange={(e) => setInstructorDepartment(e.target.value)}
+                    placeholder="e.g. Computer Science"
+                    className={inputClass(errors.department)}
+                  />
+                </Field>
+
+                <Field label="Short bio" error={errors.bio}>
+                  <textarea
+                    value={instructorBio}
+                    onChange={(e) => setInstructorBio(e.target.value)}
+                    placeholder="Tell learners about your expertise"
+                    className={`${inputClass(errors.bio)} min-h-[90px] resize-y`}
+                  />
+                </Field>
+              </div>
+            )}
 
             {/* University & Year row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

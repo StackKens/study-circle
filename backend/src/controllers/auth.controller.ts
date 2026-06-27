@@ -7,7 +7,17 @@ import { sendVerificationEmail } from "../services/email.service";
 
 //  Register
 export async function register(req: Request, res: Response) {
-  const { name, email, password, university, course, year_of_study, role } = req.body;
+  const {
+    name,
+    email,
+    password,
+    university,
+    course,
+    year_of_study,
+    role,
+    bio,
+    department,
+  } = req.body;
 
   // Basic validation — never trust the client
   if (
@@ -58,11 +68,15 @@ export async function register(req: Request, res: Response) {
 
     const user = result.rows[0];
 
-    // If registering as instructor, create an instructors row (profile can be updated later)
+    // If registering as instructor, create an instructors row with profile details
     if (role === "instructor") {
       await pool.query(
-        `INSERT INTO instructors (user_id) VALUES ($1) ON CONFLICT DO NOTHING`,
-        [user.id],
+        `INSERT INTO instructors (user_id, bio, department)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (user_id) DO UPDATE SET
+           bio = EXCLUDED.bio,
+           department = EXCLUDED.department`,
+        [user.id, bio?.trim() || null, department?.trim() || null],
       );
     }
 
@@ -238,10 +252,9 @@ export async function verifyEmail(req: Request, res: Response) {
     }
     const { user_id, expires_at } = v.rows[0];
     if (new Date(expires_at).getTime() < Date.now()) {
-      await pool.query(
-        `DELETE FROM email_verifications WHERE token = $1`,
-        [token],
-      );
+      await pool.query(`DELETE FROM email_verifications WHERE token = $1`, [
+        token,
+      ]);
       res.status(400).json({ error: "Token expired" });
       return;
     }
@@ -250,10 +263,9 @@ export async function verifyEmail(req: Request, res: Response) {
       `UPDATE users SET is_email_verified = TRUE WHERE id = $1`,
       [user_id],
     );
-    await pool.query(
-      `DELETE FROM email_verifications WHERE token = $1`,
-      [token],
-    );
+    await pool.query(`DELETE FROM email_verifications WHERE token = $1`, [
+      token,
+    ]);
 
     res.json({ ok: true });
   } catch (err) {
