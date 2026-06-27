@@ -177,7 +177,7 @@ export default function ResourcesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-1">
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
           <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
             Materials

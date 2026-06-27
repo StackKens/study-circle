@@ -12,6 +12,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router";
 import { useSessionStore } from "../../store/sessionStore";
 import { useGroupStore } from "../../store/groupStore";
 import type { Session } from "../../types/session";
@@ -230,7 +231,7 @@ export default function SessionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-1">
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
         <div>
           <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
             Schedule
@@ -251,6 +252,23 @@ export default function SessionsPage() {
           </button>
         )}
       </div>
+
+      {!isAdmin && (
+        <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-xl text-sm text-teal-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between animate-fade-in">
+          <div>
+            <p className="font-semibold">Want to schedule a study session?</p>
+            <p className="text-xs text-teal-700 mt-0.5">
+              You must first create a study group (or be a group admin) to host a session.
+            </p>
+          </div>
+          <Link
+            to="/dashboard/groups"
+            className="inline-flex w-fit items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold cursor-pointer shrink-0 transition"
+          >
+            Go to Groups
+          </Link>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-20 text-slate-400 text-sm">
@@ -624,6 +642,9 @@ export default function SessionsPage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                   Google Meet link
                 </label>
+                <p className="text-xs text-slate-400 mb-1.5">
+                  Please create a meeting link (e.g., from Google Meet or Zoom) and paste it below.
+                </p>
                 <input
                   type="url"
                   value={formData.meet_link}
