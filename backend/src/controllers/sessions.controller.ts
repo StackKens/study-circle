@@ -139,10 +139,9 @@ export async function getSessionAttendees(req: AuthRequest, res: Response) {
 
   try {
     const membership = await pool.query(
-      `SELECT 1 FROM session_attendees sa
-       JOIN sessions s ON s.id = sa.session_id
+      `SELECT 1 FROM sessions s
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
-       WHERE sa.session_id = $2 LIMIT 1`,
+       WHERE s.id = $2 LIMIT 1`,
       [userId, id],
     );
     if (membership.rows.length === 0) {

@@ -14,8 +14,15 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useSessionStore } from "../../store/sessionStore";
 import { useGroupStore } from "../../store/groupStore";
+import type { Session } from "../../types/session";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
+interface SessionAttendee {
+  id: string;
+  name: string;
+  avatar_url?: string | null;
+}
 
 function formatDateTime(iso: string) {
   const d = new Date(iso);
@@ -63,6 +70,11 @@ export default function SessionsPage() {
 
   const [joining, setJoining] = useState<string | null>(null);
   const [joinError, setJoinError] = useState("");
+  const [selectedPastSession, setSelectedPastSession] =
+    useState<Session | null>(null);
+  const [attendees, setAttendees] = useState<SessionAttendee[]>([]);
+  const [attendeesLoading, setAttendeesLoading] = useState(false);
+  const [attendeesError, setAttendeesError] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,6 +180,28 @@ export default function SessionsPage() {
     }
   };
 
+  const handleViewPastSession = async (session: Session) => {
+    setSelectedPastSession(session);
+    setAttendees([]);
+    setAttendeesError("");
+    setAttendeesLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/sessions/${session.id}/attendees`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load attendees");
+      setAttendees(data);
+    } catch (err) {
+      setAttendeesError(
+        err instanceof Error ? err.message : "Failed to load attendees",
+      );
+    } finally {
+      setAttendeesLoading(false);
+    }
+  };
+
   const getJoinAction = (session: {
     start_time: string;
     end_time: string;
@@ -246,7 +280,7 @@ export default function SessionsPage() {
                       key={session.id}
                       className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-sm transition-all"
                     >
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2.5 mb-2">
                             <h3 className="font-semibold text-slate-900">
@@ -274,7 +308,7 @@ export default function SessionsPage() {
                             {session.group_name}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:flex-shrink-0">
                           {session.meet_link &&
                             getStatus(session.start_time, session.end_time) !==
                               "completed" && (
@@ -282,7 +316,7 @@ export default function SessionsPage() {
                                 href={session.meet_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                                className="min-h-10 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap"
                               >
                                 <Video size={13} /> Join Meet
                               </a>
@@ -292,7 +326,9 @@ export default function SessionsPage() {
                             disabled={
                               joining === session.id || joinAction.disabled
                             }
-                            className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                            className={`min-h-10 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed whitespace-nowrap ${
+                              session.meet_link ? "" : "col-span-2"
+                            }`}
                           >
                             {joining === session.id ? (
                               <Loader2 size={13} className="animate-spin" />
@@ -354,7 +390,10 @@ export default function SessionsPage() {
                           {date} at {time} · {session.group_name}
                         </p>
                       </div>
-                      <button className="text-xs text-teal-600 font-semibold hover:text-teal-700 cursor-pointer">
+                      <button
+                        onClick={() => handleViewPastSession(session)}
+                        className="text-xs text-teal-600 font-semibold hover:text-teal-700 cursor-pointer"
+                      >
                         View →
                       </button>
                     </div>
@@ -364,6 +403,113 @@ export default function SessionsPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* Past Session Details Modal */}
+      {selectedPastSession && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-start justify-between p-5 border-b border-slate-100">
+              <div>
+                <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
+                  Session details
+                </p>
+                <h2 className="text-lg font-bold text-slate-800">
+                  {selectedPastSession.title}
+                </h2>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedPastSession(null);
+                  setAttendees([]);
+                  setAttendeesError("");
+                }}
+                className="p-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={18} className="text-slate-500" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <p className="text-xs text-slate-400 mb-1">Started</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {formatDateTime(selectedPastSession.start_time).date} at{" "}
+                    {formatDateTime(selectedPastSession.start_time).time}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <p className="text-xs text-slate-400 mb-1">Ended</p>
+                  <p className="text-sm font-semibold text-slate-800">
+                    {formatDateTime(selectedPastSession.end_time).date} at{" "}
+                    {formatDateTime(selectedPastSession.end_time).time}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs text-slate-400 mb-1">Study group</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {selectedPastSession.group_name}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-400 mb-1">Attendance</p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {selectedPastSession.participant_count} students
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
+                  Attendees
+                </p>
+                {attendeesLoading ? (
+                  <div className="text-sm text-slate-400 py-6 text-center">
+                    Loading attendees...
+                  </div>
+                ) : attendeesError ? (
+                  <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                    {attendeesError}
+                  </p>
+                ) : attendees.length > 0 ? (
+                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                    {attendees.map((attendee) => (
+                      <div
+                        key={attendee.id}
+                        className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"
+                      >
+                        {attendee.avatar_url ? (
+                          <img
+                            src={attendee.avatar_url}
+                            alt={attendee.name}
+                            className="w-9 h-9 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-xs">
+                            {attendee.name.charAt(0)}
+                          </div>
+                        )}
+                        <p className="text-sm font-medium text-slate-700">
+                          {attendee.name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm text-slate-400 py-6 text-center rounded-xl border border-slate-100">
+                    No attendees were recorded for this session.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Create Session Modal */}
