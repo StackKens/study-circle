@@ -50,10 +50,12 @@ function timeAgo(iso: string) {
 // Avatar pill — teal gradient with initials
 function Avatar({
   name,
+  url,
   size = "md",
   isAdmin,
 }: {
   name: string;
+  url?: string | null;
   size?: "sm" | "md" | "lg";
   isAdmin?: boolean;
 }) {
@@ -64,11 +66,19 @@ function Avatar({
   };
   return (
     <div className="relative flex-shrink-0">
-      <div
-        className={`${sizes[size]} rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-semibold text-white`}
-      >
-        {getInitials(name)}
-      </div>
+      {url ? (
+        <img
+          src={url}
+          alt={name}
+          className={`${sizes[size]} rounded-full object-cover border border-slate-100`}
+        />
+      ) : (
+        <div
+          className={`${sizes[size]} rounded-full bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center font-semibold text-white`}
+        >
+          {getInitials(name)}
+        </div>
+      )}
       {isAdmin && (
         <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-amber-400 rounded-full flex items-center justify-center">
           <Crown size={9} className="text-amber-900" />
@@ -412,7 +422,11 @@ export default function GroupDetailPage() {
                 key={member.user_id}
                 className="flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50 transition-colors"
               >
-                <Avatar name={member.name} isAdmin={member.role === "admin"} />
+                <Avatar
+                  name={member.name}
+                  url={member.avatar_url}
+                  isAdmin={member.role === "admin"}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-800 truncate flex items-center gap-2">
                     {member.name}

@@ -257,15 +257,20 @@ export function initChat(httpServer: HTTPServer) {
         }
 
         try {
+          // Fetch fresh user details from DB to ensure avatar/name updates are instant
+          const userRes = await pool.query(
+            "SELECT name, university, avatar_url FROM users WHERE id = $1",
+            [user.id]
+          );
+          const freshUser = userRes.rows[0] || user;
+
           const saved = await saveMessage(group_id, user.id, trimmed);
 
           const outgoing = {
             ...saved,
-            sender_name: user.name,
-            // University is on the user object from the JWT — avoids a JOIN
-            // on every message. If you ever update university, re-issue the token.
-            sender_university: (user as any).university ?? "",
-            sender_avatar_url: (user as any).avatar_url ?? null,
+            sender_name: freshUser.name,
+            sender_university: freshUser.university ?? "",
+            sender_avatar_url: freshUser.avatar_url ?? null,
           };
 
           // Broadcast to all sockets in the room, including the sender
@@ -312,13 +317,20 @@ export function initChat(httpServer: HTTPServer) {
         }
 
         try {
+          // Fetch fresh user details from DB to ensure avatar/name updates are instant
+          const userRes = await pool.query(
+            "SELECT name, university, avatar_url FROM users WHERE id = $1",
+            [user.id]
+          );
+          const freshUser = userRes.rows[0] || user;
+
           const saved = await saveGeneralMessage(user.id, trimmed);
 
           const outgoing = {
             ...saved,
-            sender_name: user.name,
-            sender_university: (user as any).university ?? "",
-            sender_avatar_url: (user as any).avatar_url ?? null,
+            sender_name: freshUser.name,
+            sender_university: freshUser.university ?? "",
+            sender_avatar_url: freshUser.avatar_url ?? null,
           };
 
           // Broadcast to ALL connected sockets (the entire platform)
