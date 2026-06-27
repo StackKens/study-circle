@@ -311,35 +311,3 @@ export async function verifyEmail(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
-
-export async function cleanDb(req: Request, res: Response) {
-  const usersToDelete = [
-    'alex@gmail.com',
-    'okello@gmail.com',
-    'alexx@gmail.com',
-    'kent@gmail.com',
-    'trex@gmail.com',
-    'tonny@gmail.com'
-  ];
-  try {
-    // Delete resources
-    await pool.query(
-      'DELETE FROM resources WHERE uploaded_by IN (SELECT id FROM users WHERE LOWER(email) = ANY($1::text[]))',
-      [usersToDelete.map(e => e.toLowerCase())]
-    );
-    // Delete sessions
-    await pool.query(
-      'DELETE FROM sessions WHERE created_by IN (SELECT id FROM users WHERE LOWER(email) = ANY($1::text[]))',
-      [usersToDelete.map(e => e.toLowerCase())]
-    );
-    // Delete users
-    const result = await pool.query(
-      'DELETE FROM users WHERE LOWER(email) = ANY($1::text[]) RETURNING id, email, name',
-      [usersToDelete.map(e => e.toLowerCase())]
-    );
-    res.json({ ok: true, deleted: result.rows });
-  } catch (err: any) {
-    console.error("cleanDb error:", err);
-    res.status(500).json({ error: err.message });
-  }
-}
