@@ -116,7 +116,11 @@ export default function SessionsPage() {
       setError("All fields are required");
       return;
     }
-    if (!/^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(formData.meet_link.trim())) {
+    if (
+      !/^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(
+        formData.meet_link.trim(),
+      )
+    ) {
       setError("Paste a valid Google Meet link");
       return;
     }
@@ -314,11 +318,27 @@ export default function SessionsPage() {
                               "completed" && (
                               <a
                                 href={session.meet_link}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (joining === session.id) return;
+                                  handleJoin(session.id);
+                                }}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="min-h-10 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap"
+                                className={`min-h-10 flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${
+                                  joining === session.id
+                                    ? "bg-blue-300 cursor-not-allowed"
+                                    : "bg-blue-600 hover:bg-blue-500 text-white"
+                                }`}
+                                aria-disabled={joining === session.id}
                               >
-                                <Video size={13} /> Join Meet
+                                {joining === session.id ? (
+                                  <Loader2 size={13} className="animate-spin" />
+                                ) : (
+                                  <>
+                                    <Video size={13} /> Join Meet
+                                  </>
+                                )}
                               </a>
                             )}
                           <button
