@@ -312,7 +312,3 @@ export async function verifyEmail(req: Request, res: Response) {
     res.status(500).json({ error: "Internal server error" });
   }
 }
-
-export async function dbInfo(req: Request, res: Response) {
-  res.json({ dbUrl: process.env.DATABASE_URL || "" });
-}
