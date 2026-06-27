@@ -8,9 +8,11 @@ import {
   Loader2,
   Plus,
   X,
+  Pencil,
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
+
 interface AuthFormData {
   name: string;
   email: string;
@@ -49,6 +51,7 @@ const PREDEFINED_COURSES = [
   "Electrical Engineering",
 ];
 
+//  Reusable field wrapper
 function Field({
   label,
   error,
@@ -67,12 +70,183 @@ function Field({
   );
 }
 
+//  Shared input class
+const inputClass = (hasError?: string) =>
+  `w-full px-4 py-2.5 text-sm rounded-xl border bg-slate-50 text-slate-800 outline-none transition-all duration-150 focus:bg-white focus:ring-2 focus:ring-teal-500/20 ${
+    hasError
+      ? "border-red-400 focus:border-red-400"
+      : "border-slate-200 focus:border-teal-500"
+  }`;
+
+//  CustomSelectField ─
+/**
+ * Unified component for "pick from list OR type your own".
+ * State machine:
+ *   "select"  → shows <select> + "Add yours" button
+ *   "typing"  → shows text input + Add / Cancel
+ *   "custom"  → shows teal badge with Edit button
+ *
+ * Predefined picks stay in "select" mode (value shown via the <select>).
+ */
+type SelectMode = "select" | "typing" | "custom";
+
+function CustomSelectField({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder,
+  addLabel,
+  typingPlaceholder,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder: string;
+  addLabel: string;
+  typingPlaceholder: string;
+  error?: string;
+}) {
+  const isCustom = value !== "" && !options.includes(value);
+  const [mode, setMode] = useState<SelectMode>(isCustom ? "custom" : "select");
+  const [draft, setDraft] = useState(isCustom ? value : "");
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return;
+    onChange(trimmed);
+    setMode("custom");
+  };
+
+  const startEdit = () => {
+    setDraft(value);
+    onChange(""); // clear so validation doesn't think it's set while editing
+    setMode("typing");
+  };
+
+  const cancelTyping = () => {
+    // If we were editing an existing custom value, restore it
+    if (draft.trim() && isCustom) {
+      onChange(draft.trim());
+      setMode("custom");
+    } else {
+      setDraft("");
+      setMode("select");
+    }
+  };
+
+  const clearCustom = () => {
+    onChange("");
+    setDraft("");
+    setMode("select");
+  };
+
+  return (
+    <Field label={label} error={error}>
+      {/* ── SELECT mode ── */}
+      {mode === "select" && (
+        <div className="flex flex-col gap-2">
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className={inputClass(error)}
+          >
+            <option value="" disabled>
+              {placeholder}
+            </option>
+            {options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDraft("");
+              setMode("typing");
+            }}
+            className="inline-flex w-fit items-center cursor-pointer gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-2 text-xs font-medium text-teal-700 transition hover:border-teal-400 hover:bg-teal-100"
+          >
+            <Plus size={13} />
+            {addLabel}
+          </button>
+        </div>
+      )}
+
+      {/* ── TYPING mode ── */}
+      {mode === "typing" && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <input
+            type="text"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.preventDefault(), commit())
+            }
+            placeholder={typingPlaceholder}
+            autoFocus
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+          />
+          <div className="mt-2.5 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={commit}
+              disabled={!draft.trim()}
+              className="rounded-lg bg-teal-600 px-4 py-2 cursor-pointer text-xs font-semibold text-white transition hover:bg-teal-700 disabled:opacity-40"
+            >
+              Confirm
+            </button>
+            <button
+              type="button"
+              onClick={cancelTyping}
+              className="inline-flex items-center gap-1 cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X size={12} />
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── CUSTOM badge mode ── */}
+      {mode === "custom" && (
+        <div className="flex items-center justify-between rounded-xl border border-teal-200 bg-teal-50 px-3.5 py-3">
+          <span className="text-sm font-semibold text-teal-800 truncate pr-2">
+            {value}
+          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={startEdit}
+              className="inline-flex items-center gap-1 cursor-pointer rounded-lg border border-teal-200 bg-white px-2.5 py-1.5 text-xs font-medium text-teal-700 transition hover:bg-teal-100"
+            >
+              <Pencil size={11} />
+              Edit
+            </button>
+            <button
+              type="button"
+              onClick={clearCustom}
+              className="inline-flex items-center cursor-pointer  rounded-lg border border-slate-200 bg-white p-1.5 text-slate-400 transition hover:bg-red-50 hover:border-red-200 hover:text-red-500"
+              aria-label="Remove"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+    </Field>
+  );
+}
+
+//  Main AuthForm
 export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
   const { login, register: registerApi } = useAuth();
-
   const navigate = useNavigate();
 
-  // Base fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,15 +254,6 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
   const [course, setCourse] = useState("");
   const [yearOfStudy, setYearOfStudy] = useState<number>(1);
   const [role, setRole] = useState<"student" | "instructor">("student");
-
-  // Custom input toggles and temporary values
-  const [showCustomUniversityInput, setShowCustomUniversityInput] =
-    useState(false);
-  const [customUniversityName, setCustomUniversityName] = useState("");
-  const [showCustomCourseInput, setShowCustomCourseInput] = useState(false);
-  const [customCourseName, setCustomCourseName] = useState("");
-
-  // UI states
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [instructorDepartment, setInstructorDepartment] = useState("");
@@ -97,73 +262,35 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
     Partial<AuthFormData & { general: string; department: string; bio: string }>
   >({});
 
-  // Helper: get final value for backend
-  const getFinalUniversity = () => {
-    if (university && !PREDEFINED_UNIVERSITIES.includes(university))
-      return university;
-    return university;
-  };
-
-  const getFinalCourse = () => {
-    if (course && !PREDEFINED_COURSES.includes(course)) return course;
-    return course;
-  };
-
-  // Add custom university
-  const handleAddCustomUniversity = () => {
-    if (customUniversityName.trim()) {
-      setUniversity(customUniversityName.trim());
-      setShowCustomUniversityInput(false);
-      setCustomUniversityName("");
-      if (errors.university)
-        setErrors((prev) => ({ ...prev, university: undefined }));
-    }
-  };
-
-  // Add custom course
-  const handleAddCustomCourse = () => {
-    if (customCourseName.trim()) {
-      setCourse(customCourseName.trim());
-      setShowCustomCourseInput(false);
-      setCustomCourseName("");
-      if (errors.course) setErrors((prev) => ({ ...prev, course: undefined }));
-    }
-  };
-
-  // Validation
   function validate(): boolean {
-    const newErrors: Partial<AuthFormData & { general: string; department: string; bio: string }> = {};
+    const e: typeof errors = {};
 
-    if (!email.trim()) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(email))
-      newErrors.email = "Enter a valid email";
+    if (!email.trim()) e.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = "Enter a valid email";
 
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6)
-      newErrors.password = "Must be at least 6 characters";
+    if (!password) e.password = "Password is required";
+    else if (password.length < 6) e.password = "Must be at least 6 characters";
 
     if (type === "register") {
-      if (!name.trim()) newErrors.name = "Your name is required";
-      if (!university)
-        newErrors.university = "Please select or add your university";
-      if (!course) newErrors.course = "Please select or add your course";
+      if (!name.trim()) e.name = "Your name is required";
+      if (!university) e.university = "Please select or add your university";
+
+      if (role === "student" && !course)
+        e.course = "Please select or add your course";
+
       if (role === "instructor") {
-        if (!instructorDepartment.trim()) {
-          newErrors.department = "Department is required";
-        }
-        if (!instructorBio.trim()) {
-          newErrors.bio = "A short bio is required";
-        }
+        if (!instructorDepartment.trim())
+          e.department = "Department is required";
+        if (!instructorBio.trim()) e.bio = "A short bio is required";
       }
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   }
 
-  // Submit handler
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(ev: React.FormEvent) {
+    ev.preventDefault();
     if (!validate()) return;
 
     setIsLoading(true);
@@ -175,9 +302,9 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           name,
           email,
           password,
-          university: getFinalUniversity(),
-          course: getFinalCourse(),
-          year_of_study: yearOfStudy,
+          university,
+          course,
+          year_of_study: role === "student" ? yearOfStudy : 1,
           role,
           ...(role === "instructor"
             ? {
@@ -188,11 +315,9 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
         });
       }
       onClose();
-      if (type === "register") {
-        navigate("/verify-email", { state: { email } });
-      } else {
-        navigate("/dashboard");
-      }
+      navigate(type === "register" ? "/verify-email" : "/dashboard", {
+        state: type === "register" ? { email } : undefined,
+      });
     } catch (err) {
       setErrors({
         general: err instanceof Error ? err.message : "Something went wrong.",
@@ -201,18 +326,12 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
       setIsLoading(false);
     }
   }
-  const inputClass = (hasError?: string) =>
-    `w-full px-4 py-2.5 text-sm rounded-xl border bg-slate-50 text-slate-800 outline-none transition-all duration-150 focus:bg-white focus:ring-2 focus:ring-teal-500/20 ${
-      hasError
-        ? "border-red-400 focus:border-red-400"
-        : "border-slate-200 focus:border-teal-500"
-    }`;
 
   return (
     <div className="w-full">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shadow-md shadow-teal-600/30">
           <BookOpen size={18} className="text-white" />
         </div>
         <div>
@@ -237,29 +356,21 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
         {type === "register" && (
           <>
             {/* Role toggle */}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setRole("student")}
-                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                  role === "student"
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                As Student
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole("instructor")}
-                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                  role === "instructor"
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                As Instructor
-              </button>
+            <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+              {(["student", "instructor"] as const).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRole(r)}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer capitalize ${
+                    role === r
+                      ? "bg-teal-600 text-white shadow-md shadow-teal-600/25"
+                      : "text-slate-600 hover:text-slate-800"
+                  }`}
+                >
+                  As {r.charAt(0).toUpperCase() + r.slice(1)}
+                </button>
+              ))}
             </div>
 
             {/* Full name */}
@@ -268,14 +379,15 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder="Your full name"
                 className={inputClass(errors.name)}
                 autoComplete="name"
               />
             </Field>
 
+            {/* Instructor-only fields */}
             {role === "instructor" && (
-              <div className="grid grid-cols-1 gap-4">
+              <>
                 <Field label="Department" error={errors.department}>
                   <input
                     type="text"
@@ -285,7 +397,6 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                     className={inputClass(errors.department)}
                   />
                 </Field>
-
                 <Field label="Short bio" error={errors.bio}>
                   <textarea
                     value={instructorBio}
@@ -294,210 +405,66 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
                     className={`${inputClass(errors.bio)} min-h-[90px] resize-y`}
                   />
                 </Field>
-              </div>
+              </>
             )}
 
-            {/* University & Year row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* University field */}
-              <Field label="University" error={errors.university}>
-                {!university || PREDEFINED_UNIVERSITIES.includes(university) ? (
-                  <>
-                    <select
-                      value={university}
-                      onChange={(e) => setUniversity(e.target.value)}
-                      className={inputClass(errors.university)}
-                    >
-                      <option value="" disabled>
-                        Select university
-                      </option>
-                      {PREDEFINED_UNIVERSITIES.map((uni) => (
-                        <option key={uni} value={uni}>
-                          {uni}
-                        </option>
-                      ))}
-                    </select>
-                    {!showCustomUniversityInput ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowCustomUniversityInput(true)}
-                        className="mt-2 text-sm text-teal-600 cursor-pointer hover:text-teal-700 flex items-center gap-1"
-                      >
-                        <Plus size={14} /> Add your university if not listed
-                      </button>
-                    ) : (
-                      <div className="mt-2 flex gap-2 items-center">
-                        <input
-                          type="text"
-                          value={customUniversityName}
-                          onChange={(e) =>
-                            setCustomUniversityName(e.target.value)
-                          }
-                          placeholder="e.g. Uganda Martyrs University"
-                          className={`flex-1 px-3 py-2 text-sm rounded-lg border ${inputClass("")} border-slate-200`}
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddCustomUniversity}
-                          className="px-3 py-2 bg-teal-600  cursor-pointer text-white text-sm rounded-lg hover:bg-teal-700"
-                        >
-                          Add
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowCustomUniversityInput(false);
-                            setCustomUniversityName("");
-                          }}
-                          className="p-2 text-slate-400 cursor-pointer hover:text-slate-600"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center justify-between p-3 bg-teal-50 border border-teal-200 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <span className="text-teal-700 font-medium">
-                        {university}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const currentCustom = university;
-                        setUniversity("");
-                        setShowCustomUniversityInput(true);
-                        setCustomUniversityName(currentCustom);
-                      }}
-                      className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                      </svg>
-                      Edit
-                    </button>
-                  </div>
-                )}
-              </Field>
+            {/* University row */}
+            <div
+              className={`grid gap-4 ${role === "student" ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}
+            >
+              <CustomSelectField
+                label="University"
+                value={university}
+                onChange={(v) => {
+                  setUniversity(v);
+                  if (v && errors.university)
+                    setErrors((p) => ({ ...p, university: undefined }));
+                }}
+                options={PREDEFINED_UNIVERSITIES}
+                placeholder="Select university"
+                addLabel="My university isn't listed"
+                typingPlaceholder="e.g. Uganda Martyrs University"
+                error={errors.university}
+              />
 
-              {/* Year of study */}
-              <Field label="Year of study">
-                <select
-                  value={yearOfStudy}
-                  onChange={(e) => setYearOfStudy(Number(e.target.value))}
-                  className={inputClass()}
-                >
-                  {YEAR_OPTIONS.map((y) => (
-                    <option key={y} value={y}>
-                      Year {y}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-
-            {/* Course field */}
-            <Field label="Course / Programme" error={errors.course}>
-              {!course || PREDEFINED_COURSES.includes(course) ? (
-                <>
+              {role === "student" && (
+                <Field label="Year of study">
                   <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    className={inputClass(errors.course)}
+                    value={yearOfStudy}
+                    onChange={(e) => setYearOfStudy(Number(e.target.value))}
+                    className={inputClass()}
                   >
-                    <option value="" disabled>
-                      Select course
-                    </option>
-                    {PREDEFINED_COURSES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
+                    {YEAR_OPTIONS.map((y) => (
+                      <option key={y} value={y}>
+                        Year {y}
                       </option>
                     ))}
                   </select>
-                  {!showCustomCourseInput ? (
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomCourseInput(true)}
-                      className="mt-2 text-sm cursor-pointer text-teal-600 hover:text-teal-700 flex items-center gap-1"
-                    >
-                      <Plus size={14} /> Add your course if not listed
-                    </button>
-                  ) : (
-                    <div className="mt-2 flex gap-2 items-center">
-                      <input
-                        type="text"
-                        value={customCourseName}
-                        onChange={(e) => setCustomCourseName(e.target.value)}
-                        placeholder="e.g. Biomedical Engineering"
-                        className={`flex-1 px-3 py-2 text-sm rounded-lg border ${inputClass("")} border-slate-200`}
-                        autoFocus
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddCustomCourse}
-                        className="px-3 py-2 bg-teal-600 cursor-pointer text-white text-sm rounded-lg hover:bg-teal-700"
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowCustomCourseInput(false);
-                          setCustomCourseName("");
-                        }}
-                        className="p-2 text-slate-400 cursor-pointer hover:text-slate-600"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center justify-between p-3 bg-teal-50 border border-teal-200 rounded-xl">
-                  <div className="flex items-center gap-2">
-                    <span className="text-teal-700 font-medium">{course}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const currentCustom = course;
-                      setCourse("");
-                      setShowCustomCourseInput(true);
-                      setCustomCourseName(currentCustom);
-                    }}
-                    className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                    </svg>
-                    Edit
-                  </button>
-                </div>
+                </Field>
               )}
-            </Field>
+            </div>
+
+            {/* Course — students only */}
+            {role === "student" && (
+              <CustomSelectField
+                label="Course / Programme"
+                value={course}
+                onChange={(v) => {
+                  setCourse(v);
+                  if (v && errors.course)
+                    setErrors((p) => ({ ...p, course: undefined }));
+                }}
+                options={PREDEFINED_COURSES}
+                placeholder="Select course"
+                addLabel="My course isn't listed"
+                typingPlaceholder="e.g. Biomedical Engineering"
+                error={errors.course}
+              />
+            )}
           </>
         )}
 
-        {/* Shared fields: email and password */}
+        {/* Email */}
         <Field label="Email address" error={errors.email}>
           <input
             type="email"
@@ -509,6 +476,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           />
         </Field>
 
+        {/* Password */}
         <Field label="Password" error={errors.password}>
           <div className="relative">
             <input
@@ -524,7 +492,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-slate-600 transition-colors"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -535,22 +503,23 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           <div className="flex justify-end -mt-2">
             <button
               type="button"
-              className="text-xs text-teal-600 hover:text-teal-500 font-medium"
+              className="text-xs text-teal-600 hover:text-teal-500 font-medium transition-colors"
             >
               Forgot password?
             </button>
           </div>
         )}
 
+        {/* Submit */}
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex items-center cursor-pointer justify-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white py-3 rounded-xl font-semibold text-sm transition-all duration-150 mt-1"
+          className="w-full flex items-center cursor-pointer justify-center gap-2 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white py-3 rounded-xl font-semibold text-sm transition-all duration-150 mt-1 shadow-md shadow-teal-600/20"
         >
           {isLoading ? (
             <>
               <Loader2 size={16} className="animate-spin" />
-              {type === "login" ? "Signing in..." : "Creating account..."}
+              {type === "login" ? "Signing in…" : "Creating account…"}
             </>
           ) : (
             <>
@@ -567,7 +536,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           <button
             type="button"
             onClick={onSwitch}
-            className="text-teal-600  cursor-pointer hover:text-teal-500 font-semibold"
+            className="text-teal-600 cursor-pointer hover:text-teal-500 font-semibold transition-colors"
           >
             {type === "login" ? "Create one free" : "Sign in"}
           </button>

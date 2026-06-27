@@ -20,15 +20,23 @@ export async function register(req: Request, res: Response) {
   } = req.body;
 
   // Basic validation — never trust the client
-  if (
-    !name ||
-    !email ||
-    !password ||
-    !university ||
-    !course ||
-    !year_of_study
-  ) {
-    res.status(400).json({ error: "All fields are required" });
+  if (!name || !email || !password || !university || !role) {
+    res.status(400).json({ error: "Name, email, password, university, and role are required" });
+    return;
+  }
+
+  if (role !== "student" && role !== "instructor") {
+    res.status(400).json({ error: "Role must be student or instructor" });
+    return;
+  }
+
+  if (role === "student" && (!course || !year_of_study)) {
+    res.status(400).json({ error: "Course and year of study are required for students" });
+    return;
+  }
+
+  if (role === "instructor" && (!department || !department.trim() || !bio || !bio.trim())) {
+    res.status(400).json({ error: "Department and bio are required for instructors" });
     return;
   }
 
