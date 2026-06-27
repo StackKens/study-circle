@@ -6,7 +6,7 @@ const FROM_EMAIL = process.env.FROM_EMAIL || "no-reply@studycircle.app";
 const FRONTEND_URL =
   process.env.FRONTEND_URL ||
   (process.env.NODE_ENV === "production"
-    ? "https://studycircle2026.netlify.app"
+    ? "https://studycircle-2026.netlify.app"
     : "http://localhost:5173");
 
 const SMTP_HOST = process.env.SMTP_HOST?.trim();

@@ -119,7 +119,7 @@ export async function register(req: Request, res: Response) {
     const FRONTEND_URL =
       process.env.FRONTEND_URL ||
       (process.env.NODE_ENV === "production"
-        ? "https://studycircle2026.netlify.app"
+        ? "https://studycircle-2026.netlify.app"
         : "http://localhost:5173");
     const verificationLink = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(user.email)}`;
 
@@ -260,7 +260,7 @@ export async function resendVerification(req: Request, res: Response) {
     const FRONTEND_URL =
       process.env.FRONTEND_URL ||
       (process.env.NODE_ENV === "production"
-        ? "https://studycircle2026.netlify.app"
+        ? "https://studycircle-2026.netlify.app"
         : "http://localhost:5173");
     const verificationLink = `${FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email.toLowerCase())}`;
 

@@ -48,7 +48,7 @@ export function meta({}: Route.MetaArgs) {
       content: "Study together. Succeed together.",
     },
     { property: "og:type", content: "website" },
-    { property: "og:url", content: "https://studycircle2026.netlify.app" },
+    { property: "og:url", content: "https://studycircle-2026.netlify.app" },
   ];
 }
 

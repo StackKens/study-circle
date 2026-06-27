@@ -30,7 +30,7 @@ app.use(express.urlencoded({ limit: "10kb" }));
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
-        process.env.FRONTEND_URL || "https://studycircle2026.netlify.app",
+        process.env.FRONTEND_URL || "https://studycircle-2026.netlify.app",
         /\.netlify\.app$/,
       ]
     : [/^http:\/\/localhost:\d+$/];

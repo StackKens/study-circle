@@ -160,7 +160,7 @@ export function initChat(httpServer: HTTPServer) {
     cors: {
       origin:
         process.env.NODE_ENV === "production"
-          ? process.env.FRONTEND_URL || "https://studycircle2026.netlify.app"
+          ? process.env.FRONTEND_URL || "https://studycircle-2026.netlify.app"
           : /^http:\/\/localhost:\d+$/,
       credentials: true,
     },
