@@ -72,6 +72,7 @@ export default function SessionsPage() {
     group_id: "",
     start_time: "",
     end_time: "",
+    meet_link: "",
   });
 
   const adminGroups = groups.filter((g) => g.role === "admin");
@@ -97,9 +98,14 @@ export default function SessionsPage() {
       !formData.title ||
       !formData.group_id ||
       !formData.start_time ||
-      !formData.end_time
+      !formData.end_time ||
+      !formData.meet_link
     ) {
       setError("All fields are required");
+      return;
+    }
+    if (!/^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(formData.meet_link.trim())) {
+      setError("Paste a valid Google Meet link");
       return;
     }
     if (new Date(formData.end_time) <= new Date(formData.start_time)) {
@@ -122,7 +128,13 @@ export default function SessionsPage() {
       if (!res.ok) throw new Error(data.error || "Failed to create session");
       addSession(data);
       setIsModalOpen(false);
-      setFormData({ title: "", group_id: "", start_time: "", end_time: "" });
+      setFormData({
+        title: "",
+        group_id: "",
+        start_time: "",
+        end_time: "",
+        meet_link: "",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -142,8 +154,8 @@ export default function SessionsPage() {
       if (!res.ok) throw new Error(data.error || "Failed to join session");
       markSessionJoined(sessionId, data.participant_count);
 
-      // Auto-open the Google Meet link in a new tab
-      if (data.meet_link) {
+      // Auto-open only for live joins; reserving an upcoming session stays here.
+      if (data.status === "checked_in" && data.meet_link) {
         window.open(data.meet_link, "_blank", "noopener");
       }
     } catch (err) {
@@ -438,6 +450,21 @@ export default function SessionsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, end_time: e.target.value })
                   }
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Google Meet link
+                </label>
+                <input
+                  type="url"
+                  value={formData.meet_link}
+                  onChange={(e) =>
+                    setFormData({ ...formData, meet_link: e.target.value })
+                  }
+                  placeholder="https://meet.google.com/abc-defg-hij"
                   className={inputClass}
                 />
               </div>

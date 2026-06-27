@@ -3,5 +3,3 @@ build/
 .react-router/
 .env
 .env.local
-.codex/
-.agents/

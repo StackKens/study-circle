@@ -41,6 +41,23 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Homepage testimonials
+CREATE TABLE IF NOT EXISTS testimonials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  name VARCHAR(255) NOT NULL,
+  university VARCHAR(255) NOT NULL,
+  course VARCHAR(255) NOT NULL,
+  year_of_study INTEGER CHECK (year_of_study BETWEEN 1 AND 6),
+  quote TEXT NOT NULL,
+  rating INTEGER NOT NULL DEFAULT 5 CHECK (rating BETWEEN 1 AND 5),
+  avatar_url TEXT,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (name, quote)
+);
+
 -- Session attendees
 CREATE TABLE IF NOT EXISTS session_attendees (
   session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
@@ -75,6 +92,8 @@ CREATE INDEX IF NOT EXISTS idx_group_members_group ON group_members(group_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_group ON sessions(group_id);
 CREATE INDEX IF NOT EXISTS idx_resources_group ON resources(group_id);
 CREATE INDEX IF NOT EXISTS idx_friendships_user ON friendships(user_id);
+CREATE INDEX IF NOT EXISTS idx_testimonials_active_order
+  ON testimonials(is_active, display_order, created_at DESC);
 
 
 CREATE TABLE IF NOT EXISTS messages (

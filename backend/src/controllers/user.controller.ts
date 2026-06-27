@@ -5,7 +5,13 @@ import pool from "../db/index";
 // Public endpoint — no auth required
 export async function getHomeStats(req: Request, res: Response) {
   try {
-    const [countResult, usersResult, universitiesResult, liveGroupResult, nextSessionResult] = await Promise.all([
+    const [
+      countResult,
+      usersResult,
+      universitiesResult,
+      liveGroupResult,
+      nextSessionResult,
+    ] = await Promise.all([
       pool.query(`SELECT COUNT(*) FROM users`),
       pool.query(
         `SELECT id, name, university, course, year_of_study, avatar_url
@@ -31,6 +37,29 @@ export async function getHomeStats(req: Request, res: Response) {
          LIMIT 1`
       ),
     ]);
+    let testimonials = [];
+    try {
+      const testimonialsResult = await pool.query(
+        `SELECT
+           t.id,
+           COALESCE(u.name, t.name) AS name,
+           COALESCE(u.university, t.university) AS university,
+           COALESCE(u.course, t.course) AS course,
+           COALESCE(u.year_of_study, t.year_of_study) AS year_of_study,
+           t.quote,
+           t.rating,
+           COALESCE(u.avatar_url, t.avatar_url) AS avatar_url
+         FROM testimonials t
+         LEFT JOIN users u ON u.id = t.user_id
+         WHERE t.is_active = TRUE
+           AND COALESCE(u.avatar_url, t.avatar_url) IS NOT NULL
+           AND TRIM(COALESCE(u.avatar_url, t.avatar_url)) != ''
+         ORDER BY t.display_order ASC, t.created_at DESC`,
+      );
+      testimonials = testimonialsResult.rows;
+    } catch (err) {
+      console.error("getHomeStats testimonials error:", err);
+    }
 
     res.json({
       student_count: parseInt(countResult.rows[0].count, 10),
@@ -38,6 +67,7 @@ export async function getHomeStats(req: Request, res: Response) {
       universities: universitiesResult.rows.map((r: { university: string }) => r.university),
       live_group: liveGroupResult.rows[0] || null,
       next_session: nextSessionResult.rows[0] || null,
+      testimonials,
     });
   } catch (err) {
     console.error("getHomeStats error:", err);

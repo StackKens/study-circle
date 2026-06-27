@@ -113,8 +113,8 @@ export default function DashboardHome() {
       if (!res.ok) throw new Error(data.error || "Failed to join session");
       markSessionJoined(sessionId, data.participant_count);
 
-      // Auto-open the Google Meet link in a new tab
-      if (data.meet_link) {
+      // Auto-open only for live joins; reserving an upcoming session stays here.
+      if (data.status === "checked_in" && data.meet_link) {
         window.open(data.meet_link, "_blank", "noopener");
       }
     } catch (err) {

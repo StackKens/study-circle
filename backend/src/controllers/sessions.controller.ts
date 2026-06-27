@@ -2,24 +2,36 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 
-function generateMeetLink() {
-  const chars = "abcdefghijklmnopqrstuvwxyz";
-  const seg = (n: number) =>
-    Array.from(
-      { length: n },
-      () => chars[Math.floor(Math.random() * chars.length)],
-    ).join("");
-  return `https://meet.google.com/${seg(3)}-${seg(4)}-${seg(3)}`;
+function isValidMeetLink(value: string) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "meet.google.com" &&
+      /^\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(url.pathname)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function createSession(req: AuthRequest, res: Response) {
-  const { group_id, title, start_time, end_time } = req.body;
+  const { group_id, title, start_time, end_time, meet_link } = req.body;
   const userId = req.user!.id;
 
-  if (!group_id || !title || !start_time || !end_time) {
+  if (!group_id || !title || !start_time || !end_time || !meet_link) {
     res
       .status(400)
-      .json({ error: "group_id, title, start_time and end_time are required" });
+      .json({
+        error:
+          "group_id, title, start_time, end_time and meet_link are required",
+      });
+    return;
+  }
+
+  const trimmedMeetLink = String(meet_link).trim();
+  if (!isValidMeetLink(trimmedMeetLink)) {
+    res.status(400).json({ error: "Enter a valid Google Meet link" });
     return;
   }
 
@@ -38,13 +50,11 @@ export async function createSession(req: AuthRequest, res: Response) {
       return;
     }
 
-    const meet_link = generateMeetLink();
-
     const result = await pool.query(
       `INSERT INTO sessions (group_id, title, start_time, end_time, created_by, meet_link)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [group_id, title.trim(), start_time, end_time, userId, meet_link],
+      [group_id, title.trim(), start_time, end_time, userId, trimmedMeetLink],
     );
 
     const session = result.rows[0];
