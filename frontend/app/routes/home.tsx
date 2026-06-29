@@ -730,7 +730,7 @@ export default function Home() {
             ))}
           </div>
           <div className="border-t border-white/[0.05] pt-8 text-xs flex flex-col md:flex-row justify-between items-center gap-3 text-slate-700">
-            <p>© 2026 StudyCircle Uganda. All rights reserved.</p>
+            <p>© 2026 StudyCircle Victoria University. All rights reserved.</p>
             <p>Made with love for students, by students.</p>
           </div>
         </div>
