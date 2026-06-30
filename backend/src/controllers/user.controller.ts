@@ -99,6 +99,10 @@ export async function getUserStats(req: AuthRequest, res: Response) {
       "SELECT COUNT(*) FROM resources WHERE uploaded_by = $1",
       [userId],
     );
+    const coursesCount = await client.query(
+      "SELECT COUNT(*) FROM course_enrollments WHERE student_id = $1",
+      [userId],
+    );
     // Study hours: sum of (end_time - start_time) in hours for sessions attended
     const hoursResult = await client.query(
       `SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (s.end_time - s.start_time)) / 3600), 0) as total_hours
@@ -113,6 +117,7 @@ export async function getUserStats(req: AuthRequest, res: Response) {
       sessions: parseInt(sessionsCount.rows[0].count, 10),
       resources: parseInt(resourcesCount.rows[0].count, 10),
       studyHours: Math.round(hoursResult.rows[0].total_hours),
+      enrolledCourses: parseInt(coursesCount.rows[0].count, 10),
     });
   } catch (err) {
     console.error("Error fetching user stats:", err);

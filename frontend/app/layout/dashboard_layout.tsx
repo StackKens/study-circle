@@ -425,44 +425,117 @@ export default function DashboardLayout() {
 
           {/* Mobile drawer (extra links) */}
           {mobileMenuOpen && (
-            <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-2 shadow-sm">
+            <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-1 shadow-sm">
               {!isInstructor && (
                 <>
                   <MobileDrawerChatLink onClick={() => setMobileMenuOpen(false)} />
                   <NavLink
+                    to="/dashboard/sessions"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sessions
+                  </NavLink>
+                  <NavLink
+                    to="/dashboard/friends"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Friends
+                  </NavLink>
+                  <NavLink
                     to="/dashboard/resources"
-                    className="block py-2 text-sm text-slate-600 hover:text-teal-600"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Resources
                   </NavLink>
                   <NavLink
+                    to="/dashboard/progress"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Progress
+                  </NavLink>
+                  <NavLink
                     to="/dashboard/instructors"
-                    className="block py-2 text-sm text-slate-600 hover:text-teal-600"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Instructors
                   </NavLink>
+                  <NavLink
+                    to="/dashboard/library"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Library
+                  </NavLink>
                 </>
               )}
               {isInstructor && (
-                <NavLink
-                  to="/dashboard/instructor/announcements"
-                  className="block py-2 text-sm text-slate-600 hover:text-teal-600"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Announcements
-                </NavLink>
+                <>
+                  <NavLink
+                    to="/dashboard/instructor/announcements"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Announcements
+                  </NavLink>
+                  <NavLink
+                    to="/dashboard/instructor/resources"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Resources
+                  </NavLink>
+                  <NavLink
+                    to="/dashboard/instructor/assignments"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Assignments
+                  </NavLink>
+                  <NavLink
+                    to="/dashboard/instructor/discussions"
+                    className={({ isActive }) =>
+                      `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                    }
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Discussions
+                  </NavLink>
+                </>
               )}
-              <button
-                onClick={() => {
-                  setShowLogoutModal(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left py-2 text-sm text-red-600 hover:text-red-700"
-              >
-                Logout
-              </button>
+              <div className="border-t border-slate-100 pt-2 mt-1">
+                <button
+                  onClick={() => {
+                    setShowLogoutModal(true);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left py-2 text-sm text-red-600 hover:text-red-700"
+                >
+                  Logout
+                </button>
+              </div>
             </div>
           )}
 

@@ -24,6 +24,7 @@ interface UserStats {
   sessions: number;
   resources: number;
   studyHours: number;
+  enrolledCourses: number;
 }
 
 const colorMap: Record<string, string> = {
@@ -143,6 +144,16 @@ export default function DashboardHome() {
 
   const stats = [
     {
+      label: "Enrolled Courses",
+      value: userStats?.enrolledCourses ?? "—",
+      icon: GraduationCap,
+      change: userStats
+        ? userStats.enrolledCourses > 0
+          ? `${userStats.enrolledCourses} active`
+          : "None yet"
+        : "Loading...",
+    },
+    {
       label: "Active Groups",
       value: groups.length,
       icon: Users,
@@ -183,8 +194,8 @@ export default function DashboardHome() {
         </p>
       </div>
 
-      {/* KPI Stats — 2-col compact on mobile, 4-col on lg */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-5 sm:mb-8">
+      {/* KPI Stats — 2-col on mobile, 3-col on md, 5-col on lg */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-5 sm:mb-8">
         {stats.map((stat) => (
           <div
             key={stat.label}
