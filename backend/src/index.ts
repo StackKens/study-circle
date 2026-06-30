@@ -56,13 +56,19 @@ const authLimiter = rateLimit({
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register", authLimiter);
 
-// Disable caching for all API responses to prevent CDN/browser/proxy caching
+// Disable caching for all API responses by default
 app.use("/api", (req, res, next) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   next();
 });
+
+// Allow short-lived caching for public, rarely-changing data
+const publicCacheMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+  next();
+};
 
 //  Routes
 app.use("/api/auth", authRoutes);

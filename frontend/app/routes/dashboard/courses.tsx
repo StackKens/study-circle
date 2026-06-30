@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   GraduationCap,
@@ -7,6 +7,7 @@ import {
   BookOpen,
   UserPlus,
 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { usePrivateChat } from "../../context/PrivateChatContext";
 import { UserAvatar } from "../../components/UserAvatar";
@@ -29,22 +30,17 @@ interface Course {
 export default function StudentCoursesPage() {
   const { token, user } = useAuth();
   const { openChat } = usePrivateChat();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
-  function load() {
-    fetch(`${API_URL}/courses/available`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => Array.isArray(d) && setCourses(d))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => {
-    if (token) load();
-  }, [token]);
+  const { data: courses = [], isLoading: loading } = useQuery<Course[]>({
+    queryKey: ["courses-available", user?.id],
+    queryFn: () =>
+      fetch(`${API_URL}/courses/available`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    enabled: !!token,
+  });
 
   async function handleEnroll(courseId: string) {
     setEnrollingId(courseId);
@@ -53,7 +49,7 @@ export default function StudentCoursesPage() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) load();
+      if (res.ok) queryClient.invalidateQueries({ queryKey: ["courses-available", user?.id] });
     } finally {
       setEnrollingId(null);
     }

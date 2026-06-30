@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { useState, useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthProvider } from "./context/AuthContext";
 import { AuthModalProvider } from "./context/AuthModalContext";
@@ -14,12 +15,29 @@ import SplashScreen from "./components/SplashScreen";
 import type { Route } from "./+types/root";
 import "./app.css";
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 2,      // data stays fresh for 2 minutes
+      gcTime: 1000 * 60 * 10,         // keep in cache for 10 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
     href: "https://fonts.gstatic.com",
     crossOrigin: "anonymous" as const,
+  },
+  // Preload the font stylesheet so it doesn't block rendering
+  {
+    rel: "preload",
+    as: "style",
+    href: "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap",
   },
   {
     rel: "stylesheet",
@@ -62,9 +80,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <AuthProvider>
-          <AuthModalProvider>{children}</AuthModalProvider>
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AuthModalProvider>{children}</AuthModalProvider>
+          </AuthProvider>
+        </QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

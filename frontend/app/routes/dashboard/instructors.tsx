@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { UserPlus, Loader2, MessageCircle } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { usePrivateChat } from "../../context/PrivateChatContext";
 import { UserAvatar } from "../../components/UserAvatar";
@@ -21,28 +22,23 @@ interface Instructor {
 export default function InstructorsPage() {
   const { token } = useAuth();
   const { openChat } = usePrivateChat();
-  const [instructors, setInstructors] = useState<Instructor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  function load() {
-    fetch(`${API_URL}/instructors`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => Array.isArray(d) && setInstructors(d))
-      .finally(() => setLoading(false));
-  }
-
-  useEffect(() => {
-    load();
-  }, [token]);
+  const { data: instructors = [], isLoading: loading } = useQuery<Instructor[]>({
+    queryKey: ["instructors"],
+    queryFn: () =>
+      fetch(`${API_URL}/instructors`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    enabled: !!token,
+  });
 
   async function toggleFollow(id: string, following: boolean) {
     await fetch(`${API_URL}/instructors/${id}/follow`, {
       method: following ? "DELETE" : "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
-    load();
+    queryClient.invalidateQueries({ queryKey: ["instructors"] });
   }
 
   return (

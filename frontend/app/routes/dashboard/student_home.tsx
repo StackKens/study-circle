@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import {
   Users,
@@ -11,7 +11,7 @@ import {
   Loader2,
   GraduationCap,
 } from "lucide-react";
-
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { useGroupStore } from "../../store/groupStore";
 import { useSessionStore } from "../../store/sessionStore";
@@ -85,20 +85,22 @@ export default function DashboardHome() {
   const { groups, fetchGroups } = useGroupStore();
   const { sessions, fetchSessions, markSessionJoined } = useSessionStore();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [joinError, setJoinError] = useState("");
+
+  const { data: userStats } = useQuery<UserStats>({
+    queryKey: ["user-stats", user?.id],
+    queryFn: () =>
+      fetch(`${API_URL}/users/me/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    enabled: !!token,
+  });
 
   useEffect(() => {
     if (!token) return;
     fetchGroups(token);
     fetchSessions(token);
-    fetch(`${API_URL}/users/me/stats`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => setUserStats(data))
-      .catch(console.error);
   }, [token]);
 
   const upcomingSessions = sessions
