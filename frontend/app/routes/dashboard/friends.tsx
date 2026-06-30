@@ -369,7 +369,18 @@ export default function FriendsPage() {
             Friends <span className="text-teal-600 ml-1">{friends.length}</span>
           </p>
           {isLoading ? (
-            <div className="text-center py-20 text-slate-400 text-sm">Loading...</div>
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 animate-pulse flex items-center gap-4">
+                  <div className="w-11 h-11 bg-slate-100 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+                    <div className="h-2.5 bg-slate-100 rounded-full w-1/2" />
+                  </div>
+                  <div className="w-20 h-8 bg-slate-100 rounded-lg" />
+                </div>
+              ))}
+            </div>
           ) : filteredFriends.length > 0 ? (
             <div className="divide-y divide-slate-100 bg-white rounded-xl border border-slate-200 overflow-hidden">
               {filteredFriends.map((friend) => (

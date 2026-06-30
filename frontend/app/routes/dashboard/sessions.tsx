@@ -271,8 +271,19 @@ export default function SessionsPage() {
       )}
 
       {isLoading ? (
-        <div className="text-center py-20 text-slate-400 text-sm">
-          Loading...
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse">
+              <div className="flex items-center justify-between mb-3">
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+                  <div className="h-2.5 bg-slate-100 rounded-full w-1/3" />
+                </div>
+                <div className="w-20 h-8 bg-slate-100 rounded-lg" />
+              </div>
+              <div className="h-2.5 bg-slate-100 rounded-full w-2/3" />
+            </div>
+          ))}
         </div>
       ) : (
         <>

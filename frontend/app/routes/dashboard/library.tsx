@@ -254,7 +254,18 @@ export default function LibraryPage() {
       </p>
 
       {isLoading ? (
-        <div className="text-center py-20 text-slate-400 text-sm">Loading...</div>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse flex items-center gap-4">
+              <div className="w-10 h-10 bg-slate-100 rounded-lg shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+                <div className="h-2.5 bg-slate-100 rounded-full w-1/3" />
+              </div>
+              <div className="w-16 h-7 bg-slate-100 rounded-lg" />
+            </div>
+          ))}
+        </div>
       ) : filtered.length > 0 ? (
         <div className="divide-y divide-slate-100 bg-white rounded-xl border border-slate-200 overflow-hidden">
           {filtered.map((resource) => {

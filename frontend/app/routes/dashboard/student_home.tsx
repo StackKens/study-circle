@@ -151,7 +151,7 @@ export default function DashboardHome() {
         ? userStats.enrolledCourses > 0
           ? `${userStats.enrolledCourses} active`
           : "None yet"
-        : "Loading...",
+        : "···",
     },
     {
       label: "Active Groups",
@@ -169,13 +169,13 @@ export default function DashboardHome() {
       label: "Resources Shared",
       value: userStats?.resources ?? "—",
       icon: FolderOpen,
-      change: userStats ? `${userStats.resources} uploaded` : "Loading...",
+      change: userStats ? `${userStats.resources} uploaded` : "···",
     },
     {
       label: "Study Hours",
       value: userStats ? `${userStats.studyHours}h` : "—",
       icon: Clock,
-      change: userStats ? `${userStats.studyHours}h total` : "Loading...",
+      change: userStats ? `${userStats.studyHours}h total` : "···",
     },
   ];
 
