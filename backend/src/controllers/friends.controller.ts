@@ -21,6 +21,7 @@ export async function getFriendRecommendations(req: AuthRequest, res: Response) 
        LEFT JOIN group_members gm1 ON gm1.user_id = u.id
        LEFT JOIN group_members gm2 ON gm2.group_id = gm1.group_id AND gm2.user_id = $1
        WHERE u.id != $1
+         AND u.role != 'instructor'
          AND NOT EXISTS (
            SELECT 1 FROM friendships f
            WHERE (f.user_id = $1 AND f.friend_id = u.id)
@@ -101,6 +102,7 @@ export async function searchUsers(req: AuthRequest, res: Response) {
          LIMIT 1) AS friendship_status
        FROM users u
        WHERE u.id != $1
+         AND u.role != 'instructor'
          AND (u.name ILIKE $2 OR u.email ILIKE $2)
        LIMIT 10`,
       [userId, `%${q}%`]
@@ -123,6 +125,16 @@ export async function sendFriendRequest(req: AuthRequest, res: Response) {
   }
 
   try {
+    // Instructors are followed, not added as friends
+    const targetUser = await pool.query(
+      `SELECT role FROM users WHERE id = $1`,
+      [targetId]
+    );
+    if (targetUser.rows[0]?.role === "instructor") {
+      res.status(400).json({ error: "Instructors can be followed, not added as friends" });
+      return;
+    }
+
     const existing = await pool.query(
       `SELECT status FROM friendships
        WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
