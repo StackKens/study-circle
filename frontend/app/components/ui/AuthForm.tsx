@@ -296,11 +296,12 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
 
     setIsLoading(true);
     try {
-      let regRes: any = null;
+      let userRole: "student" | "instructor" | undefined;
       if (type === "login") {
-        await login(email, password);
+        const loggedIn = await login(email, password);
+        userRole = loggedIn.role;
       } else {
-        regRes = await registerApi({
+        const regRes = await registerApi({
           name,
           email,
           password,
@@ -315,9 +316,10 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
               }
             : {}),
         });
+        userRole = regRes.user?.role ?? role;
       }
       onClose();
-      navigate("/dashboard");
+      navigate(userRole === "instructor" ? "/dashboard/instructor" : "/dashboard");
     } catch (err) {
       setErrors({
         general: err instanceof Error ? err.message : "Something went wrong.",

@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
+import { usePrivateChat } from "../context/PrivateChatContext";
 import { useChatStore } from "../store/chatStore";
+import { UserAvatar } from "./UserAvatar";
+import { MentionTextarea } from "./MentionTextarea";
+import { renderMessageContent } from "../utils/chat";
 import { Send, MessageCircle } from "lucide-react";
 
 interface GeneralMessage {
@@ -107,80 +111,58 @@ function MessageBubble({
   isOwn,
   ownName,
   ownId,
+  onAvatarClick,
 }: {
   msg: GeneralMessage;
   isOwn: boolean;
   ownName: string;
   ownId: string;
-}) {
-  // Avatar — real image if url, otherwise colored initials
-  function AvatarImg({
-    url,
-    alt,
-    size,
-  }: {
-    url: string;
-    alt: string;
-    size: "sm" | "md";
-  }) {
-    const dim = size === "sm" ? "w-5 h-5" : "w-6 h-6";
-    return (
-      <img
-        src={url}
-        alt={alt}
-        className={`flex-shrink-0 ${dim} rounded-full object-cover`}
-      />
-    );
-  }
-  function AvatarInitials({
-    name,
-    id,
-    size,
-  }: {
-    name: string;
+  onAvatarClick?: (user: {
     id: string;
-    size: "sm" | "md";
-  }) {
-    const dim = size === "sm" ? "w-5 h-5 text-[9px]" : "w-6 h-6 text-[10px]";
-    const color = avatarColor(id, id === ownId);
-    return (
-      <div
-        className={`flex-shrink-0 ${dim} rounded-full flex items-center justify-center text-white font-bold ${color}`}
-      >
-        {initials(name)}
-      </div>
-    );
-  }
-
-  const ownAvatar = msg.sender_avatar_url ? (
-    <AvatarImg url={msg.sender_avatar_url} alt={ownName} size="sm" />
-  ) : (
-    <AvatarInitials name={ownName} id={ownId} size="sm" />
-  );
-  const otherAvatar = msg.sender_avatar_url ? (
-    <AvatarImg url={msg.sender_avatar_url} alt={msg.sender_name} size="md" />
-  ) : (
-    <AvatarInitials name={msg.sender_name} id={msg.sender_id} size="md" />
-  );
+    name: string;
+    avatar_url?: string | null;
+    university?: string;
+  }) => void;
+}) {
+  const handleAvatarClick = () => {
+    if (isOwn || !onAvatarClick) return;
+    onAvatarClick({
+      id: msg.sender_id,
+      name: msg.sender_name,
+      avatar_url: msg.sender_avatar_url,
+      university: msg.sender_university,
+    });
+  };
 
   if (isOwn) {
     return (
       <div className="flex gap-1.5 items-end justify-end">
         <div className="flex flex-col items-end gap-px">
           <div className="w-fit max-w-[82%] sm:max-w-[70%] bg-teal-600 text-white px-2.5 py-1 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words">
-            {msg.content}
+            {renderMessageContent(msg.content)}
           </div>
           <span className="text-[10px] text-slate-400 pr-0.5">
             {formatTime(msg.created_at)}
           </span>
         </div>
-        {ownAvatar}
+        <UserAvatar
+          userId={ownId}
+          name={ownName}
+          avatarUrl={msg.sender_avatar_url}
+          size="sm"
+        />
       </div>
     );
   }
   return (
     <div className="flex gap-2 items-start">
-      {otherAvatar}
+      <UserAvatar
+        userId={msg.sender_id}
+        name={msg.sender_name}
+        avatarUrl={msg.sender_avatar_url}
+        size="md"
+        onClick={handleAvatarClick}
+      />
       <div className="flex flex-col gap-px max-w-[82%] sm:max-w-[70%]">
         <div className="flex items-baseline gap-1.5">
           <span className="text-xs font-semibold text-slate-700">
@@ -191,7 +173,7 @@ function MessageBubble({
           </span>
         </div>
         <div className="w-fit bg-white border border-slate-300 text-slate-800 px-2.5 py-1 rounded-2xl rounded-tl-sm text-sm leading-relaxed break-words shadow-sm">
-          {msg.content}
+          {renderMessageContent(msg.content)}
         </div>
         <span className="text-[10px] text-slate-400 pl-0.5">
           {formatTime(msg.created_at)}
@@ -225,6 +207,7 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8080";
 
 export default function GeneralChat() {
   const { user, token } = useAuth();
+  const { openChat } = usePrivateChat();
   const [messages, setMessages] = useState<GeneralMessage[]>([]);
   const [input, setInput] = useState("");
   const [status, setStatus] = useState<
@@ -292,12 +275,6 @@ export default function GeneralChat() {
     }
   };
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
-  };
-
   const dayGroups = groupByDay(messages);
 
   return (
@@ -352,6 +329,7 @@ export default function GeneralChat() {
                   isOwn={msg.sender_id === user?.id}
                   ownName={user?.name ?? ""}
                   ownId={user?.id ?? ""}
+                  onAvatarClick={openChat}
                 />
               ))}
             </div>
@@ -363,15 +341,14 @@ export default function GeneralChat() {
       {/* Input */}
       <div className="px-3 py-2 border-t border-slate-200 bg-white">
         <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus-within:border-teal-400 focus-within:ring-1 focus-within:ring-teal-100 transition-all">
-          <textarea
-            ref={inputRef}
-            rows={1}
+          <MentionTextarea
+            inputRef={inputRef}
             value={input}
-            onChange={handleInput}
+            onChange={setInput}
             onKeyDown={handleKeyDown}
-            placeholder="Message everyone…"
+            placeholder="Message everyone… Use @name to tag"
             disabled={status !== "connected"}
-            className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none leading-relaxed max-h-[120px] disabled:opacity-40"
+            className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none leading-relaxed max-h-[120px] disabled:opacity-40 w-full"
           />
           <button
             onClick={sendMessage}

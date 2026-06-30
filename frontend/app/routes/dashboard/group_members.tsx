@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { Crown, Loader2, Users } from "lucide-react";
+import { Crown, Loader2, Users, MessageCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { usePrivateChat } from "../../context/PrivateChatContext";
+import { UserAvatar } from "../../components/UserAvatar";
 import type { GroupMember } from "../../types/groupMember";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -24,7 +26,8 @@ export function GroupMembers({
   groupName,
   currentUserRole,
 }: GroupMembersProps) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const { openChat } = usePrivateChat();
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -104,17 +107,23 @@ export function GroupMembers({
             className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
           >
             <div className="flex items-center gap-3">
-              {member.avatar_url ? (
-                <img
-                  src={member.avatar_url}
-                  alt={member.name}
-                  className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-9 h-9 bg-teal-600 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
-                  {member.name.charAt(0)}
-                </div>
-              )}
+              <UserAvatar
+                userId={member.user_id}
+                name={member.name}
+                avatarUrl={member.avatar_url}
+                size="md"
+                onClick={
+                  member.user_id !== user?.id
+                    ? () =>
+                        openChat({
+                          id: member.user_id,
+                          name: member.name,
+                          avatar_url: member.avatar_url,
+                          university: member.university,
+                        })
+                    : undefined
+                }
+              />
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-slate-900 text-sm">
@@ -132,6 +141,22 @@ export function GroupMembers({
                 </p>
               </div>
             </div>
+            {member.user_id !== user?.id && (
+              <button
+                onClick={() =>
+                  openChat({
+                    id: member.user_id,
+                    name: member.name,
+                    avatar_url: member.avatar_url,
+                    university: member.university,
+                  })
+                }
+                className="p-2 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 cursor-pointer"
+                title="Send message"
+              >
+                <MessageCircle size={16} />
+              </button>
+            )}
           </div>
         ))}
       </div>

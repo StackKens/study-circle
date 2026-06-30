@@ -58,6 +58,11 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [recentGroups, setRecentGroups] = useState<RecentGroup[]>([]);
   const [badges, setBadges] = useState<Badge[]>([]);
+  const [instructorStats, setInstructorStats] = useState<{
+    courses: number;
+    total_students: number;
+    follower_count: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +72,19 @@ export default function ProfilePage() {
     if (!user || !token) return;
     const fetchProfileData = async () => {
       try {
+        if (user.role === "instructor") {
+          const dashRes = await fetch(`${API_URL}/instructors/dashboard`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const dashData = await dashRes.json();
+          setInstructorStats({
+            courses: dashData.courses?.length ?? 0,
+            total_students: dashData.total_students ?? 0,
+            follower_count: dashData.follower_count ?? 0,
+          });
+          setLoading(false);
+          return;
+        }
         const [statsRes, groupsRes, badgesRes] = await Promise.all([
           fetch(`${API_URL}/users/me/stats`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -96,6 +114,11 @@ export default function ProfilePage() {
   // Fetch bio separately
   useEffect(() => {
     if (user?.id && token) {
+      if (user.role === "instructor" && user.instructor_bio) {
+        setBio(user.instructor_bio);
+        setLoading(false);
+        return;
+      }
       fetch(`${API_URL}/users/${user.id}/bio`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -174,6 +197,11 @@ export default function ProfilePage() {
                 <h2 className="font-bold text-slate-900 text-lg tracking-tight">
                   {user.name}
                 </h2>
+                {user.role === "instructor" && (
+                  <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md">
+                    Instructor
+                  </span>
+                )}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
                   <span className="flex items-center gap-1.5 text-xs text-slate-400">
                     <Mail size={12} /> {user.email}
@@ -182,8 +210,10 @@ export default function ProfilePage() {
                     <MapPin size={12} /> {user.university}
                   </span>
                   <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <GraduationCap size={12} /> {user.course} · Year{" "}
-                    {user.year_of_study}
+                    <GraduationCap size={12} />{" "}
+                    {user.role === "instructor"
+                      ? user.department || user.course
+                      : `${user.course} · Year ${user.year_of_study}`}
                   </span>
                 </div>
               </div>
@@ -249,7 +279,23 @@ export default function ProfilePage() {
       </div>
 
       {/* Stats grid */}
-      {stats && (
+      {user.role === "instructor" && instructorStats ? (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          {[
+            { icon: GraduationCap, value: instructorStats.courses, label: "Courses", color: "text-teal-600", bg: "bg-teal-50" },
+            { icon: Users, value: instructorStats.total_students, label: "Students", color: "text-blue-500", bg: "bg-blue-50" },
+            { icon: Award, value: instructorStats.follower_count, label: "Followers", color: "text-violet-500", bg: "bg-violet-50" },
+          ].map(({ icon: Icon, value, label, color, bg }) => (
+            <div key={label} className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+              <div className={`w-9 h-9 ${bg} ${color} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+                <Icon size={16} />
+              </div>
+              <p className="text-xl font-bold text-slate-900">{value}</p>
+              <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      ) : stats ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           {[
             {
@@ -297,10 +343,10 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
-      {/* Badges */}
-      {badges.length > 0 && (
+      {/* Badges — students only */}
+      {user.role !== "instructor" && badges.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
             Badges
@@ -318,7 +364,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Recent groups */}
+      {/* Recent groups — students only */}
+      {user.role !== "instructor" && (
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
@@ -363,6 +410,7 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

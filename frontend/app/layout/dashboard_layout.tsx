@@ -3,6 +3,8 @@ import { Outlet, NavLink, useNavigate, Link } from "react-router";
 import { ProtectedRoute } from "../components/ProtectedRote";
 import { useAuth } from "../context/AuthContext";
 import { useChatStore } from "../store/chatStore";
+import { PrivateChatProvider } from "../context/PrivateChatContext";
+import PrivateChatModal from "../components/PrivateChatModal";
 
 import {
   LayoutDashboard,
@@ -22,6 +24,10 @@ import {
   FileText,
   UserPlus as UserPlusIcon,
   Sparkles,
+  Megaphone,
+  ClipboardList,
+  GraduationCap,
+  Mail,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -192,31 +198,57 @@ function MobileDrawerChatLink({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Bottom tab items for mobile — 5 max to avoid overflow on small phones
-const bottomTabs = [
+// Bottom tab items for mobile — students
+const studentBottomTabs = [
   { name: "Home", path: "/dashboard", icon: LayoutDashboard },
+  { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
   { name: "Groups", path: "/dashboard/groups", icon: Users },
-  { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
-  { name: "Library", path: "/dashboard/library", icon: Book },
+  { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
-// Sidebar items for desktop
-const sidebarItems = [
+// Bottom tab items for instructors
+const instructorBottomTabs = [
+  { name: "Home", path: "/dashboard/instructor", icon: LayoutDashboard },
+  { name: "Courses", path: "/dashboard/instructor/courses", icon: GraduationCap },
+  { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
+  { name: "Profile", path: "/dashboard/profile", icon: User },
+];
+
+// Sidebar items for desktop — students
+const studentSidebarItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
+  { name: "Messages", path: "/dashboard/messages", icon: Mail },
+  { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
   { name: "My Groups", path: "/dashboard/groups", icon: Users },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Resources", path: "/dashboard/resources", icon: FolderOpen },
+  { name: "Instructors", path: "/dashboard/instructors", icon: GraduationCap },
   { name: "Progress", path: "/dashboard/progress", icon: TrendingUp },
   { name: "Friends", path: "/dashboard/friends", icon: UserPlus },
   { name: "Library", path: "/dashboard/library", icon: Book },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
+// Sidebar items for desktop — instructors
+const instructorSidebarItems = [
+  { name: "Dashboard", path: "/dashboard/instructor", icon: LayoutDashboard },
+  { name: "My Courses", path: "/dashboard/instructor/courses", icon: GraduationCap },
+  { name: "Announcements", path: "/dashboard/instructor/announcements", icon: Megaphone },
+  { name: "Resources", path: "/dashboard/instructor/resources", icon: FolderOpen },
+  { name: "Assignments", path: "/dashboard/instructor/assignments", icon: ClipboardList },
+  { name: "Discussions", path: "/dashboard/instructor/discussions", icon: MessageCircle },
+  { name: "General Chat", path: "/dashboard/chat", icon: Users },
+  { name: "Profile", path: "/dashboard/profile", icon: User },
+];
+
 export default function DashboardLayout() {
   const navigate = useNavigate();
-  const { logout, token } = useAuth();
+  const { logout, token, user } = useAuth();
+  const isInstructor = user?.role === "instructor";
+  const sidebarItems = isInstructor ? instructorSidebarItems : studentSidebarItems;
+  const bottomTabs = isInstructor ? instructorBottomTabs : studentBottomTabs;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -241,6 +273,7 @@ export default function DashboardLayout() {
 
   return (
     <ProtectedRoute>
+      <PrivateChatProvider>
       {showLogoutModal && (
         <LogoutConfirmModal
           onConfirm={handleLogout}
@@ -256,6 +289,11 @@ export default function DashboardLayout() {
                 Study<span className="text-teal-600">Circle</span>
               </span>
             </Link>
+            {isInstructor && (
+              <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-violet-600 bg-violet-50 px-2 py-1 rounded-md">
+                Instructor
+              </span>
+            )}
           </div>
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {sidebarItems.map((item) => (
@@ -378,28 +416,34 @@ export default function DashboardLayout() {
           {/* Mobile drawer (extra links) */}
           {mobileMenuOpen && (
             <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-2 shadow-sm">
-              <MobileDrawerChatLink onClick={() => setMobileMenuOpen(false)} />
-              <NavLink
-                to="/dashboard/resources"
-                className="block py-2 text-sm text-slate-600 hover:text-teal-600"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Resources
-              </NavLink>
-              <NavLink
-                to="/dashboard/progress"
-                className="block py-2 text-sm text-slate-600 hover:text-teal-600"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Progress
-              </NavLink>
-              <NavLink
-                to="/dashboard/friends"
-                className="block py-2 text-sm text-slate-600 hover:text-teal-600"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Friends
-              </NavLink>
+              {!isInstructor && (
+                <>
+                  <MobileDrawerChatLink onClick={() => setMobileMenuOpen(false)} />
+                  <NavLink
+                    to="/dashboard/resources"
+                    className="block py-2 text-sm text-slate-600 hover:text-teal-600"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Resources
+                  </NavLink>
+                  <NavLink
+                    to="/dashboard/instructors"
+                    className="block py-2 text-sm text-slate-600 hover:text-teal-600"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Instructors
+                  </NavLink>
+                </>
+              )}
+              {isInstructor && (
+                <NavLink
+                  to="/dashboard/instructor/announcements"
+                  className="block py-2 text-sm text-slate-600 hover:text-teal-600"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Announcements
+                </NavLink>
+              )}
               <button
                 onClick={() => {
                   setShowLogoutModal(true);
@@ -425,7 +469,10 @@ export default function DashboardLayout() {
               <NavLink
                 key={tab.name}
                 to={tab.path}
-                end={tab.path === "/dashboard"}
+                end={
+                  tab.path === "/dashboard" ||
+                  tab.path === "/dashboard/instructor"
+                }
                 className={({ isActive }) =>
                   `flex flex-col items-center gap-1 py-1 px-2 rounded-lg transition-all duration-200 ${
                     isActive
@@ -441,6 +488,8 @@ export default function DashboardLayout() {
           </div>
         </div>
       </div>
+      <PrivateChatModal />
+      </PrivateChatProvider>
     </ProtectedRoute>
   );
 }

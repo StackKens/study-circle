@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { usePrivateChat } from "../../context/PrivateChatContext";
+import { UserAvatar } from "../UserAvatar";
 import {
   Users,
   BookOpen,
@@ -91,6 +93,7 @@ function Avatar({
 export default function GroupDetailPage() {
   const { groupId } = useParams<{ groupId: string }>();
   const { token, user } = useAuth();
+  const { openChat } = usePrivateChat();
   const navigate = useNavigate();
 
   const [group, setGroup] = useState<Group | null>(null);
@@ -422,10 +425,22 @@ export default function GroupDetailPage() {
                 key={member.user_id}
                 className="flex items-center gap-3 px-6 py-3.5 hover:bg-slate-50 transition-colors"
               >
-                <Avatar
+                <UserAvatar
+                  userId={member.user_id}
                   name={member.name}
-                  url={member.avatar_url}
-                  isAdmin={member.role === "admin"}
+                  avatarUrl={member.avatar_url}
+                  size="md"
+                  onClick={
+                    member.user_id !== user?.id
+                      ? () =>
+                          openChat({
+                            id: member.user_id,
+                            name: member.name,
+                            avatar_url: member.avatar_url,
+                            university: member.university,
+                          })
+                      : undefined
+                  }
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-800 truncate flex items-center gap-2">

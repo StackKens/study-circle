@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  UserPlus, UserMinus, Search, X, Check, Loader2, Users, Sparkles, RefreshCw,
+  UserPlus, UserMinus, Search, X, Check, Loader2, Users, Sparkles, RefreshCw, MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { usePrivateChat } from "../../context/PrivateChatContext";
+import { UserAvatar } from "../../components/UserAvatar";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -60,6 +62,7 @@ function formatDate(iso: string) {
 
 export default function FriendsPage() {
   const { token } = useAuth();
+  const { openChat } = usePrivateChat();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -372,7 +375,20 @@ export default function FriendsPage() {
               {filteredFriends.map((friend) => (
                 <div key={friend.id} className="px-5 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <Avatar name={friend.name} url={friend.avatar_url} />
+                    <UserAvatar
+                      userId={friend.id}
+                      name={friend.name}
+                      avatarUrl={friend.avatar_url}
+                      size="md"
+                      onClick={() =>
+                        openChat({
+                          id: friend.id,
+                          name: friend.name,
+                          avatar_url: friend.avatar_url,
+                          university: friend.university,
+                        })
+                      }
+                    />
                     <div>
                       <p className="font-medium text-slate-900 text-sm">{friend.name}</p>
                       <p className="text-xs text-slate-400">
@@ -380,7 +396,22 @@ export default function FriendsPage() {
                       </p>
                     </div>
                   </div>
-                  <button
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() =>
+                        openChat({
+                          id: friend.id,
+                          name: friend.name,
+                          avatar_url: friend.avatar_url,
+                          university: friend.university,
+                        })
+                      }
+                      className="p-2 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 cursor-pointer"
+                      title="Message"
+                    >
+                      <MessageCircle size={16} />
+                    </button>
+                    <button
                     onClick={() => handleRemove(friend.id)}
                     disabled={loadingId === friend.id}
                     className="p-1.5 text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
@@ -388,6 +419,7 @@ export default function FriendsPage() {
                   >
                     {loadingId === friend.id ? <Loader2 size={15} className="animate-spin" /> : <UserMinus size={15} />}
                   </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -75,14 +75,14 @@ export async function register(req: Request, res: Response) {
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, university, course, year_of_study, is_email_verified)
        VALUES ($1, $2, $3, $4, $5, $6, TRUE)
-       RETURNING id, name, email, university, course, year_of_study, created_at, is_email_verified`,
+       RETURNING id, name, email, university, course, year_of_study, created_at, is_email_verified, avatar_url`,
       [
         name,
         email.toLowerCase(),
         password_hash,
         university,
-        course,
-        year_of_study,
+        role === "instructor" ? department?.trim() || "Faculty" : course,
+        role === "instructor" ? 1 : year_of_study,
       ],
     );
 
@@ -100,6 +100,14 @@ export async function register(req: Request, res: Response) {
       );
     }
 
+    const userWithRole = {
+      ...user,
+      role,
+      ...(role === "instructor"
+        ? { department: department?.trim(), instructor_bio: bio?.trim() }
+        : {}),
+    };
+
     // Create JWT token for immediate use (verified)
     const jwtToken = jwt.sign(
       {
@@ -108,12 +116,13 @@ export async function register(req: Request, res: Response) {
         name: user.name,
         university: user.university,
         avatar_url: user.avatar_url || null,
+        role,
       },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }, // token expires in 7 days
     );
 
-    res.status(201).json({ token: jwtToken, user });
+    res.status(201).json({ token: jwtToken, user: userWithRole });
   } catch (err: any) {
     console.error("=== REGISTER ERROR ===");
     console.error("Message:", err.message);
@@ -152,6 +161,13 @@ export async function login(req: Request, res: Response) {
       return;
     }
 
+    const instructorRes = await pool.query(
+      `SELECT bio, department FROM instructors WHERE user_id = $1`,
+      [user.id],
+    );
+    const isInstructor = instructorRes.rows.length > 0;
+    const role = isInstructor ? "instructor" : "student";
+
     // Create token
     const token = jwt.sign(
       {
@@ -160,6 +176,7 @@ export async function login(req: Request, res: Response) {
         name: user.name,
         university: user.university,
         avatar_url: user.avatar_url || null,
+        role,
       },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" },
@@ -167,8 +184,18 @@ export async function login(req: Request, res: Response) {
 
     // Never send password_hash
     const { password_hash, ...userWithoutPassword } = user;
+    const userPayload = {
+      ...userWithoutPassword,
+      role,
+      ...(isInstructor
+        ? {
+            department: instructorRes.rows[0].department,
+            instructor_bio: instructorRes.rows[0].bio,
+          }
+        : {}),
+    };
 
-    res.json({ token, user: userWithoutPassword });
+    res.json({ token, user: userPayload });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -179,8 +206,13 @@ export async function login(req: Request, res: Response) {
 export async function getMe(req: any, res: Response) {
   try {
     const result = await pool.query(
-      `SELECT id, name, email, university, course, year_of_study, created_at, avatar_url, is_email_verified
-       FROM users WHERE id = $1`,
+      `SELECT u.id, u.name, u.email, u.university, u.course, u.year_of_study,
+              u.created_at, u.avatar_url, u.is_email_verified,
+              i.bio AS instructor_bio, i.department,
+              CASE WHEN i.user_id IS NOT NULL THEN 'instructor' ELSE 'student' END AS role
+       FROM users u
+       LEFT JOIN instructors i ON i.user_id = u.id
+       WHERE u.id = $1`,
       [req.user.id],
     );
 

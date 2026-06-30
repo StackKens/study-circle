@@ -132,6 +132,44 @@ async function getRecentGeneralMessages(limit = 50) {
 }
 
 /**
+ * Fetch private message history between two users.
+ */
+async function getPrivateMessages(userA: string, userB: string, limit = 50) {
+  const result = await pool.query(
+    `SELECT pm.id, pm.sender_id, pm.recipient_id, pm.content, pm.mentions, pm.created_at,
+       u.name AS sender_name, u.university AS sender_university, u.avatar_url AS sender_avatar_url
+     FROM private_messages pm
+     JOIN users u ON u.id = pm.sender_id
+     WHERE (pm.sender_id = $1 AND pm.recipient_id = $2)
+        OR (pm.sender_id = $2 AND pm.recipient_id = $1)
+     ORDER BY pm.created_at DESC
+     LIMIT $3`,
+    [userA, userB, limit],
+  );
+  return result.rows.reverse();
+}
+
+async function savePrivateMessage(
+  senderId: string,
+  recipientId: string,
+  content: string,
+  mentions: string[] = [],
+) {
+  const result = await pool.query(
+    `INSERT INTO private_messages (sender_id, recipient_id, content, mentions)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id, sender_id, recipient_id, content, mentions, created_at`,
+    [senderId, recipientId, content, JSON.stringify(mentions)],
+  );
+  return result.rows[0];
+}
+
+function dmRoom(userA: string, userB: string): string {
+  const [a, b] = userA < userB ? [userA, userB] : [userB, userA];
+  return `dm:${a}:${b}`;
+}
+
+/**
  * Auto-create the general_messages table if it doesn't exist yet.
  */
 async function ensureGeneralTable() {
@@ -341,6 +379,109 @@ export function initChat(httpServer: HTTPServer) {
         }
       },
     );
+
+    // ── PRIVATE MESSAGES (DM)
+
+    socket.on(
+      "join_dm",
+      async ({ recipient_id }: { recipient_id: string }) => {
+        if (!recipient_id) {
+          socket.emit("error", { message: "recipient_id required" });
+          return;
+        }
+        if (recipient_id === user.id) {
+          socket.emit("error", { message: "Cannot message yourself" });
+          return;
+        }
+
+        const recipientCheck = await pool.query(
+          `SELECT id FROM users WHERE id = $1`,
+          [recipient_id],
+        );
+        if (recipientCheck.rowCount === 0) {
+          socket.emit("error", { message: "User not found" });
+          return;
+        }
+
+        const room = dmRoom(user.id, recipient_id);
+        socket.join(room);
+
+        try {
+          const history = await getPrivateMessages(user.id, recipient_id);
+          socket.emit("private_message_history", history);
+        } catch (err) {
+          console.error("[chat] failed to load private history", err);
+          socket.emit("private_message_history", []);
+        }
+      },
+    );
+
+    socket.on(
+      "send_private_message",
+      async ({
+        recipient_id,
+        content,
+        mentions = [],
+      }: {
+        recipient_id: string;
+        content: string;
+        mentions?: string[];
+      }) => {
+        if (!recipient_id || !content?.trim()) {
+          socket.emit("error", {
+            message: "recipient_id and content required",
+          });
+          return;
+        }
+
+        const trimmed = content.trim();
+        if (trimmed.length > 2000) {
+          socket.emit("error", {
+            message: "Message too long (max 2000 chars)",
+          });
+          return;
+        }
+
+        if (recipient_id === user.id) {
+          socket.emit("error", { message: "Cannot message yourself" });
+          return;
+        }
+
+        try {
+          const userRes = await pool.query(
+            "SELECT name, university, avatar_url FROM users WHERE id = $1",
+            [user.id],
+          );
+          const freshUser = userRes.rows[0] || user;
+
+          const saved = await savePrivateMessage(
+            user.id,
+            recipient_id,
+            trimmed,
+            mentions,
+          );
+
+          const outgoing = {
+            ...saved,
+            sender_name: freshUser.name,
+            sender_university: freshUser.university ?? "",
+            sender_avatar_url: freshUser.avatar_url ?? null,
+          };
+
+          const room = dmRoom(user.id, recipient_id);
+          io.to(room).emit("receive_private_message", outgoing);
+
+          // Also emit to recipient's personal room if they're not in the DM room
+          io.to(`user:${recipient_id}`).emit("receive_private_message", outgoing);
+        } catch (err) {
+          console.error("[chat] failed to save private message", err);
+          socket.emit("error", { message: "Failed to send message" });
+        }
+      },
+    );
+
+    // Personal room for push notifications of new DMs
+    socket.join(`user:${user.id}`);
 
     // ── disconnect
     socket.on("disconnect", (reason) => {

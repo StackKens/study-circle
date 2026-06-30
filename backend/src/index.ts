@@ -14,6 +14,8 @@ import resourceRoutes from "./routes/resources";
 import userRoutes from "./routes/users";
 import friendRoutes from "./routes/friends";
 import notificationRoutes from "./routes/notifications";
+import courseRoutes from "./routes/courses";
+import messageRoutes from "./routes/messages";
 
 import { createServer } from "http";
 import { initChat } from "./sockets/chat.socket";
@@ -70,6 +72,8 @@ app.use("/api/resources", resourceRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api", courseRoutes);
+app.use("/api/messages", messageRoutes);
 
 //  Health check
 app.get("/health", (req, res) => {
