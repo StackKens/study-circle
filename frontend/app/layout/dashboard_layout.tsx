@@ -80,7 +80,17 @@ function NotificationPanel({
 
   if (loading)
     return (
-      <div className="py-8 text-center text-sm text-slate-400">Loading...</div>
+      <div className="px-4 py-3 space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-start gap-3 animate-pulse">
+            <div className="w-8 h-8 bg-slate-100 rounded-lg shrink-0" />
+            <div className="flex-1 space-y-1.5 pt-0.5">
+              <div className="h-2.5 bg-slate-100 rounded-full w-3/4" />
+              <div className="h-2 bg-slate-100 rounded-full w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
     );
 
   if (notifications.length === 0)
