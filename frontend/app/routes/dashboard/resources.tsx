@@ -49,7 +49,6 @@ const typeConfig: Record<Resource["type"], { bg: string; text: string; label: st
 const acceptMap: Record<string, string> = {
   pdf:      ".pdf",
   document: ".doc,.docx,.ppt,.pptx,.txt",
-  video:    "video/*",
 };
 
 function formatDate(iso: string) {
@@ -372,10 +371,9 @@ export default function ResourcesPage() {
                   }}
                   className={inputClass}
                 >
-                  <option value="link">Link</option>
+                  <option value="link">Link (YouTube, Drive, etc.)</option>
                   <option value="pdf">PDF</option>
                   <option value="document">Document</option>
-                  <option value="video">Video</option>
                 </select>
               </div>
 

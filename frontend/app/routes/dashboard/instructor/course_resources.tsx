@@ -13,7 +13,7 @@ interface Resource {
   created_at: string;
 }
 
-const TYPES = ["pdf", "slides", "document", "link", "video"] as const;
+const TYPES = ["pdf", "slides", "document", "link"] as const;
 
 export default function CourseResourcesPage() {
   const { courseId } = useOutletContext<{ courseId: string }>();

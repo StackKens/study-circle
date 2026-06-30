@@ -42,9 +42,9 @@ export async function uploadResource(req: AuthRequest, res: Response) {
     return;
   }
 
-  const validTypes = ["pdf", "link", "video", "document"];
+  const validTypes = ["pdf", "link", "document"];
   if (!validTypes.includes(type)) {
-    res.status(400).json({ error: "type must be one of: pdf, link, video, document" });
+    res.status(400).json({ error: "type must be one of: pdf, link, document. For videos, use type 'link' and paste a YouTube or Google Drive URL." });
     return;
   }
 
