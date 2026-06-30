@@ -169,48 +169,90 @@ export default function DashboardHome() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-1">
-      <div className="mb-8">
+    <div className="max-w-6xl mx-auto">
+      {/* Header */}
+      <div className="mb-5 sm:mb-8">
         <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
           Overview
         </p>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-          Welcome back, {user?.name || "Guest"}
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          Welcome back, {user?.name?.split(" ")[0] || "Guest"}
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1 hidden sm:block">
           Here's what's happening in your study circle
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* KPI Stats — 2-col compact on mobile, 4-col on lg */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-5 sm:mb-8">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="bg-white rounded-xl border border-slate-200 p-5"
+            className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5"
           >
-            <div className="flex items-start justify-between mb-3">
-              <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
-                <stat.icon size={17} className="text-slate-600" />
+            {/* Mobile: icon + value side by side; desktop: stacked */}
+            <div className="flex items-center gap-2 sm:block">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0 sm:mb-3">
+                <stat.icon size={15} className="text-slate-600 sm:hidden" />
+                <stat.icon size={17} className="text-slate-600 hidden sm:block" />
               </div>
+              <p className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                {stat.value}
+              </p>
             </div>
-            <p className="text-2xl font-bold text-slate-900 tracking-tight">
-              {stat.value}
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-tight">
+              {stat.label}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">{stat.label}</p>
-            <p className="text-[11px] text-emerald-600 mt-2 font-medium">
+            <p className="text-[10px] sm:text-[11px] text-emerald-600 mt-1 font-medium hidden sm:block">
               {stat.change}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="mb-8">
+      {/* Quick Actions — horizontal scrollable row on mobile, grid on sm+ */}
+      <div className="mb-5 sm:mb-8">
         <p className="text-sm font-semibold text-slate-700 mb-3">
           Quick Actions
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Mobile: scrollable horizontal pill row */}
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:hidden scrollbar-none">
+          {quickActions.map((action) =>
+            "modal" in action && action.modal ? (
+              <button
+                key={action.label}
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-slate-200 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 transition-transform"
+              >
+                <div
+                  className={`w-7 h-7 ${colorMap[action.color]} rounded-lg flex items-center justify-center`}
+                >
+                  <action.icon size={14} />
+                </div>
+                <span className="text-xs font-medium text-slate-700">
+                  {action.label}
+                </span>
+              </button>
+            ) : (
+              <Link
+                key={action.label}
+                to={action.path!}
+                className="flex items-center gap-2 px-3 py-2 bg-white rounded-xl border border-slate-200 whitespace-nowrap shrink-0 active:scale-95 transition-transform"
+              >
+                <div
+                  className={`w-7 h-7 ${colorMap[action.color]} rounded-lg flex items-center justify-center`}
+                >
+                  <action.icon size={14} />
+                </div>
+                <span className="text-xs font-medium text-slate-700">
+                  {action.label}
+                </span>
+              </Link>
+            ),
+          )}
+        </div>
+        {/* Desktop: 2-col then 4-col grid */}
+        <div className="hidden sm:grid grid-cols-3 lg:grid-cols-5 gap-3">
           {quickActions.map((action) =>
             "modal" in action && action.modal ? (
               <button
@@ -248,12 +290,14 @@ export default function DashboardHome() {
       </div>
 
       {/* Main Grid */}
-      <div className="grid lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-5">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-5">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-5">
           {/* Groups */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-semibold text-slate-900">Your Study Groups</p>
+          <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <p className="font-semibold text-slate-900 text-sm sm:text-base">
+                Your Study Groups
+              </p>
               <Link
                 to="/dashboard/groups"
                 className="text-xs text-teal-600 font-medium flex items-center gap-1 hover:gap-1.5 transition-all"
@@ -266,10 +310,10 @@ export default function DashboardHome() {
                 {recentGroups.map((group) => (
                   <div
                     key={group.id}
-                    className="py-3.5 flex items-center justify-between"
+                    className="py-3 flex items-center justify-between"
                   >
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">
+                    <div className="min-w-0 pr-3">
+                      <p className="text-sm font-medium text-slate-800 truncate">
                         {group.name}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
@@ -279,7 +323,7 @@ export default function DashboardHome() {
                     </div>
                     <Link
                       to="/dashboard/groups"
-                      className="text-xs text-teal-600 font-medium hover:text-teal-700"
+                      className="text-xs text-teal-600 font-medium hover:text-teal-700 shrink-0"
                     >
                       View →
                     </Link>
@@ -294,9 +338,11 @@ export default function DashboardHome() {
           </div>
 
           {/* Sessions */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-semibold text-slate-900">Upcoming Sessions</p>
+          <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <p className="font-semibold text-slate-900 text-sm sm:text-base">
+                Upcoming Sessions
+              </p>
               <Link
                 to="/dashboard/sessions"
                 className="text-xs text-teal-600 font-medium flex items-center gap-1 hover:gap-1.5 transition-all"
@@ -307,17 +353,17 @@ export default function DashboardHome() {
             {upcomingSessions.length > 0 ? (
               <div className="space-y-1">
                 {joinError && (
-                  <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                  <p className="text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg mb-2">
                     {joinError}
                   </p>
                 )}
                 {upcomingSessions.map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+                    className="flex items-center justify-between py-2.5 px-2 sm:px-3 rounded-lg hover:bg-slate-50 transition-colors gap-2"
                   >
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">
                         {session.title}
                       </p>
                       <p className="text-xs text-slate-400 mt-0.5">
@@ -330,7 +376,7 @@ export default function DashboardHome() {
                       disabled={
                         joiningSessionId === session.id || session.has_joined
                       }
-                      className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                      className="bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shrink-0"
                     >
                       {joiningSessionId === session.id ? (
                         <Loader2 size={12} className="animate-spin" />
@@ -349,14 +395,14 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {/* Study Tip */}
-          <div className="bg-slate-50 rounded-xl border border-slate-200 p-5">
-            <div className="flex items-center gap-2 mb-2.5">
-              <BookOpen size={16} className="text-teal-600" />
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <BookOpen size={15} className="text-teal-600" />
               <p className="font-semibold text-slate-800 text-sm">Study Tip</p>
             </div>
-            <p className="text-sm text-slate-500 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
               Break sessions into 50-minute blocks with 10-minute breaks. The
               Pomodoro technique keeps you sharp and consistent.
             </p>

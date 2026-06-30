@@ -89,37 +89,48 @@ export default function InstructorDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
+      {/* Header */}
+      <div className="mb-6">
         <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
           Instructor Portal
         </p>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
           Welcome, {user?.name?.split(" ")[0]}
         </h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1 hidden sm:block">
           Manage your courses, materials, and student engagement
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      {/* KPI cards — horizontal compact row on mobile, 3-col grid on sm+ */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="bg-white rounded-xl border border-slate-200 p-5"
+            className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 flex flex-col"
           >
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${s.color}`}
-            >
-              <s.icon size={18} />
+            {/* icon + value on one row on mobile */}
+            <div className="flex items-center gap-2 sm:block">
+              <div
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center shrink-0 sm:mb-3 ${s.color}`}
+              >
+                <s.icon size={15} className="sm:hidden" />
+                <s.icon size={18} className="hidden sm:block" />
+              </div>
+              <p className="text-xl sm:text-3xl font-bold text-slate-900 sm:mt-0">
+                {s.value}
+              </p>
             </div>
-            <p className="text-3xl font-bold text-slate-900">{s.value}</p>
-            <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            <p className="text-[11px] sm:text-xs text-slate-500 mt-1 leading-tight">
+              {s.label}
+            </p>
           </div>
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5">
+      <div className="grid lg:grid-cols-3 gap-4 sm:gap-5">
+        {/* My Courses */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-slate-900">My Courses</h2>
             <Link
@@ -135,14 +146,14 @@ export default function InstructorDashboard() {
                 <Link
                   key={c.id}
                   to={`/dashboard/instructor/courses/${c.id}`}
-                  className="flex items-center justify-between py-3.5 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition-colors"
+                  className="flex items-center justify-between py-3 hover:bg-slate-50 -mx-2 px-2 rounded-lg transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center">
-                      <GraduationCap size={16} className="text-slate-600" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+                      <GraduationCap size={15} className="text-slate-600" />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-800">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-800 truncate">
                         {c.title}
                       </p>
                       <p className="text-xs text-slate-400">
@@ -150,7 +161,7 @@ export default function InstructorDashboard() {
                       </p>
                     </div>
                   </div>
-                  <ArrowRight size={14} className="text-slate-400" />
+                  <ArrowRight size={14} className="text-slate-400 shrink-0 ml-2" />
                 </Link>
               ))}
             </div>
@@ -167,7 +178,8 @@ export default function InstructorDashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
           <h2 className="font-semibold text-slate-900 mb-4">Recent Activity</h2>
           {data?.recent_activity.length ? (
             <div className="space-y-3">
@@ -182,7 +194,7 @@ export default function InstructorDashboard() {
                       <p className="text-xs font-medium text-slate-700 truncate">
                         {a.label}
                       </p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-400 truncate">
                         {a.course_title} ·{" "}
                         {new Date(a.created_at).toLocaleDateString()}
                       </p>
