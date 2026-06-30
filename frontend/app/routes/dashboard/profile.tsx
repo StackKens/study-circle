@@ -128,7 +128,35 @@ export default function ProfilePage() {
     }
   }, [user, token]);
 
-  if (loading) return <div className="p-4">Loading profile...</div>;
+  if (loading)
+    return (
+      <div className="max-w-2xl mx-auto animate-pulse space-y-5 p-2">
+        {/* Avatar + name block */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col items-center gap-4">
+          <div className="w-20 h-20 bg-slate-100 rounded-full" />
+          <div className="space-y-2 w-full flex flex-col items-center">
+            <div className="h-4 bg-slate-100 rounded-full w-1/3" />
+            <div className="h-3 bg-slate-100 rounded-full w-1/2" />
+          </div>
+        </div>
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-slate-200 p-4">
+              <div className="h-5 bg-slate-100 rounded-full w-1/2 mx-auto mb-2" />
+              <div className="h-3 bg-slate-100 rounded-full w-2/3 mx-auto" />
+            </div>
+          ))}
+        </div>
+        {/* Bio block */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
+          <div className="h-3 bg-slate-100 rounded-full w-1/4 mb-3" />
+          <div className="h-3 bg-slate-100 rounded-full w-full" />
+          <div className="h-3 bg-slate-100 rounded-full w-5/6" />
+          <div className="h-3 bg-slate-100 rounded-full w-3/4" />
+        </div>
+      </div>
+    );
   if (!user) return <div className="p-4">Please log in</div>;
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
