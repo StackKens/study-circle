@@ -220,7 +220,9 @@ export async function listCourses(req: AuthRequest, res: Response) {
         `SELECT c.*,
            (SELECT COUNT(*)::int FROM course_enrollments WHERE course_id = c.id) AS student_count,
            (SELECT COUNT(*)::int FROM course_announcements WHERE course_id = c.id) AS announcement_count,
-           (SELECT COUNT(*)::int FROM course_assignments WHERE course_id = c.id) AS assignment_count
+           (SELECT COUNT(*)::int FROM course_assignments WHERE course_id = c.id) AS assignment_count,
+           (SELECT COUNT(*)::int FROM course_resources WHERE course_id = c.id) AS resource_count,
+           (SELECT COUNT(*)::int FROM course_discussions WHERE course_id = c.id) AS discussion_count
          FROM courses c
          WHERE c.instructor_id = $1
          ORDER BY c.created_at DESC`,
