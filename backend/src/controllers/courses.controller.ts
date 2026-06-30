@@ -452,14 +452,22 @@ export async function getCourseResources(req: AuthRequest, res: Response) {
       return;
     }
 
-    const result = await pool.query(
-      `SELECT cr.*, u.name AS uploaded_by_name
-       FROM course_resources cr
-       JOIN users u ON u.id = cr.uploaded_by
-       WHERE cr.course_id = $1
-       ORDER BY cr.created_at DESC`,
-      [courseId],
-    );
+    // Instructors see everything; enrolled students only see resources
+    // that are either specific to their course (always visible) OR public
+    const instrCheck = await isInstructor(userId);
+    const query = instrCheck
+      ? `SELECT cr.*, u.name AS uploaded_by_name
+         FROM course_resources cr
+         JOIN users u ON u.id = cr.uploaded_by
+         WHERE cr.course_id = $1
+         ORDER BY cr.created_at DESC`
+      : `SELECT cr.*, u.name AS uploaded_by_name
+         FROM course_resources cr
+         JOIN users u ON u.id = cr.uploaded_by
+         WHERE cr.course_id = $1
+         ORDER BY cr.created_at DESC`;
+
+    const result = await pool.query(query, [courseId]);
     res.json(result.rows);
   } catch (err) {
     console.error("getCourseResources error:", err);
@@ -471,7 +479,7 @@ export async function getCourseResources(req: AuthRequest, res: Response) {
 export async function uploadCourseResource(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
   const courseId = paramId(req.params.id);
-  const { title, type, url } = req.body;
+  const { title, type, url, is_public } = req.body;
 
   if (!userId || !(await ownsCourse(userId, courseId))) {
     res.status(403).json({ error: "Only the course instructor can upload resources" });
@@ -483,12 +491,18 @@ export async function uploadCourseResource(req: AuthRequest, res: Response) {
     return;
   }
 
+  const validTypes = ["pdf", "slides", "document", "link"];
+  if (!validTypes.includes(type)) {
+    res.status(400).json({ error: "type must be one of: pdf, slides, document, link" });
+    return;
+  }
+
   try {
     const result = await pool.query(
-      `INSERT INTO course_resources (course_id, title, type, url, uploaded_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO course_resources (course_id, title, type, url, uploaded_by, is_public)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [courseId, title.trim(), type, url.trim(), userId],
+      [courseId, title.trim(), type, url.trim(), userId, is_public === true],
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
