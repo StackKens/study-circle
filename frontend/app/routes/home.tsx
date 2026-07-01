@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   Calendar,
   BarChart2,
@@ -19,46 +19,6 @@ export function meta() {
     { title: "StudyCircle • Study Together" },
     { name: "description", content: "The modern study platform for students" },
   ];
-}
-
-//  AI carousel phrases
-const aiPhrases = [
-  "AI-Powered Recommendations",
-  "Smart Group Matching",
-  "AI Study Partner Finder",
-  "Intelligent Resource Curation",
-  "AI-Driven Progress Insights",
-];
-
-function AiCarousel() {
-  const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => {
-        setIndex((i) => (i + 1) % aiPhrases.length);
-        setVisible(true);
-      }, 400);
-    }, 2800);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="mb-6 inline-flex items-center gap-2.5 bg-teal-500/10 border border-teal-500/20 px-4 py-2 rounded-full">
-      <span className="relative flex h-2 w-2 shrink-0">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-60" />
-        <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400" />
-      </span>
-      <span
-        className="text-xs text-teal-300 font-semibold tracking-wide transition-opacity duration-300"
-        style={{ opacity: visible ? 1 : 0 }}
-      >
-        {aiPhrases[index]}
-      </span>
-    </div>
-  );
 }
 
 //  Types
@@ -87,17 +47,6 @@ interface HomeStats {
   top_users: TopUser[];
   testimonials: Testimonial[];
   universities: string[];
-  live_group: {
-    name: string;
-    member_count: number;
-    resource_count: number;
-    session_count: number;
-  } | null;
-  next_session: {
-    title: string;
-    start_time: string;
-    attendee_count: number;
-  } | null;
 }
 
 // Inline SVG logo matchign the favicon (book + star)
@@ -257,8 +206,6 @@ export default function Home() {
   const studentCount = stats?.student_count ?? null;
   const topUsers = stats?.top_users ?? [];
   const universities = stats?.universities ?? [];
-  const liveGroup = stats?.live_group ?? null;
-  const nextSession = stats?.next_session ?? null;
   const testimonials = stats?.testimonials ?? [];
   const activeTestimonial = testimonials[testimonialIndex] ?? null;
 
@@ -270,18 +217,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [testimonials.length]);
 
-  function formatSessionTime(iso: string) {
-    const d = new Date(iso);
-    const isToday = d.toDateString() === new Date().toDateString();
-    const time = d.toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return isToday
-      ? `Today at ${time}`
-      : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} at ${time}`;
-  }
-
   return (
     <main className="bg-white font-sans">
       {/*  HERO  */}
@@ -292,9 +227,6 @@ export default function Home() {
         <div className="absolute top-0 inset-x-0 h-px bg-white/[0.06]" />
 
         <div className="max-w-6xl mx-auto px-8 py-32 relative z-10 w-full">
-          {/* AI carousel pill */}
-          <AiCarousel />
-
           {/* Headline */}
           <h1 className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.06] tracking-[-0.03em] text-white max-w-3xl mb-7">
             Study with focus.{" "}
@@ -371,88 +303,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* App preview — right side desktop */}
-        <div className="hidden lg:flex flex-col gap-3 absolute right-10 top-1/2 -translate-y-1/2 w-[320px]">
-          {liveGroup && (
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 backdrop-blur-sm">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="font-semibold text-sm text-white">
-                    {liveGroup.name}
-                  </p>
-                  <p className="text-slate-500 text-xs mt-0.5">
-                    {liveGroup.member_count} members
-                  </p>
-                </div>
-                <span className="flex items-center gap-1.5 text-emerald-400 text-[11px] font-semibold bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />{" "}
-                  Live
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-teal-400 rounded-full"
-                    style={{
-                      width: `${Math.min(100, Number(liveGroup.session_count) * 10)}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-teal-400 text-xs font-semibold">
-                  {liveGroup.session_count} sessions
-                </span>
-              </div>
-            </div>
-          )}
-
-          {nextSession && (
-            <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-4 backdrop-blur-sm flex items-center gap-3">
-              <div className="w-9 h-9 bg-teal-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Calendar size={16} className="text-teal-400" />
-              </div>
-              <div>
-                <p className="text-[11px] text-slate-500 uppercase tracking-wide font-medium">
-                  Next session
-                </p>
-                <p className="text-white font-semibold text-sm">
-                  {nextSession.title}
-                </p>
-                <p className="text-teal-400 text-xs mt-0.5">
-                  {formatSessionTime(nextSession.start_time)} ·{" "}
-                  {nextSession.attendee_count} attending
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-3 gap-2.5">
-            {[
-              {
-                val: String(liveGroup?.member_count ?? "—"),
-                label: "Members",
-                color: "text-teal-400",
-              },
-              {
-                val: String(liveGroup?.resource_count ?? "—"),
-                label: "Resources",
-                color: "text-amber-400",
-              },
-              {
-                val: String(studentCount ?? "—"),
-                label: "Students",
-                color: "text-emerald-400",
-              },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-3.5 text-center backdrop-blur-sm"
-              >
-                <p className={`text-xl font-bold ${s.color}`}>{s.val}</p>
-                <p className="text-slate-600 text-[10px] mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/*  UNIVERSITIES ─ */}
