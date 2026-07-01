@@ -2,8 +2,6 @@ import pool from "./index";
 import bcrypt from "bcryptjs";
 import { initDatabase } from "./init";
 
-const AVATAR_BASE = "https://api.dicebear.com/7.x/avataaars/svg?seed=";
-
 const UNIVERSITIES = [
   "University of Lagos",
   "Obafemi Awolowo University",
@@ -82,11 +80,11 @@ async function seed() {
 
   // ── 1. USERS ──────────────────────────────────────────────────────────────
   const adminResult = await pool.query(
-    `INSERT INTO users (name, email, password_hash, university, course, year_of_study, avatar_url)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO users (name, email, password_hash, university, course, year_of_study)
+     VALUES ($1, $2, $3, $4, $5, $6)
      ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
      RETURNING id`,
-    ["Admin User", "admin@studycircle.app", passwordHash, "University of Lagos", "Administration", 1, `${AVATAR_BASE}admin`]
+    ["Admin User", "admin@studycircle.app", passwordHash, "University of Lagos", "Administration", 1]
   );
   const adminId = adminResult.rows[0].id;
   console.log(`  ✓ Admin: admin@studycircle.app / password123`);
@@ -107,14 +105,13 @@ async function seed() {
     const university = pick(UNIVERSITIES);
     const course = pick(COURSES);
     const year = pick(YEAR_STUDY);
-    const avatarSeed = name.replace(/\s+/g, "").toLowerCase();
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, university, course, year_of_study, avatar_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO users (name, email, password_hash, university, course, year_of_study)
+       VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
        RETURNING id`,
-      [name, email, passwordHash, university, course, year, `${AVATAR_BASE}${avatarSeed}`]
+      [name, email, passwordHash, university, course, year]
     );
     userIds.push(result.rows[0].id);
   }
@@ -304,7 +301,7 @@ async function seed() {
 
   // ── 12. GENERAL CHAT MESSAGES ─────────────────────────────────────────────
   const chatMessages = [
-    "Hello everyone! 👋",
+    "Hello everyone!",
     "Good morning! Hope you're all having a productive day.",
     "Does anyone have notes for today's lecture?",
     "I just uploaded some resources for the upcoming exam.",
