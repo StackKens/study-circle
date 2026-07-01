@@ -2,6 +2,8 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { recommendResourcesForUser } from "../services/ai.service";
+import { notifyGroupMembers } from "../services/notification.service";
+import { getIO } from "../sockets/chat.socket";
 
 export async function getResourceRecommendations(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
@@ -76,7 +78,19 @@ export async function uploadResource(req: AuthRequest, res: Response) {
       [resource.id]
     );
 
-    res.status(201).json(enriched.rows[0]);
+    const r = enriched.rows[0];
+    const notifMembers = await notifyGroupMembers(
+      group_id, userId, "resource",
+      "New Resource",
+      `${r.uploaded_by_name} shared "${r.title}" in ${r.group_name}.`,
+      `/dashboard/resources`,
+    );
+    const notif = { type: "resource", title: "New Resource", message: `${r.uploaded_by_name} shared "${r.title}" in ${r.group_name}.`, link: `/dashboard/resources` };
+    for (const m of notifMembers) {
+      try { getIO().to(`user:${m.user_id}`).emit("notification", notif); } catch {}
+    }
+
+    res.status(201).json(r);
   } catch (err) {
     console.error("uploadResource error:", err);
     res.status(500).json({ error: "Internal server error" });

@@ -1,6 +1,8 @@
 import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { notifyGroupMembers } from "../services/notification.service";
+import { getIO } from "../sockets/chat.socket";
 
 function isValidMeetLink(value: string) {
   try {
@@ -69,7 +71,20 @@ export async function createSession(req: AuthRequest, res: Response) {
       [session.id],
     );
 
-    res.status(201).json(enriched.rows[0]);
+    const s = enriched.rows[0];
+    const startTime = new Date(s.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const notifMembers = await notifyGroupMembers(
+      group_id, userId, "session",
+      "New Study Session",
+      `A new session "${s.title}" in ${s.group_name} starts at ${startTime}.`,
+      `/dashboard/sessions`,
+    );
+    const notif = { type: "session", title: "New Study Session", message: `A new session "${s.title}" in ${s.group_name} starts at ${startTime}.`, link: `/dashboard/sessions` };
+    for (const m of notifMembers) {
+      try { getIO().to(`user:${m.user_id}`).emit("notification", notif); } catch {}
+    }
+
+    res.status(201).json(s);
   } catch (err) {
     console.error("createSession error:", err);
     res.status(500).json({ error: "Internal server error" });

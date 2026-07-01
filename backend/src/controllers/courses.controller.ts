@@ -1,6 +1,8 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db/index";
+import { createNotification, notifyCourseStudents } from "../services/notification.service";
+import { getIO } from "../sockets/chat.socket";
 
 function paramId(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
@@ -283,7 +285,15 @@ export async function createCourse(req: AuthRequest, res: Response) {
         university?.trim() || userRes.rows[0]?.university,
       ],
     );
-    res.status(201).json(result.rows[0]);
+    const course = result.rows[0];
+    const notif = await createNotification(
+      userId, "course",
+      "Course Created",
+      `Your course "${course.title}" has been created.`,
+      `/dashboard/instructor/courses`,
+    );
+    try { getIO().to(`user:${userId}`).emit("notification", notif); } catch {}
+    res.status(201).json(course);
   } catch (err) {
     console.error("createCourse error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -429,7 +439,20 @@ export async function createAnnouncement(req: AuthRequest, res: Response) {
        RETURNING *`,
       [courseId, userId, title.trim(), content.trim()],
     );
-    res.status(201).json(result.rows[0]);
+    const announcement = result.rows[0];
+    const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [courseId]);
+    const courseTitle = courseRes.rows[0]?.title || "";
+    const notifStudents = await notifyCourseStudents(
+      courseId, userId, "course_announcement",
+      "New Announcement",
+      `"${announcement.title}" posted in ${courseTitle}.`,
+      `/dashboard/courses/${courseId}`,
+    );
+    const notif = { type: "course_announcement", title: "New Announcement", message: `"${announcement.title}" posted in ${courseTitle}.`, link: `/dashboard/courses/${courseId}` };
+    for (const m of notifStudents) {
+      try { getIO().to(`user:${m.student_id}`).emit("notification", notif); } catch {}
+    }
+    res.status(201).json(announcement);
   } catch (err) {
     console.error("createAnnouncement error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -580,7 +603,20 @@ export async function createAssignment(req: AuthRequest, res: Response) {
        RETURNING *`,
       [courseId, title.trim(), description?.trim() || null, due_date || null, userId],
     );
-    res.status(201).json(result.rows[0]);
+    const assignment = result.rows[0];
+    const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [courseId]);
+    const courseTitle = courseRes.rows[0]?.title || "";
+    const notifStudents = await notifyCourseStudents(
+      courseId, userId, "course_assignment",
+      "New Assignment",
+      `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`,
+      `/dashboard/courses/${courseId}`,
+    );
+    const notif = { type: "course_assignment", title: "New Assignment", message: `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`, link: `/dashboard/courses/${courseId}` };
+    for (const m of notifStudents) {
+      try { getIO().to(`user:${m.student_id}`).emit("notification", notif); } catch {}
+    }
+    res.status(201).json(assignment);
   } catch (err) {
     console.error("createAssignment error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -733,7 +769,20 @@ export async function createDiscussion(req: AuthRequest, res: Response) {
        RETURNING *`,
       [courseId, userId, title.trim(), content.trim()],
     );
-    res.status(201).json(result.rows[0]);
+    const discussion = result.rows[0];
+    const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [courseId]);
+    const courseTitle = courseRes.rows[0]?.title || "";
+    const notifStudents = await notifyCourseStudents(
+      courseId, userId, "course_discussion",
+      "New Discussion",
+      `"${discussion.title}" started in ${courseTitle}.`,
+      `/dashboard/courses/${courseId}`,
+    );
+    const notif = { type: "course_discussion", title: "New Discussion", message: `"${discussion.title}" started in ${courseTitle}.`, link: `/dashboard/courses/${courseId}` };
+    for (const m of notifStudents) {
+      try { getIO().to(`user:${m.student_id}`).emit("notification", notif); } catch {}
+    }
+    res.status(201).json(discussion);
   } catch (err) {
     console.error("createDiscussion error:", err);
     res.status(500).json({ error: "Internal server error" });

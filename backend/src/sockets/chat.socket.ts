@@ -193,8 +193,15 @@ async function ensureGeneralTable() {
 
 // ─── Engine
 
+let io: Server | null = null;
+
+export function getIO(): Server {
+  if (!io) throw new Error("Socket.io not initialized");
+  return io;
+}
+
 export function initChat(httpServer: HTTPServer) {
-  const io = new Server(httpServer, {
+  io = new Server(httpServer, {
     cors: {
       origin:
         process.env.NODE_ENV === "production"
@@ -313,7 +320,7 @@ export function initChat(httpServer: HTTPServer) {
 
           // Broadcast to all sockets in the room, including the sender
           // so the sender's UI confirms the message was saved
-          io.to(`group:${group_id}`).emit("receive_message", outgoing);
+          io!.to(`group:${group_id}`).emit("receive_message", outgoing);
         } catch (err) {
           console.error("[chat] failed to save message", err);
           socket.emit("error", { message: "Failed to send message" });
@@ -372,7 +379,7 @@ export function initChat(httpServer: HTTPServer) {
           };
 
           // Broadcast to ALL connected sockets (the entire platform)
-          io.emit("receive_general_message", outgoing);
+          io!.emit("receive_general_message", outgoing);
         } catch (err) {
           console.error("[chat] failed to save general message", err);
           socket.emit("error", { message: "Failed to send message" });
@@ -469,8 +476,8 @@ export function initChat(httpServer: HTTPServer) {
           };
 
           const room = dmRoom(user.id, recipient_id);
-          io.to(room).emit("receive_private_message", outgoing);
-          io.to(`user:${recipient_id}`).emit("receive_private_message", outgoing);
+          io!.to(room).emit("receive_private_message", outgoing);
+          io!.to(`user:${recipient_id}`).emit("receive_private_message", outgoing);
         } catch (err) {
           console.error("[chat] failed to save private message", err);
           socket.emit("error", { message: "Failed to send message" });

@@ -2,6 +2,8 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { recommendGroupsForUser } from "../services/ai.service";
+import { createNotification, notifyGroupMembers } from "../services/notification.service";
+import { getIO } from "../sockets/chat.socket";
 
 export async function createGroup(req: AuthRequest, res: Response) {
   const { name, subject, university, description } = req.body;
@@ -27,6 +29,14 @@ export async function createGroup(req: AuthRequest, res: Response) {
       `INSERT INTO group_members (user_id, group_id, role) VALUES ($1, $2, 'admin')`,
       [userId, group.id]
     );
+
+    const notif = await createNotification(
+      userId, "group",
+      "Group Created",
+      `Your group "${group.name}" is ready. Invite members to join!`,
+      `/dashboard/groups?focus=${group.id}`,
+    );
+    try { getIO().to(`user:${userId}`).emit("notification", notif); } catch {}
 
     res.status(201).json(group);
   } catch (err) {
