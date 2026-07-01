@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Outlet, NavLink, useNavigate, Link } from "react-router";
+import { Outlet, NavLink, useNavigate, useLocation, Link } from "react-router";
 import { io, Socket } from "socket.io-client";
 import { ProtectedRoute } from "../components/ProtectedRote";
 import { useAuth } from "../context/AuthContext";
@@ -65,6 +65,7 @@ const notifIconMap: Record<string, { icon: any; bg: string; text: string }> = {
   course_assignment: { icon: ClipboardList, bg: "bg-rose-50", text: "text-rose-500" },
   course_discussion: { icon: MessageCircle, bg: "bg-sky-50", text: "text-sky-500" },
   course_resource: { icon: FolderOpen, bg: "bg-teal-50", text: "text-teal-600" },
+  private_message: { icon: Mail, bg: "bg-blue-50", text: "text-blue-500" },
 };
 
 function NotificationPanel({
@@ -334,6 +335,7 @@ const instructorSidebarItems = [
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, token, user } = useAuth();
   const isInstructor = user?.role === "instructor";
   const sidebarItems = isInstructor
@@ -346,7 +348,7 @@ export default function DashboardLayout() {
   const [mobileNotifOpen, setMobileNotifOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
-  const { unreadCount, setUnreadCount, incrementUnread } = useNotificationStore();
+  const { unreadCount, dmUnreadCount, setUnreadCount, incrementUnread, resetDmUnread } = useNotificationStore();
   const notifSocketRef = useRef<Socket | null>(null);
 
   const refreshUnreadCount = useCallback(async () => {
@@ -378,6 +380,13 @@ export default function DashboardLayout() {
       notifSocketRef.current = null;
     };
   }, [token, user?.id, incrementUnread]);
+
+  // Reset DM unread when viewing the messages page
+  useEffect(() => {
+    if (location.pathname === "/dashboard/messages") {
+      resetDmUnread();
+    }
+  }, [location.pathname, resetDmUnread]);
 
   // Poll unread count every 30s as fallback
   useEffect(() => {
@@ -440,7 +449,14 @@ export default function DashboardLayout() {
                     }`
                   }
                 >
-                  <item.icon size={18} />
+                  <span className="relative">
+                    <item.icon size={18} />
+                    {item.name === "Messages" && dmUnreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                        {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
+                      </span>
+                    )}
+                  </span>
                   {item.name}
                 </NavLink>
               ))}

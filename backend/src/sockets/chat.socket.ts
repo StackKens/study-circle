@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import { Server as HTTPServer } from "http";
 import jwt from "jsonwebtoken";
 import pool from "../db/index";
+import { createNotification } from "../services/notification.service";
 
 //  Types
 
@@ -478,6 +479,17 @@ export function initChat(httpServer: HTTPServer) {
           const room = dmRoom(user.id, recipient_id);
           io!.to(room).emit("receive_private_message", outgoing);
           io!.to(`user:${recipient_id}`).emit("receive_private_message", outgoing);
+
+          // Create in-app notification for recipient
+          try {
+            const notif = await createNotification(
+              recipient_id, "private_message",
+              "New Message",
+              `${freshUser.name} sent you a message.`,
+              `/dashboard/messages`,
+            );
+            io!.to(`user:${recipient_id}`).emit("notification", notif);
+          } catch {}
         } catch (err) {
           console.error("[chat] failed to save private message", err);
           socket.emit("error", { message: "Failed to send message" });

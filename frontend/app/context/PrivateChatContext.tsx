@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuth } from "./AuthContext";
+import { useNotificationStore } from "../store/notificationStore";
 import type { ChatUser } from "../utils/chat";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8080";
@@ -75,18 +76,20 @@ export function PrivateChatProvider({
     });
 
     socket.on("receive_private_message", (msg: PrivateMessage) => {
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        if (
-          targetRef.current &&
-          (msg.sender_id === targetRef.current.id ||
-            msg.recipient_id === targetRef.current.id ||
-            msg.sender_id === user.id)
-        ) {
+      const isForActiveChat =
+        targetRef.current &&
+        (msg.sender_id === targetRef.current.id ||
+          msg.recipient_id === targetRef.current.id ||
+          msg.sender_id === user.id);
+
+      if (isForActiveChat) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev;
           return [...prev, msg];
-        }
-        return prev;
-      });
+        });
+      } else if (msg.sender_id !== user.id) {
+        useNotificationStore.getState().incrementDmUnread();
+      }
     });
 
     return () => {
@@ -98,6 +101,7 @@ export function PrivateChatProvider({
   const openChat = useCallback((chatUser: PrivateChatTarget) => {
     setTarget(chatUser);
     setMessages([]);
+    useNotificationStore.getState().resetDmUnread();
     if (socketRef.current?.connected) {
       socketRef.current.emit("join_dm", { recipient_id: chatUser.id });
     }
