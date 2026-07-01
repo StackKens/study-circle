@@ -8,6 +8,7 @@ import {
   getMyFollowers,
   listCourses,
   createCourse,
+  updateCourse,
   getCourse,
   enrollCourse,
   getAnnouncements,
@@ -45,6 +46,7 @@ router.get("/courses/available", authenticateToken, shortCache, listAvailableCou
 router.get("/courses", authenticateToken, shortCache, listCourses);
 router.post("/courses", authenticateToken, createCourse);
 router.get("/courses/:id", authenticateToken, shortCache, getCourse);
+router.put("/courses/:id", authenticateToken, updateCourse);
 router.post("/courses/:id/enroll", authenticateToken, enrollCourse);
 
 router.get("/courses/:id/announcements", authenticateToken, getAnnouncements);

@@ -88,7 +88,7 @@ export default function PrivateChatModal() {
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
         onClick={closeChat}
       />
-      <div className="relative bg-white w-full sm:max-w-md sm:rounded-2xl shadow-2xl flex flex-col h-[85vh] sm:h-[520px] overflow-hidden border border-slate-200">
+      <div className="relative bg-white w-full sm:max-w-md sm:rounded-2xl shadow-2xl flex flex-col h-screen sm:h-[520px] overflow-hidden border border-slate-200">
         {/* Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 bg-white">
           <UserAvatar
@@ -179,7 +179,7 @@ export default function PrivateChatModal() {
                   handleSend();
                 }
               }}
-              placeholder={`Message ${target.name.split(" ")[0]}… Use @ to tag`}
+              placeholder={`Message ${target.name.split(" ")[0]}…`}
               disabled={status !== "connected"}
               className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none leading-relaxed max-h-[80px]"
             />

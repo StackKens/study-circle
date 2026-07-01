@@ -19,14 +19,14 @@ export default function GroupChatPage() {
   if (!groupId) return null;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto space-y-4">
       <Link
         to={`/dashboard/groups/${groupId}`}
         className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-teal-600 transition-colors"
       >
         <ArrowLeft size={15} /> Back to group
       </Link>
-      <div className="h-[600px]">
+      <div className="h-[600px] lg:h-[calc(100vh-10rem)]">
         <GroupChat groupId={groupId} groupName={group?.name ?? "Group Chat"} />
       </div>
     </div>

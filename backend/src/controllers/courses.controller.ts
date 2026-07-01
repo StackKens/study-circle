@@ -300,6 +300,54 @@ export async function createCourse(req: AuthRequest, res: Response) {
   }
 }
 
+export async function updateCourse(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  const { title, code, description } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  if (!(await ownsCourse(userId, courseId))) {
+    res.status(403).json({ error: "Only the course instructor can edit this course" });
+    return;
+  }
+
+  if (title !== undefined && !title?.trim()) {
+    res.status(400).json({ error: "Title cannot be empty" });
+    return;
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE courses
+       SET title = COALESCE(NULLIF($1, ''), title),
+           code = COALESCE(NULLIF($2, ''), code),
+           description = $3
+       WHERE id = $4
+       RETURNING *`,
+      [
+        title?.trim() ?? null,
+        code?.trim() ?? null,
+        description?.trim() ?? null,
+        courseId,
+      ],
+    );
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: "Course not found" });
+      return;
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("updateCourse error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // GET /courses/:id
 export async function getCourse(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
