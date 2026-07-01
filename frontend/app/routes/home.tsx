@@ -469,7 +469,7 @@ export default function Home() {
             <div
               className="flex gap-14 items-center"
               style={{
-                animation: "scroll-unis 18s linear infinite",
+                animation: "scroll-unis 40s linear infinite",
                 width: "max-content",
               }}
             >
