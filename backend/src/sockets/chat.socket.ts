@@ -470,8 +470,6 @@ export function initChat(httpServer: HTTPServer) {
 
           const room = dmRoom(user.id, recipient_id);
           io.to(room).emit("receive_private_message", outgoing);
-
-          // Also emit to recipient's personal room if they're not in the DM room
           io.to(`user:${recipient_id}`).emit("receive_private_message", outgoing);
         } catch (err) {
           console.error("[chat] failed to save private message", err);

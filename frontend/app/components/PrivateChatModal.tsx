@@ -1,25 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { io, Socket } from "socket.io-client";
 import { X, Send, Loader2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { usePrivateChat } from "../context/PrivateChatContext";
 import { UserAvatar } from "./UserAvatar";
 import { renderMessageContent } from "../utils/chat";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:8080";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-
-interface PrivateMessage {
-  id: string;
-  sender_id: string;
-  recipient_id: string;
-  content: string;
-  mentions?: string[];
-  created_at: string;
-  sender_name: string;
-  sender_university?: string;
-  sender_avatar_url?: string | null;
-}
 
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString([], {
@@ -30,60 +16,20 @@ function formatTime(iso: string) {
 
 export default function PrivateChatModal() {
   const { user, token } = useAuth();
-  const { target, closeChat, isOpen } = usePrivateChat();
-  const [messages, setMessages] = useState<PrivateMessage[]>([]);
+  const { target, closeChat, isOpen, messages, status, sendMessage } =
+    usePrivateChat();
   const [input, setInput] = useState("");
-  const [status, setStatus] = useState<"connecting" | "connected" | "error">(
-    "connecting",
-  );
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionResults, setMentionResults] = useState<
     Array<{ id: string; name: string }>
   >([]);
 
-  const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  useEffect(() => {
-    if (!isOpen || !target || !token) return;
-
-    setMessages([]);
-    setStatus("connecting");
-
-    const socket = io(SOCKET_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-    });
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      setStatus("connected");
-      socket.emit("join_dm", { recipient_id: target.id });
-    });
-    socket.on("connect_error", () => setStatus("error"));
-    socket.on("private_message_history", (history: PrivateMessage[]) =>
-      setMessages(history),
-    );
-    socket.on("receive_private_message", (msg: PrivateMessage) => {
-      if (
-        msg.sender_id === target.id ||
-        msg.recipient_id === target.id ||
-        msg.sender_id === user?.id
-      ) {
-        setMessages((prev) => [...prev, msg]);
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-      socketRef.current = null;
-    };
-  }, [isOpen, target?.id, token, user?.id]);
 
   useEffect(() => {
     if (!mentionQuery || mentionQuery.length < 2 || !token) {
@@ -103,23 +49,19 @@ export default function PrivateChatModal() {
     return () => clearTimeout(t);
   }, [mentionQuery, token]);
 
-  const sendMessage = useCallback(() => {
+  const handleSend = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed || !socketRef.current?.connected || !target) return;
+    if (!trimmed) return;
 
     const mentionMatches = trimmed.match(/@([\w\s]+)/g) || [];
     const mentions = mentionResults
       .filter((u) => mentionMatches.some((m) => m.slice(1).trim() === u.name))
       .map((u) => u.id);
 
-    socketRef.current.emit("send_private_message", {
-      recipient_id: target.id,
-      content: trimmed,
-      mentions,
-    });
+    sendMessage(trimmed, mentions);
     setInput("");
     inputRef.current?.focus();
-  }, [input, target, mentionResults]);
+  }, [input, mentionResults, sendMessage]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -234,7 +176,7 @@ export default function PrivateChatModal() {
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  sendMessage();
+                  handleSend();
                 }
               }}
               placeholder={`Message ${target.name.split(" ")[0]}… Use @ to tag`}
@@ -242,7 +184,7 @@ export default function PrivateChatModal() {
               className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none leading-relaxed max-h-[80px]"
             />
             <button
-              onClick={sendMessage}
+              onClick={handleSend}
               disabled={!input.trim() || status !== "connected"}
               className="flex-shrink-0 w-8 h-8 rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-30 flex items-center justify-center cursor-pointer"
             >
