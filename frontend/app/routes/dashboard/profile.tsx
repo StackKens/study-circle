@@ -266,7 +266,7 @@ export default function ProfilePage() {
                   <div className="flex gap-2">
                     <button
                       onClick={async () => {
-                        await fetch(`${API_URL}/users/${user.id}/bio`, {
+                        const res = await fetch(`${API_URL}/users/${user.id}/bio`, {
                           method: "PATCH",
                           headers: {
                             "Content-Type": "application/json",
@@ -274,6 +274,11 @@ export default function ProfilePage() {
                           },
                           body: JSON.stringify({ bio }),
                         });
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.user) updateUser(data.user);
+                          else updateUser({ instructor_bio: bio });
+                        }
                         setEditing(false);
                       }}
                       className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"

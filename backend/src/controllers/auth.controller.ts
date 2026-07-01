@@ -73,8 +73,8 @@ export async function register(req: Request, res: Response) {
 
     // Insert new user — verified by default for this version
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, university, course, year_of_study, is_email_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+      `INSERT INTO users (name, email, password_hash, university, course, year_of_study, is_email_verified, bio)
+       VALUES ($1, $2, $3, $4, $5, $6, TRUE, $7)
        RETURNING id, name, email, university, course, year_of_study, created_at, is_email_verified, avatar_url`,
       [
         name,
@@ -83,6 +83,7 @@ export async function register(req: Request, res: Response) {
         university,
         role === "instructor" ? department?.trim() || "Faculty" : course,
         role === "instructor" ? 1 : year_of_study,
+        role === "instructor" ? bio?.trim() || null : null,
       ],
     );
 

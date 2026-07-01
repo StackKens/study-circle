@@ -267,7 +267,19 @@ export async function updateUserBio(req: AuthRequest, res: Response) {
       bio,
       authenticatedUserId,
     ]);
-    res.json({ success: true, bio });
+    await pool.query(
+      "UPDATE instructors SET bio = $1 WHERE user_id = $2",
+      [bio, authenticatedUserId],
+    );
+    const userRes = await pool.query(
+      `SELECT id, name, email, university, course, year_of_study, created_at, avatar_url,
+              i.bio AS instructor_bio, i.department
+       FROM users u
+       LEFT JOIN instructors i ON i.user_id = u.id
+       WHERE u.id = $1`,
+      [authenticatedUserId],
+    );
+    res.json({ success: true, bio, user: userRes.rows[0] || null });
   } catch (err) {
     console.error("Error updating bio:", err);
     res.status(500).json({ error: "Failed to update bio" });
