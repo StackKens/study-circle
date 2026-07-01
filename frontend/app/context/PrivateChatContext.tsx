@@ -92,6 +92,10 @@ export function PrivateChatProvider({
       }
     });
 
+    socket.on("notification", () => {
+      useNotificationStore.getState().incrementUnread();
+    });
+
     return () => {
       socket.disconnect();
       socketRef.current = null;

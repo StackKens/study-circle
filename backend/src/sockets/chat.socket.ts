@@ -489,7 +489,9 @@ export function initChat(httpServer: HTTPServer) {
               `/dashboard/messages`,
             );
             io!.to(`user:${recipient_id}`).emit("notification", notif);
-          } catch {}
+          } catch (err) {
+            console.error("[chat] failed to create DM notification:", err);
+          }
         } catch (err) {
           console.error("[chat] failed to save private message", err);
           socket.emit("error", { message: "Failed to send message" });
