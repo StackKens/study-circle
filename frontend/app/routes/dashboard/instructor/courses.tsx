@@ -78,9 +78,9 @@ export default function InstructorCoursesPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer"
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold cursor-pointer"
         >
-          <Plus size={16} /> New Course
+          <Plus size={15} /> New Course
         </button>
       </div>
 
