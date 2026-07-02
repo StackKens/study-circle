@@ -213,6 +213,7 @@ export default function GeneralChat() {
   const [status, setStatus] = useState<
     "connecting" | "connected" | "disconnected" | "error"
   >("connecting");
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -235,12 +236,14 @@ export default function GeneralChat() {
 
     socket.on("connect", () => {
       setStatus("connected");
+      setHistoryLoaded(false);
       socket.emit("general_message_history");
     });
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("error"));
     socket.on("general_message_history", (history: GeneralMessage[]) => {
       setMessages(history);
+      setHistoryLoaded(true);
       useChatStore.getState().setGeneralMessageCount(history.length);
     });
     socket.on("receive_general_message", (msg: GeneralMessage) => {
@@ -302,7 +305,7 @@ export default function GeneralChat() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-4 space-y-1">
-        {messages.length === 0 && status !== "connected" && (
+        {!historyLoaded && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
             <div className="w-10 h-10 rounded-full border-2 border-teal-200 border-t-teal-600 animate-spin" />
             <div>
@@ -315,7 +318,7 @@ export default function GeneralChat() {
             </div>
           </div>
         )}
-        {messages.length === 0 && status === "connected" && (
+        {historyLoaded && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
             <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
               <MessageCircle size={22} className="text-teal-400" />

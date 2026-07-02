@@ -218,6 +218,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
   const [status, setStatus] = useState<
     "connecting" | "connected" | "disconnected" | "error"
   >("connecting");
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -240,12 +241,16 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
     socket.on("connect", () => {
       setStatus("connected");
+      setHistoryLoaded(false);
       socket.emit("join_room", { group_id: groupId });
       prevGroupId.current = groupId;
     });
     socket.on("disconnect", () => setStatus("disconnected"));
     socket.on("connect_error", () => setStatus("error"));
-    socket.on("message_history", (history: Message[]) => setMessages(history));
+    socket.on("message_history", (history: Message[]) => {
+      setMessages(history);
+      setHistoryLoaded(true);
+    });
     socket.on("receive_message", (msg: Message) =>
       setMessages((prev) => [...prev, msg]),
     );
@@ -312,7 +317,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-4 space-y-1">
-        {messages.length === 0 && status !== "connected" && (
+        {!historyLoaded && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
             <div className="w-10 h-10 rounded-full border-2 border-teal-200 border-t-teal-600 animate-spin" />
             <div>
@@ -325,7 +330,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
             </div>
           </div>
         )}
-        {messages.length === 0 && status === "connected" && (
+        {historyLoaded && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
             <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
               <MessageCircle size={22} className="text-teal-400" />
