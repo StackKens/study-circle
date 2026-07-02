@@ -284,6 +284,7 @@ const instructorBottomTabs = [
     icon: GraduationCap,
   },
   { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
+  { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
@@ -331,6 +332,7 @@ const instructorSidebarItems = [
     path: "/dashboard/instructor/discussions",
     icon: MessageCircle,
   },
+  { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "General Chat", path: "/dashboard/chat", icon: Users },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];

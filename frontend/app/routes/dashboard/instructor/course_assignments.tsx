@@ -241,20 +241,22 @@ export default function CourseAssignmentsPage() {
                                 {s.grade}/100
                               </span>
                             )}
-                            {s.grade === null && (
-                              <button
-                                onClick={() => handleGrade(s, a)}
-                                disabled={gradingId === s.id}
-                                className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2.5 py-1 rounded-lg font-medium cursor-pointer disabled:opacity-50"
-                              >
-                                {gradingId === s.id ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  <Sparkles size={12} />
-                                )}
-                                {gradingId === s.id ? "Grading…" : "Grade with AI"}
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleGrade(s, a)}
+                              disabled={gradingId === s.id}
+                              className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2.5 py-1 rounded-lg font-medium cursor-pointer disabled:opacity-50"
+                            >
+                              {gradingId === s.id ? (
+                                <Loader2 size={12} className="animate-spin" />
+                              ) : (
+                                <Sparkles size={12} />
+                              )}
+                              {gradingId === s.id
+                                ? "Grading…"
+                                : s.grade != null
+                                  ? "Regrade"
+                                  : "Grade with AI"}
+                            </button>
                           </div>
                         </div>
                         {s.feedback && (
