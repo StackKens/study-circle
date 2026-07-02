@@ -11,7 +11,8 @@ type NotificationType =
   | "course_assignment"
   | "course_discussion"
   | "course_resource"
-  | "private_message";
+  | "private_message"
+  | "assignment_graded";
 
 export async function createNotification(
   userId: string,

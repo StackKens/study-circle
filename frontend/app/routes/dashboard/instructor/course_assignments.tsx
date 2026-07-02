@@ -228,7 +228,7 @@ export default function CourseAssignmentsPage() {
                             )}
                           </div>
                           <div className="flex flex-col items-end gap-1.5 ml-3">
-                            {s.grade !== null && (
+                            {s.grade != null && (
                               <span
                                 className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                                   s.grade >= 70

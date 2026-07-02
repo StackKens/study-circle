@@ -177,7 +177,7 @@ function MessageBubble({
             {msg.sender_university}
           </span>
         </div>
-        <div className="w-fit bg-white border border-slate-300 text-slate-800 px-2.5 py-1 rounded-2xl rounded-tl-sm text-sm leading-relaxed break-words shadow-sm">
+        <div className="w-fit bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed break-words">
           {renderMessageContent(msg.content)}
         </div>
         <span className="text-[10px] text-slate-400 pl-0.5">

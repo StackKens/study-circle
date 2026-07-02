@@ -301,7 +301,7 @@ export default function StudentCourseDetailPage() {
                         Submitted
                       </span>
                     )}
-                    {a.grade !== null && (
+                    {a.grade != null && (
                       <>
                         <span
                           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
@@ -318,7 +318,7 @@ export default function StudentCourseDetailPage() {
                     )}
                   </div>
                 </div>
-                {a.grade !== null && a.feedback && (
+                {a.grade != null && a.feedback && (
                   <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
                     <p className="text-xs font-semibold text-slate-700 mb-1">Feedback</p>
                     <p className="text-xs text-slate-600 leading-relaxed">{a.feedback}</p>

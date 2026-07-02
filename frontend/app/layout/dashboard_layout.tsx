@@ -32,6 +32,7 @@ import {
   ClipboardList,
   GraduationCap,
   Mail,
+  CheckCheck,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -66,6 +67,7 @@ const notifIconMap: Record<string, { icon: any; bg: string; text: string }> = {
   course_discussion: { icon: MessageCircle, bg: "bg-sky-50", text: "text-sky-500" },
   course_resource: { icon: FolderOpen, bg: "bg-teal-50", text: "text-teal-600" },
   private_message: { icon: Mail, bg: "bg-blue-50", text: "text-blue-500" },
+  assignment_graded: { icon: CheckCheck, bg: "bg-emerald-50", text: "text-emerald-600" },
 };
 
 function NotificationPanel({
