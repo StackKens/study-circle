@@ -231,7 +231,7 @@ export default function SessionsPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-1">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
+      <div className="flex items-start justify-between mb-8">
         <div>
           <p className="text-xs text-slate-400 tracking-[0.14em] uppercase font-medium mb-1">
             Schedule
@@ -246,9 +246,9 @@ export default function SessionsPage() {
         {isAdmin && (
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center cursor-pointer gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
           >
-            <Plus size={15} /> Create Session
+            <Plus size={15} /> New Session
           </button>
         )}
       </div>

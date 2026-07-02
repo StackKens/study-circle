@@ -312,6 +312,19 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-4 space-y-1">
+        {messages.length === 0 && status !== "connected" && (
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
+            <div className="w-10 h-10 rounded-full border-2 border-teal-200 border-t-teal-600 animate-spin" />
+            <div>
+              <p className="text-sm font-semibold text-slate-600">
+                Loading chats…
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Connecting to the chat server
+              </p>
+            </div>
+          </div>
+        )}
         {messages.length === 0 && status === "connected" && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-16">
             <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center">
