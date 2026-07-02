@@ -1,5 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useEffect, useState, useRef } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
+
+function parseList(val: string | string[] | null | undefined): string[] {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try { return JSON.parse(val); } catch { return []; }
+}
 import {
   ArrowLeft,
   Megaphone,
@@ -11,6 +17,7 @@ import {
   Send,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import AiCourseChat from "../../components/AiCourseChat";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -27,6 +34,7 @@ interface Course {
 export default function StudentCourseDetailPage() {
   const { courseId } = useParams();
   const { token } = useAuth();
+  const [searchParams] = useSearchParams();
   const [course, setCourse] = useState<Course | null>(null);
   const [tab, setTab] = useState<Tab>("announcements");
   const [loading, setLoading] = useState(true);
@@ -47,6 +55,7 @@ export default function StudentCourseDetailPage() {
   );
   const [replies, setReplies] = useState<Record<string, any[]>>({});
   const [replyText, setReplyText] = useState("");
+  const assignmentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     if (!token || !courseId) return;
@@ -80,6 +89,23 @@ export default function StudentCourseDetailPage() {
         .then((d) => Array.isArray(d) && setDiscussions(d));
     }
   }, [tab, token, courseId]);
+
+  useEffect(() => {
+    const targetId = searchParams.get("assignment");
+    if (targetId) {
+      setTab("assignments");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const targetId = searchParams.get("assignment");
+    if (targetId && assignments.length > 0) {
+      const el = assignmentRefs.current[targetId];
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [assignments, searchParams]);
 
   async function handleSubmit(assignmentId: string) {
     setSubmittingId(assignmentId);
@@ -186,6 +212,8 @@ export default function StudentCourseDetailPage() {
         )}
       </div>
 
+      {courseId && <AiCourseChat courseId={courseId} />}
+
       <div className="flex gap-1 overflow-x-auto mb-5 pb-1">
         {tabs.map((t) => (
           <button
@@ -249,6 +277,8 @@ export default function StudentCourseDetailPage() {
             assignments.map((a) => (
               <div
                 key={a.id}
+                id={`assignment-${a.id}`}
+                ref={(el) => { assignmentRefs.current[a.id] = el; }}
                 className="py-4 border-b border-slate-100 last:border-0"
               >
                 <div className="flex items-start justify-between gap-2">
@@ -265,12 +295,59 @@ export default function StudentCourseDetailPage() {
                       </p>
                     )}
                   </div>
-                  {a.submitted && (
-                    <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
-                      Submitted
-                    </span>
-                  )}
+                  <div className="flex flex-col items-end gap-1">
+                    {a.submitted && (
+                      <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
+                        Submitted
+                      </span>
+                    )}
+                    {a.grade !== null && (
+                      <>
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            a.grade >= 70
+                              ? "text-emerald-600 bg-emerald-50"
+                              : a.grade >= 40
+                                ? "text-amber-600 bg-amber-50"
+                                : "text-red-600 bg-red-50"
+                          }`}
+                        >
+                          {a.grade}/100
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {a.grade !== null && a.feedback && (
+                  <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-xs font-semibold text-slate-700 mb-1">Feedback</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">{a.feedback}</p>
+                    {(() => {
+                      const strengths = parseList(a.strengths);
+                      const weaknesses = parseList(a.weaknesses);
+                      return (
+                        <div className="mt-2 space-y-1.5">
+                          {strengths.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-medium text-emerald-600">Strengths</p>
+                              <ul className="list-disc list-inside text-[11px] text-slate-500">
+                                {strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          {weaknesses.length > 0 && (
+                            <div>
+                              <p className="text-[11px] font-medium text-amber-600">Areas to Improve</p>
+                              <ul className="list-disc list-inside text-[11px] text-slate-500">
+                                {weaknesses.map((w: string, i: number) => <li key={i}>{w}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
                 {!a.submitted && (
                   <div className="mt-3 space-y-2">
                     <textarea

@@ -55,6 +55,49 @@ function overlapScore(a: string, b: string) {
   return matches / Math.max(left.size, right.size);
 }
 
+function getAiConfig() {
+  const apiKey = process.env.OPENAI_API_KEY || "";
+  const isGroq = apiKey.startsWith("gsk_");
+  return {
+    apiKey,
+    isGroq,
+    baseUrl: isGroq ? "https://api.groq.com/openai/v1" : "https://api.openai.com/v1",
+    model: isGroq ? "llama-3.3-70b-versatile" : process.env.OPENAI_MODEL || "gpt-4o-mini",
+  };
+}
+
+export async function callAiChat(
+  messages: { role: string; content: string }[],
+): Promise<string | null> {
+  const { apiKey, isGroq, baseUrl, model } = getAiConfig();
+  if (!apiKey) return null;
+
+  const body: Record<string, any> = { model, messages };
+  if (!isGroq) body.response_format = { type: "json_object" };
+
+  try {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as any;
+    let content = data.choices?.[0]?.message?.content || null;
+    if (content) {
+      content = content.replace(/^```(?:json)?\s*|\s*```$/g, "");
+    }
+    return content;
+  } catch {
+    return null;
+  }
+}
+
 function fallbackRecommendations(
   profile: UserProfile,
   candidates: GroupRecommendationCandidate[],
@@ -98,72 +141,28 @@ async function getAiRecommendations(
   profile: UserProfile,
   candidates: GroupRecommendationCandidate[],
 ): Promise<AiRecommendation[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return [];
+  const systemMsg = `Rank study groups for a university student. Prefer strong course fit, same university, active groups, and clear academic value. Return concise, student-friendly reasons.
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "Rank study groups for a university student. Prefer strong course fit, same university, active groups, and clear academic value. Return concise, student-friendly reasons.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify({ profile, groups: candidates }),
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "group_recommendations",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              recommendations: {
-                type: "array",
-                maxItems: 5,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    groupId: { type: "string" },
-                    score: { type: "integer", minimum: 0, maximum: 100 },
-                    reason: { type: "string" },
-                  },
-                  required: ["groupId", "score", "reason"],
-                },
-              },
-            },
-            required: ["recommendations"],
-          },
-        },
-      },
-    }),
-  });
+Respond with valid JSON only, using this exact structure:
+{
+  "recommendations": [
+    {"groupId": "<id>", "score": <0-100>, "reason": "<string>"}
+  ]
+}`;
 
-  if (!response.ok) {
-    throw new Error(`OpenAI request failed with ${response.status}`);
-  }
+  const outputText = await callAiChat([
+    { role: "system", content: systemMsg },
+    { role: "user", content: JSON.stringify({ profile, groups: candidates }) },
+  ]);
 
-  const data = (await response.json()) as any;
-  const outputText = data.output?.[0]?.content?.[0]?.text || "";
   if (!outputText) return [];
 
-  const parsed = JSON.parse(outputText) as {
-    recommendations?: AiRecommendation[];
-  };
-
-  return parsed.recommendations || [];
+  try {
+    const parsed = JSON.parse(outputText) as { recommendations?: AiRecommendation[] };
+    return parsed.recommendations || [];
+  } catch {
+    return [];
+  }
 }
 
 //  Friend recommendations
@@ -212,65 +211,30 @@ async function getAiFriendRecommendations(
   profile: UserProfile,
   candidates: FriendCandidate[],
 ): Promise<{ userId: string; score: number; reason: string }[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return [];
+  const systemMsg = `Recommend study partners for a university student. Consider course similarity, mutual groups, year of study, and cross-university value. Return concise, friendly reasons.
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "Recommend study partners for a university student. Consider course similarity, mutual groups, year of study, and cross-university value. Return concise, friendly reasons.",
-        },
-        { role: "user", content: JSON.stringify({ profile, candidates }) },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "friend_recommendations",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              recommendations: {
-                type: "array",
-                maxItems: 5,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    userId: { type: "string" },
-                    score: { type: "integer", minimum: 0, maximum: 100 },
-                    reason: { type: "string" },
-                  },
-                  required: ["userId", "score", "reason"],
-                },
-              },
-            },
-            required: ["recommendations"],
-          },
-        },
-      },
-    }),
-  });
+Respond with valid JSON only, using this exact structure:
+{
+  "recommendations": [
+    {"userId": "<id>", "score": <0-100>, "reason": "<string>"}
+  ]
+}`;
 
-  if (!response.ok)
-    throw new Error(`OpenAI request failed with ${response.status}`);
-  const data = (await response.json()) as any;
-  const outputText = data.output?.[0]?.content?.[0]?.text || "";
+  const outputText = await callAiChat([
+    { role: "system", content: systemMsg },
+    { role: "user", content: JSON.stringify({ profile, candidates }) },
+  ]);
+
   if (!outputText) return [];
-  const parsed = JSON.parse(outputText) as {
-    recommendations?: { userId: string; score: number; reason: string }[];
-  };
-  return parsed.recommendations || [];
+
+  try {
+    const parsed = JSON.parse(outputText) as {
+      recommendations?: { userId: string; score: number; reason: string }[];
+    };
+    return parsed.recommendations || [];
+  } catch {
+    return [];
+  }
 }
 
 export async function recommendFriendsForUser(
@@ -338,68 +302,30 @@ async function getAiResourceRecommendations(
   profile: UserProfile,
   candidates: ResourceCandidate[],
 ): Promise<{ resourceId: string; score: number; reason: string }[]> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return [];
+  const systemMsg = `Recommend study resources for a university student. Prefer strong relevance to their course, popular materials, and clear academic value. Return concise, student-friendly reasons.
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
-      input: [
-        {
-          role: "system",
-          content:
-            "Recommend study resources for a university student. Prefer strong relevance to their course, popular materials, and clear academic value. Return concise, student-friendly reasons.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify({ profile, resources: candidates }),
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "resource_recommendations",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              recommendations: {
-                type: "array",
-                maxItems: 5,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  properties: {
-                    resourceId: { type: "string" },
-                    score: { type: "integer", minimum: 0, maximum: 100 },
-                    reason: { type: "string" },
-                  },
-                  required: ["resourceId", "score", "reason"],
-                },
-              },
-            },
-            required: ["recommendations"],
-          },
-        },
-      },
-    }),
-  });
+Respond with valid JSON only, using this exact structure:
+{
+  "recommendations": [
+    {"resourceId": "<id>", "score": <0-100>, "reason": "<string>"}
+  ]
+}`;
 
-  if (!response.ok)
-    throw new Error(`OpenAI request failed with ${response.status}`);
-  const data = (await response.json()) as any;
-  const outputText = data.output?.[0]?.content?.[0]?.text || "";
+  const outputText = await callAiChat([
+    { role: "system", content: systemMsg },
+    { role: "user", content: JSON.stringify({ profile, resources: candidates }) },
+  ]);
+
   if (!outputText) return [];
-  const parsed = JSON.parse(outputText) as {
-    recommendations?: { resourceId: string; score: number; reason: string }[];
-  };
-  return parsed.recommendations || [];
+
+  try {
+    const parsed = JSON.parse(outputText) as {
+      recommendations?: { resourceId: string; score: number; reason: string }[];
+    };
+    return parsed.recommendations || [];
+  } catch {
+    return [];
+  }
 }
 
 export async function recommendResourcesForUser(
@@ -427,6 +353,51 @@ export async function recommendResourcesForUser(
     );
   }
   return fallbackResourceRecommendations(profile, normalized);
+}
+
+//  Assignment grading
+
+export interface GradeResult {
+  score: number;
+  feedback: string;
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export async function gradeSubmission(
+  submissionContent: string,
+  assignmentTitle: string,
+  assignmentDescription?: string | null,
+  maxPoints?: number,
+): Promise<GradeResult> {
+  const maxScore = maxPoints || 100;
+
+  const prompt = `Grade this student submission for the assignment "${assignmentTitle}".${assignmentDescription ? `\nAssignment instructions: ${assignmentDescription}` : ""}\n\nSubmission:\n${submissionContent}`;
+
+  const systemMsg = `You are a university teaching assistant grading an assignment. Be fair, constructive, and specific. Score out of ${maxScore}.
+
+Respond with valid JSON only, using this exact structure:
+{
+  "score": <integer 0-${maxScore}>,
+  "feedback": "<detailed feedback string>",
+  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "weaknesses": ["<weakness 1>", "<weakness 2>", "<weakness 3>"]
+}`;
+
+  const outputText = await callAiChat([
+    { role: "system", content: systemMsg },
+    { role: "user", content: prompt },
+  ]);
+
+  if (!outputText) throw new Error("AI grading unavailable");
+
+  const parsed = JSON.parse(outputText);
+  return {
+    score: parsed.score ?? 0,
+    feedback: parsed.feedback || "Graded by AI.",
+    strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+    weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses : [],
+  } as GradeResult;
 }
 
 //  Group recommendations

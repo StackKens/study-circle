@@ -2,6 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db/index";
 import { createNotification, notifyCourseStudents } from "../services/notification.service";
+import { gradeSubmission, callAiChat } from "../services/ai.service";
 import { getIO } from "../sockets/chat.socket";
 
 function paramId(value: string | string[]): string {
@@ -615,8 +616,10 @@ export async function getAssignments(req: AuthRequest, res: Response) {
 
     const result = await pool.query(
       `SELECT a.*,
-         EXISTS(SELECT 1 FROM assignment_submissions s WHERE s.assignment_id = a.id AND s.student_id = $2) AS submitted
+         s.id IS NOT NULL AS submitted,
+         s.grade, s.feedback, s.strengths, s.weaknesses, s.graded_at
        FROM course_assignments a
+       LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.student_id = $2
        WHERE a.course_id = $1
        ORDER BY a.due_date ASC NULLS LAST, a.created_at DESC`,
       [courseId, userId],
@@ -654,13 +657,14 @@ export async function createAssignment(req: AuthRequest, res: Response) {
     const assignment = result.rows[0];
     const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [courseId]);
     const courseTitle = courseRes.rows[0]?.title || "";
+    const notifLink = `/dashboard/courses/${courseId}?assignment=${assignment.id}`;
     const notifStudents = await notifyCourseStudents(
       courseId, userId, "course_assignment",
       "New Assignment",
       `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`,
-      `/dashboard/courses/${courseId}`,
+      notifLink,
     );
-    const notif = { type: "course_assignment", title: "New Assignment", message: `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`, link: `/dashboard/courses/${courseId}` };
+    const notif = { type: "course_assignment", title: "New Assignment", message: `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`, link: notifLink };
     for (const m of notifStudents) {
       try { getIO().to(`user:${m.student_id}`).emit("notification", notif); } catch {}
     }
@@ -725,11 +729,16 @@ export async function submitAssignment(req: AuthRequest, res: Response) {
 
   try {
     const assignment = await pool.query(
-      `SELECT a.course_id FROM course_assignments a WHERE a.id = $1`,
+      `SELECT a.course_id, a.due_date FROM course_assignments a WHERE a.id = $1`,
       [assignmentId],
     );
     if (assignment.rows.length === 0) {
       res.status(404).json({ error: "Assignment not found" });
+      return;
+    }
+
+    if (assignment.rows[0].due_date && new Date(assignment.rows[0].due_date) < new Date()) {
+      res.status(403).json({ error: "Submission deadline has passed" });
       return;
     }
 
@@ -754,6 +763,102 @@ export async function submitAssignment(req: AuthRequest, res: Response) {
   } catch (err) {
     console.error("submitAssignment error:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// POST /assignments/:id/grade/:studentId — instructor grades a submission (AI)
+export async function gradeAssignment(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const assignmentId = paramId(req.params.id);
+  const studentId = paramId(req.params.studentId);
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    const assignment = await pool.query(
+      `SELECT a.*, c.instructor_id, c.id AS course_id, c.title AS course_title
+       FROM course_assignments a
+       JOIN courses c ON c.id = a.course_id
+       WHERE a.id = $1`,
+      [assignmentId],
+    );
+    if (assignment.rows.length === 0) {
+      res.status(404).json({ error: "Assignment not found" });
+      return;
+    }
+    if (assignment.rows[0].instructor_id !== userId) {
+      res.status(403).json({ error: "Only the course instructor can grade" });
+      return;
+    }
+
+    const submission = await pool.query(
+      `SELECT * FROM assignment_submissions WHERE assignment_id = $1 AND student_id = $2`,
+      [assignmentId, studentId],
+    );
+    if (submission.rows.length === 0) {
+      res.status(404).json({ error: "Submission not found" });
+      return;
+    }
+
+    const sub = submission.rows[0];
+    const result = await gradeSubmission(
+      sub.content || "",
+      assignment.rows[0].title,
+      assignment.rows[0].description,
+    );
+
+    await pool.query(
+      `UPDATE assignment_submissions
+       SET grade = $1, feedback = $2, strengths = $3, weaknesses = $4, graded_at = NOW(), graded_by = $5
+       WHERE id = $6`,
+      [
+        result.score,
+        result.feedback,
+        JSON.stringify(result.strengths),
+        JSON.stringify(result.weaknesses),
+        userId,
+        sub.id,
+      ],
+    );
+
+    const studentRes = await pool.query(
+      `SELECT name FROM users WHERE id = $1`,
+      [studentId],
+    );
+    const studentName = studentRes.rows[0]?.name || "Student";
+
+    const notifLink = `/dashboard/courses/${assignment.rows[0].course_id}?assignment=${assignmentId}`;
+    await createNotification(
+      studentId,
+      "assignment_graded",
+      "Assignment Graded",
+      `Your submission for "${assignment.rows[0].title}" has been graded — ${result.score}/100`,
+      notifLink,
+    );
+    try {
+      getIO().to(`user:${studentId}`).emit("notification", {
+        type: "assignment_graded",
+        title: "Assignment Graded",
+        message: `Your submission for "${assignment.rows[0].title}" has been graded — ${result.score}/100`,
+        link: notifLink,
+      });
+    } catch {}
+
+    res.json({
+      ...sub,
+      grade: result.score,
+      feedback: result.feedback,
+      strengths: JSON.stringify(result.strengths),
+      weaknesses: JSON.stringify(result.weaknesses),
+      graded_at: new Date().toISOString(),
+      graded_by: userId,
+    });
+  } catch (err) {
+    console.error("gradeAssignment error:", err);
+    res.status(503).json({ error: "AI grading unavailable. Please try again later or grade manually." });
   }
 }
 
@@ -938,6 +1043,52 @@ async function canAccessCourse(
     [courseId, userId],
   );
   return (r.rowCount ?? 0) > 0;
+}
+
+// POST /courses/:id/chat — AI tutor chat scoped to a course
+export async function chatWithAI(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  const { message, history } = req.body;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!message?.trim()) {
+    res.status(400).json({ error: "Message is required" });
+    return;
+  }
+
+  try {
+    const course = await pool.query(
+      `SELECT title, description FROM courses WHERE id = $1`,
+      [courseId],
+    );
+    if (course.rows.length === 0) {
+      res.status(404).json({ error: "Course not found" });
+      return;
+    }
+
+    const systemMsg = `You are a helpful AI tutor for the course "${course.rows[0].title}". ${course.rows[0].description ? `Course description: ${course.rows[0].description}` : ""} Answer the student's questions clearly and concisely. If you don't know something, say so honestly. Keep responses under 200 words.`;
+
+    const messages = [
+      { role: "system", content: systemMsg },
+      ...(Array.isArray(history) ? history : []),
+      { role: "user", content: message },
+    ];
+
+    const reply = await callAiChat(messages);
+    if (!reply) {
+      res.status(503).json({ error: "AI tutor is temporarily unavailable. Please try again." });
+      return;
+    }
+
+    res.json({ reply });
+  } catch (err) {
+    console.error("chatWithAI error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 }
 
 // GET /courses/available — courses student can browse and enroll

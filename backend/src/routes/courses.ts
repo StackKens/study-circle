@@ -19,11 +19,13 @@ import {
   createAssignment,
   getSubmissions,
   submitAssignment,
+  gradeAssignment,
   getDiscussions,
   createDiscussion,
   replyToDiscussion,
   listAvailableCourses,
   getDiscussionReplies,
+  chatWithAI,
 } from "../controllers/courses.controller";
 
 const router = Router();
@@ -61,8 +63,11 @@ router.post("/courses/:id/assignments", authenticateToken, createAssignment);
 router.get("/courses/:id/discussions", authenticateToken, getDiscussions);
 router.post("/courses/:id/discussions", authenticateToken, createDiscussion);
 
+router.post("/courses/:id/chat", authenticateToken, chatWithAI);
+
 router.get("/assignments/:id/submissions", authenticateToken, getSubmissions);
 router.post("/assignments/:id/submit", authenticateToken, submitAssignment);
+router.post("/assignments/:id/grade/:studentId", authenticateToken, gradeAssignment);
 
 router.post("/discussions/:id/reply", authenticateToken, replyToDiscussion);
 router.get("/discussions/:id/replies", authenticateToken, getDiscussionReplies);
