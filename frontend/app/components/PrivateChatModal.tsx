@@ -182,7 +182,7 @@ export default function PrivateChatModal() {
                   handleSend();
                 }
               }}
-              placeholder={`Message ${target.name.split(" ")[0]}… Use @ to tag`}
+              placeholder={`Message ${target.name.split(" ")[0]}...`}
               disabled={status !== "connected"}
               className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 resize-none outline-none leading-relaxed max-h-[80px]"
             />

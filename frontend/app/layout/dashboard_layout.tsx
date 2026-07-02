@@ -594,6 +594,15 @@ export default function DashboardLayout() {
                       onClick={() => setMobileMenuOpen(false)}
                     />
                     <NavLink
+                      to="/dashboard/friends"
+                      className={({ isActive }) =>
+                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Friends
+                    </NavLink>
+                    <NavLink
                       to="/dashboard/sessions"
                       className={({ isActive }) =>
                         `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
