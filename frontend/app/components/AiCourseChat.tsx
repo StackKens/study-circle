@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send, Loader2, Bot, User, ChevronDown } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, Bot, User } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -71,117 +71,95 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
     }
   }
 
-  const panel = (header: boolean) => (
-    <div className="flex flex-col overflow-hidden bg-white rounded-xl shadow-2xl border border-slate-200">
-      {header && (
-        <div className="flex items-center justify-between px-4 py-3 bg-teal-600 text-white">
-          <div className="flex items-center gap-2">
-            <Bot size={18} />
-            <span className="text-sm font-semibold">{firstName}'s AI Assistant</span>
-          </div>
-          <button onClick={() => setOpen(false)} className="cursor-pointer">
-            <ChevronDown size={18} />
-          </button>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ maxHeight: 300 }}>
-        {messages.length === 0 && (
-          <div className="text-center pt-6">
-            <Bot size={32} className="mx-auto text-teal-300 mb-2" />
-            <p className="text-xs text-slate-500">{opener}</p>
-          </div>
-        )}
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            {msg.role === "assistant" && (
-              <div className="shrink-0 mt-1">
-                <Bot size={16} className="text-teal-600" />
-              </div>
-            )}
-            <div
-              className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
-                msg.role === "user"
-                  ? "bg-teal-600 text-white rounded-tr-sm"
-                  : "bg-slate-100 text-slate-700 rounded-tl-sm"
-              }`}
-            >
-              {msg.content}
-            </div>
-            {msg.role === "user" && (
-              <div className="shrink-0 mt-1">
-                <User size={16} className="text-teal-600" />
-              </div>
-            )}
-          </div>
-        ))}
-        {loading && (
-          <div className="flex gap-2 justify-start">
-            <div className="shrink-0 mt-1">
-              <Bot size={16} className="text-teal-600" />
-            </div>
-            <div className="max-w-[80%] rounded-xl rounded-tl-sm px-3 py-2 bg-slate-100">
-              <Loader2 size={14} className="animate-spin text-slate-400" />
-            </div>
-          </div>
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      <form onSubmit={handleSend} className="border-t border-slate-200 p-3 flex gap-2">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question…"
-          disabled={loading}
-          className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-teal-400 disabled:opacity-50"
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          className="bg-teal-600 text-white p-2 rounded-lg cursor-pointer disabled:opacity-50"
-        >
-          <Send size={16} />
-        </button>
-      </form>
-    </div>
-  );
-
   return (
     <>
-      {/* Mobile: inline at top */}
-      <div className="md:hidden mt-4 bg-white rounded-xl border border-slate-200 overflow-hidden">
-        <button
-          onClick={() => setOpen((prev) => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50 transition"
-        >
-          <div className="flex items-center gap-2">
-            <Bot size={18} className="text-teal-600" />
-            <span className="text-sm font-semibold text-slate-800">{firstName}'s AI Assistant</span>
-          </div>
-          <ChevronDown size={16} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
-        </button>
-        {open && <div className="border-t border-slate-200">{panel(false)}</div>}
-      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => setOpen(false)} />
+          <div className="fixed bottom-20 right-4 left-4 sm:right-6 sm:left-auto sm:w-96 z-50 max-h-[70vh] flex flex-col bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-teal-600 text-white shrink-0">
+              <div className="flex items-center gap-2">
+                <Bot size={18} />
+                <span className="text-sm font-semibold">{firstName}'s AI Assistant</span>
+              </div>
+              <button onClick={() => setOpen(false)} className="cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
 
-      {/* Desktop: floating button */}
-      <div className="hidden md:block">
-        <button
-          onClick={() => setOpen((prev) => !prev)}
-          className="fixed bottom-6 right-6 z-50 bg-teal-600 text-white p-3.5 rounded-full shadow-lg hover:bg-teal-500 transition cursor-pointer"
-          title={`${firstName}'s AI Assistant`}
-        >
-          {open ? <X size={22} /> : <MessageCircle size={22} />}
-        </button>
-        {open && (
-          <div className="fixed bottom-20 right-6 z-50 w-80 sm:w-96 h-96">
-            {panel(true)}
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 min-h-0">
+              {messages.length === 0 && (
+                <div className="text-center pt-6">
+                  <Bot size={32} className="mx-auto text-teal-300 mb-2" />
+                  <p className="text-xs text-slate-500">{opener}</p>
+                </div>
+              )}
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  {msg.role === "assistant" && (
+                    <div className="shrink-0 mt-1">
+                      <Bot size={16} className="text-teal-600" />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${
+                      msg.role === "user"
+                        ? "bg-teal-600 text-white rounded-tr-sm"
+                        : "bg-slate-100 text-slate-700 rounded-tl-sm"
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="shrink-0 mt-1">
+                      <User size={16} className="text-teal-600" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {loading && (
+                <div className="flex gap-2 justify-start">
+                  <div className="shrink-0 mt-1">
+                    <Bot size={16} className="text-teal-600" />
+                  </div>
+                  <div className="max-w-[80%] rounded-xl rounded-tl-sm px-3 py-2 bg-slate-100">
+                    <Loader2 size={14} className="animate-spin text-slate-400" />
+                  </div>
+                </div>
+              )}
+              <div ref={bottomRef} />
+            </div>
+
+            <form onSubmit={handleSend} className="border-t border-slate-200 p-3 flex gap-2 shrink-0">
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask a question…"
+                disabled={loading}
+                className="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none focus:border-teal-400 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="bg-teal-600 text-white p-2 rounded-lg cursor-pointer disabled:opacity-50"
+              >
+                <Send size={16} />
+              </button>
+            </form>
           </div>
-        )}
-      </div>
+        </>
+      )}
+
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="fixed bottom-6 right-6 z-50 bg-teal-600 text-white p-3.5 rounded-full shadow-lg hover:bg-teal-500 transition cursor-pointer"
+        title={`${firstName}'s AI Assistant`}
+      >
+        {open ? <X size={22} /> : <MessageCircle size={22} />}
+      </button>
     </>
   );
 }
