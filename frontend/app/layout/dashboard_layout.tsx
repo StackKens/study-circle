@@ -686,6 +686,15 @@ export default function DashboardLayout() {
                     >
                       Discussions
                     </NavLink>
+                    <NavLink
+                      to="/dashboard/sessions"
+                      className={({ isActive }) =>
+                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sessions
+                    </NavLink>
                   </>
                 )}
                 <div className="border-t border-slate-100 pt-2 mt-1">
