@@ -78,7 +78,7 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
       {open && (
         <>
           <div className="fixed inset-0 z-40 bg-black/20" />
-          <div className="fixed bottom-24 left-4 right-4 sm:right-6 sm:left-auto sm:w-96 z-50 max-h-[80vh] flex flex-col bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+          <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[85%] h-[55vh] sm:left-auto sm:translate-x-0 sm:right-6 sm:w-96 sm:max-h-[80vh] sm:h-auto z-50 flex flex-col bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 bg-teal-600 text-white shrink-0">
               <div className="flex items-center gap-2">
                 <Bot size={18} />
