@@ -24,7 +24,9 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const [opener] = useState(() => coolOpeners[Math.floor(Math.random() * coolOpeners.length)]);
+  const [opener] = useState(
+    () => coolOpeners[Math.floor(Math.random() * coolOpeners.length)],
+  );
   const firstName = user?.name?.split(" ")[0] || "Student";
 
   useEffect(() => {
@@ -80,7 +82,9 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
             <div className="flex items-center justify-between px-4 py-3 bg-teal-600 text-white shrink-0">
               <div className="flex items-center gap-2">
                 <Bot size={18} />
-                <span className="text-sm font-semibold">{firstName}'s AI Assistant</span>
+                <span className="text-sm font-semibold">
+                  {firstName}'s AI Assistant
+                </span>
               </div>
               <button onClick={() => setOpen(false)} className="cursor-pointer">
                 <X size={18} />
@@ -126,14 +130,20 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
                     <Bot size={16} className="text-teal-600" />
                   </div>
                   <div className="max-w-[80%] rounded-xl rounded-tl-sm px-3 py-2 bg-slate-100">
-                    <Loader2 size={14} className="animate-spin text-slate-400" />
+                    <Loader2
+                      size={14}
+                      className="animate-spin text-slate-400"
+                    />
                   </div>
                 </div>
               )}
               <div ref={bottomRef} />
             </div>
 
-            <form onSubmit={handleSend} className="border-t border-slate-200 p-3 flex gap-2 shrink-0">
+            <form
+              onSubmit={handleSend}
+              className="border-t border-slate-200 p-3 flex gap-2 shrink-0"
+            >
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -158,7 +168,7 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
         className="fixed bottom-24 left-6 z-50 bg-teal-600 text-white p-3.5 rounded-full shadow-lg hover:bg-teal-500 transition cursor-pointer"
         title={`${firstName}'s AI Assistant`}
       >
-        {open ? <X size={22} /> : <MessageCircle size={22} />}
+        <MessageCircle size={22} />
       </button>
     </>
   );
