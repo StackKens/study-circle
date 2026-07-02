@@ -284,7 +284,6 @@ const instructorBottomTabs = [
     icon: GraduationCap,
   },
   { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
-  { name: "Groups", path: "/dashboard/groups", icon: Users },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
@@ -604,33 +603,6 @@ export default function DashboardLayout() {
                       Sessions
                     </NavLink>
                     <NavLink
-                      to="/dashboard/groups"
-                      className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Groups
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/sessions"
-                      className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sessions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/resources"
-                      className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Resources
-                    </NavLink>
-                    <NavLink
                       to="/dashboard/progress"
                       className={({ isActive }) =>
                         `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
@@ -696,6 +668,15 @@ export default function DashboardLayout() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Discussions
+                    </NavLink>
+                    <NavLink
+                      to="/dashboard/groups"
+                      className={({ isActive }) =>
+                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Groups
                     </NavLink>
                     <NavLink
                       to="/dashboard/sessions"

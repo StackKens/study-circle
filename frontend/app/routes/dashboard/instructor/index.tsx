@@ -22,6 +22,14 @@ interface Course {
   student_count: number;
 }
 
+interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  subject: string;
+  total_members: number;
+}
+
 interface Activity {
   type: string;
   label: string;
@@ -46,6 +54,7 @@ export default function InstructorDashboard() {
   const { user, token } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -56,6 +65,16 @@ export default function InstructorDashboard() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/groups`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d) && setGroups(d))
+      .catch(console.error);
   }, [token]);
 
   if (loading) {
@@ -209,6 +228,54 @@ export default function InstructorDashboard() {
             </p>
           )}
         </div>
+      </div>
+
+      {/* My Groups */}
+      <div className="mt-4 sm:mt-5 bg-white rounded-xl border border-slate-200 p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-slate-900">My Groups</h2>
+          <Link
+            to="/dashboard/groups"
+            className="text-xs text-teal-600 font-medium flex items-center gap-1"
+          >
+            Manage all <ArrowRight size={12} />
+          </Link>
+        </div>
+        {groups.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {groups.map((g) => (
+              <Link
+                key={g.id}
+                to={`/dashboard/groups/${g.id}`}
+                className="flex items-center gap-3 p-3 rounded-lg border border-slate-100 hover:border-teal-200 hover:bg-teal-50/30 transition-colors"
+              >
+                <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+                  <Users size={15} className="text-slate-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-slate-800 truncate">
+                    {g.name}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {g.total_members} member{g.total_members !== 1 ? "s" : ""}
+                    {g.subject ? ` · ${g.subject}` : ""}
+                  </p>
+                </div>
+                <ArrowRight size={13} className="text-slate-300 shrink-0" />
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-sm text-slate-500 mb-3">No groups yet</p>
+            <Link
+              to="/dashboard/groups"
+              className="inline-flex items-center gap-1.5 bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-teal-500"
+            >
+              Create your first group
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

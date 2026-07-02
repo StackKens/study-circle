@@ -12,6 +12,10 @@ import {
   Award,
   Camera,
   Loader2,
+  FileText,
+  Megaphone,
+  MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -51,6 +55,23 @@ interface Badge {
   color: string;
 }
 
+interface Course {
+  id: string;
+  title: string;
+  code: string | null;
+  description: string | null;
+  university: string;
+  created_at: string;
+  student_count: number;
+}
+
+interface ActivityItem {
+  type: "announcement" | "submission" | "discussion";
+  label: string;
+  created_at: string;
+  course_title: string;
+}
+
 export default function ProfilePage() {
   const { user, token, updateUser } = useAuth();
   const [bio, setBio] = useState<string>("");
@@ -63,6 +84,8 @@ export default function ProfilePage() {
     total_students: number;
     follower_count: number;
   } | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,15 +96,24 @@ export default function ProfilePage() {
     const fetchProfileData = async () => {
       try {
         if (user.role === "instructor") {
-          const dashRes = await fetch(`${API_URL}/instructors/dashboard`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+          const [dashRes, groupsRes] = await Promise.all([
+            fetch(`${API_URL}/instructors/dashboard`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+            fetch(`${API_URL}/users/me/groups?limit=3`, {
+              headers: { Authorization: `Bearer ${token}` },
+            }),
+          ]);
           const dashData = await dashRes.json();
+          const groupsData: RecentGroup[] = await groupsRes.json();
           setInstructorStats({
             courses: dashData.courses?.length ?? 0,
             total_students: dashData.total_students ?? 0,
             follower_count: dashData.follower_count ?? 0,
           });
+          setCourses(dashData.courses ?? []);
+          setRecentActivity(dashData.recent_activity ?? []);
+          setRecentGroups(groupsData);
           setLoading(false);
           return;
         }
@@ -378,6 +410,70 @@ export default function ProfilePage() {
         </div>
       ) : null}
 
+      {/* Course List — instructors only */}
+      {user.role === "instructor" && courses.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-5">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
+              My Courses
+            </p>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {courses.map((course) => (
+              <Link
+                key={course.id}
+                to={`/dashboard/instructor/courses/${course.id}`}
+                className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-slate-900 text-sm truncate">
+                    {course.title}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {course.code && `${course.code} · `}{course.student_count} student{course.student_count !== 1 ? "s" : ""}
+                  </p>
+                </div>
+                <ExternalLink size={14} className="text-slate-300 group-hover:text-teal-500 transition-colors flex-shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Activity — instructors only */}
+      {user.role === "instructor" && recentActivity.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-5">
+          <div className="px-5 py-4 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
+              Recent Activity
+            </p>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {recentActivity.map((item, i) => {
+              const iconMap = {
+                announcement: Megaphone,
+                submission: FileText,
+                discussion: MessageSquare,
+              } as const;
+              const Icon = iconMap[item.type] || MessageSquare;
+              return (
+                <div key={i} className="px-5 py-3 flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Icon size={13} className="text-slate-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-slate-700 leading-snug">{item.label}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {item.course_title} · {new Date(item.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Badges — students only */}
       {user.role !== "instructor" && badges.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
@@ -397,8 +493,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Recent groups — students only */}
-      {user.role !== "instructor" && (
+      {/* Active groups */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
@@ -443,7 +538,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-      )}
     </div>
   );
 }
