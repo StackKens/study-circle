@@ -38,6 +38,7 @@ export default function StudentCourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [tab, setTab] = useState<Tab>("announcements");
   const [loading, setLoading] = useState(true);
+  const [tabLoading, setTabLoading] = useState(false);
 
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
@@ -70,23 +71,28 @@ export default function StudentCourseDetailPage() {
 
   useEffect(() => {
     if (!token || !courseId) return;
+    setTabLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
     if (tab === "announcements") {
       fetch(`${API_URL}/courses/${courseId}/announcements`, { headers })
         .then((r) => r.json())
-        .then((d) => Array.isArray(d) && setAnnouncements(d));
+        .then((d) => Array.isArray(d) && setAnnouncements(d))
+        .finally(() => setTabLoading(false));
     } else if (tab === "resources") {
       fetch(`${API_URL}/courses/${courseId}/resources`, { headers })
         .then((r) => r.json())
-        .then((d) => Array.isArray(d) && setResources(d));
+        .then((d) => Array.isArray(d) && setResources(d))
+        .finally(() => setTabLoading(false));
     } else if (tab === "assignments") {
       fetch(`${API_URL}/courses/${courseId}/assignments`, { headers })
         .then((r) => r.json())
-        .then((d) => Array.isArray(d) && setAssignments(d));
+        .then((d) => Array.isArray(d) && setAssignments(d))
+        .finally(() => setTabLoading(false));
     } else {
       fetch(`${API_URL}/courses/${courseId}/discussions`, { headers })
         .then((r) => r.json())
-        .then((d) => Array.isArray(d) && setDiscussions(d));
+        .then((d) => Array.isArray(d) && setDiscussions(d))
+        .finally(() => setTabLoading(false));
     }
   }, [tab, token, courseId]);
 
@@ -233,7 +239,9 @@ export default function StudentCourseDetailPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         {tab === "announcements" &&
-          (announcements.length ? (
+          (tabLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
+          ) : announcements.length ? (
             announcements.map((a) => (
               <div key={a.id} className="py-4 border-b border-slate-100 last:border-0">
                 <p className="font-semibold text-slate-900">{a.title}</p>
@@ -250,7 +258,9 @@ export default function StudentCourseDetailPage() {
           ))}
 
         {tab === "resources" &&
-          (resources.length ? (
+          (tabLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
+          ) : resources.length ? (
             resources.map((r) => (
               <a
                 key={r.id}
@@ -273,7 +283,9 @@ export default function StudentCourseDetailPage() {
           ))}
 
         {tab === "assignments" &&
-          (assignments.length ? (
+          (tabLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
+          ) : assignments.length ? (
             assignments.map((a) => (
               <div
                 key={a.id}
@@ -406,7 +418,9 @@ export default function StudentCourseDetailPage() {
                 Post question
               </button>
             </form>
-            {discussions.length ? (
+            {tabLoading ? (
+              <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
+            ) : discussions.length ? (
               discussions.map((d) => (
                 <div key={d.id} className="py-3 border-b border-slate-100 last:border-0">
                   <p className="font-semibold text-slate-900">{d.title}</p>

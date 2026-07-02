@@ -109,11 +109,16 @@ export default function DashboardHome() {
 
   const recentGroups = groups.slice(0, 3);
 
-  async function handleJoinSession(sessionId: string) {
+  async function handleJoinSession(sessionId: string, meetLink?: string) {
     if (!token) return;
 
     setJoiningSessionId(sessionId);
     setJoinError("");
+
+    if (meetLink) {
+      window.open(meetLink, "_blank", "noopener");
+    }
+
     try {
       const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
         method: "POST",
@@ -122,11 +127,6 @@ export default function DashboardHome() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to join session");
       markSessionJoined(sessionId, data.participant_count);
-
-      // Auto-open only for live joins; reserving an upcoming session stays here.
-      if (data.status === "checked_in" && data.meet_link) {
-        window.open(data.meet_link, "_blank", "noopener");
-      }
     } catch (err) {
       console.error("joinSession error:", err);
       setJoinError(
@@ -385,7 +385,7 @@ export default function DashboardHome() {
                       </p>
                     </div>
                     <button
-                      onClick={() => handleJoinSession(session.id)}
+                      onClick={() => handleJoinSession(session.id, session.meet_link)}
                       disabled={
                         joiningSessionId === session.id || session.has_joined
                       }

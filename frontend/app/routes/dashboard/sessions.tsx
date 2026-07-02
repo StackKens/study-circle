@@ -159,9 +159,15 @@ export default function SessionsPage() {
     }
   };
 
-  const handleJoin = async (sessionId: string) => {
+  const handleJoin = async (sessionId: string, meetLink?: string) => {
     setJoining(sessionId);
     setJoinError("");
+
+    // Open synchronously to bypass popup blocker
+    if (meetLink) {
+      window.open(meetLink, "_blank", "noopener");
+    }
+
     try {
       const res = await fetch(`${API_URL}/sessions/${sessionId}/join`, {
         method: "POST",
@@ -170,11 +176,6 @@ export default function SessionsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to join session");
       markSessionJoined(sessionId, data.participant_count);
-
-      // Auto-open only for live joins; reserving an upcoming session stays here.
-      if (data.status === "checked_in" && data.meet_link) {
-        window.open(data.meet_link, "_blank", "noopener");
-      }
     } catch (err) {
       console.error("joinSession error:", err);
       setJoinError(
@@ -350,7 +351,7 @@ export default function SessionsPage() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   if (joining === session.id) return;
-                                  handleJoin(session.id);
+                                  handleJoin(session.id, session.meet_link);
                                 }}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -371,7 +372,7 @@ export default function SessionsPage() {
                               </a>
                             )}
                           <button
-                            onClick={() => handleJoin(session.id)}
+                            onClick={() => handleJoin(session.id, session.meet_link)}
                             disabled={
                               joining === session.id || joinAction.disabled
                             }
