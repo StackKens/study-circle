@@ -71,17 +71,19 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
     }
   }
 
-  const panel = (
+  const panel = (header: boolean) => (
     <div className="flex flex-col overflow-hidden bg-white rounded-xl shadow-2xl border border-slate-200">
-      <div className="flex items-center justify-between px-4 py-3 bg-teal-600 text-white">
-        <div className="flex items-center gap-2">
-          <Bot size={18} />
-          <span className="text-sm font-semibold">{firstName}'s AI Assistant</span>
+      {header && (
+        <div className="flex items-center justify-between px-4 py-3 bg-teal-600 text-white">
+          <div className="flex items-center gap-2">
+            <Bot size={18} />
+            <span className="text-sm font-semibold">{firstName}'s AI Assistant</span>
+          </div>
+          <button onClick={() => setOpen(false)} className="cursor-pointer">
+            <ChevronDown size={18} />
+          </button>
         </div>
-        <button onClick={() => setOpen(false)} className="cursor-pointer">
-          <ChevronDown size={18} />
-        </button>
-      </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3" style={{ maxHeight: 300 }}>
         {messages.length === 0 && (
@@ -151,15 +153,18 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
   return (
     <>
       {/* Mobile: inline at top */}
-      <div className="md:hidden mt-4">
+      <div className="md:hidden mt-4 bg-white rounded-xl border border-slate-200 overflow-hidden">
         <button
           onClick={() => setOpen((prev) => !prev)}
-          className="w-full flex items-center justify-between bg-teal-600 text-white px-4 py-3 rounded-xl cursor-pointer"
+          className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-slate-50 transition"
         >
-          <span className="text-sm font-semibold">{firstName}'s AI Assistant</span>
-          <MessageCircle size={18} />
+          <div className="flex items-center gap-2">
+            <Bot size={18} className="text-teal-600" />
+            <span className="text-sm font-semibold text-slate-800">{firstName}'s AI Assistant</span>
+          </div>
+          <ChevronDown size={16} className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
-        {open && <div className="mt-2">{panel}</div>}
+        {open && <div className="border-t border-slate-200">{panel(false)}</div>}
       </div>
 
       {/* Desktop: floating button */}
@@ -173,7 +178,7 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
         </button>
         {open && (
           <div className="fixed bottom-20 right-6 z-50 w-80 sm:w-96 h-96">
-            {panel}
+            {panel(true)}
           </div>
         )}
       </div>
