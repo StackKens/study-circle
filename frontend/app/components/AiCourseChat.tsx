@@ -163,13 +163,15 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
         </>
       )}
 
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className="fixed bottom-24 left-6 z-50 bg-teal-600 text-white p-3.5 rounded-full shadow-lg hover:bg-teal-500 transition cursor-pointer"
-        title={`${firstName}'s AI Assistant`}
-      >
-        <MessageCircle size={22} />
-      </button>
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-24 left-6 z-50 bg-teal-600 text-white p-3.5 rounded-full shadow-lg hover:bg-teal-500 transition cursor-pointer"
+          title={`${firstName}'s AI Assistant`}
+        >
+          <MessageCircle size={22} />
+        </button>
+      )}
     </>
   );
 }
