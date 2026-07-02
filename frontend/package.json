@@ -15,6 +15,7 @@
     "@react-router/node": "7.15.0",
     "@react-router/serve": "7.15.0",
     "@tanstack/react-query": "^5.100.10",
+    "@emailjs/browser": "^4.4.1",
     "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
