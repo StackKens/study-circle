@@ -312,3 +312,74 @@ export async function getInstructorSubmissions(req: AuthRequest, res: Response) 
     res.status(500).json({ error: "Internal server error" });
   }
 }
+
+// GET /instructors/me/assignments — all assignments across instructor's courses
+export async function getInstructorAssignments(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!(await isInstructor(userId))) { res.status(403).json({ error: "Instructor access only" }); return; }
+
+  try {
+    const result = await pool.query(
+      `SELECT a.*,
+         (SELECT COUNT(*)::int FROM assignment_submissions WHERE assignment_id = a.id) AS submission_count,
+         c.id AS course_id, c.title AS course_title
+       FROM course_assignments a
+       JOIN courses c ON c.id = a.course_id
+       WHERE c.instructor_id = $1
+       ORDER BY a.created_at DESC`,
+      [userId],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getInstructorAssignments error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// POST /instructors/me/assignments — instructor creates an assignment for a course
+export async function createInstructorAssignment(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const { course_id, title, description, due_date } = req.body;
+
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!(await isInstructor(userId))) { res.status(403).json({ error: "Instructor access only" }); return; }
+
+  if (!course_id || !title?.trim()) {
+    res.status(400).json({ error: "Course and title are required" });
+    return;
+  }
+
+  try {
+    const owns = await pool.query(
+      `SELECT id FROM courses WHERE id = $1 AND instructor_id = $2`,
+      [course_id, userId],
+    );
+    if (owns.rows.length === 0) { res.status(403).json({ error: "You don't own this course" }); return; }
+
+    const result = await pool.query(
+      `INSERT INTO course_assignments (course_id, title, description, due_date, created_by)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [course_id, title.trim(), description?.trim() || null, due_date || null, userId],
+    );
+    const assignment = result.rows[0];
+    const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [course_id]);
+    const courseTitle = courseRes.rows[0]?.title || "";
+    const notifLink = `/dashboard/courses/${course_id}?assignment=${assignment.id}`;
+    const notifStudents = await notifyCourseStudents(
+      course_id, userId, "course_assignment",
+      "New Assignment",
+      `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`,
+      notifLink,
+    );
+    const notif = { type: "course_assignment", title: "New Assignment", message: `"${assignment.title}" assigned in ${courseTitle}.${due_date ? ` Due: ${new Date(due_date).toLocaleDateString()}` : ""}`, link: notifLink };
+    for (const m of notifStudents) {
+      try { getIO().to(`user:${m.student_id}`).emit("notification", notif); } catch {}
+    }
+    res.status(201).json(assignment);
+  } catch (err) {
+    console.error("createInstructorAssignment error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
