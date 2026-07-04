@@ -379,11 +379,12 @@ export default function DashboardLayout() {
   const bottomTabs = isInstructor ? instructorBottomTabs : studentBottomTabs;
 
   const isActive = (path: string) => {
-    const p = location.pathname.replace(/\/$/, "");
-    if (path === "/dashboard" || path === "/dashboard/instructor") {
-      return p === path;
+    const p = window.location.pathname.replace(/\/+$/, "");
+    const target = path.replace(/\/+$/, "");
+    if (target === "/dashboard" || target === "/dashboard/instructor") {
+      return p === target;
     }
-    return p.startsWith(path);
+    return p.startsWith(target);
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -489,12 +490,12 @@ export default function DashboardLayout() {
               {sidebarItems.map((item) => {
                 const active = isActive(item.path);
                 return (
-                  <NavLink
+                  <Link
                     key={item.name}
                     to={item.path}
                     className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all cursor-pointer ${
                       active
-                        ? "bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-emerald-500 pl-[12px]"
+                        ? "bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-solid border-emerald-500 pl-[12px]"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                     }`}
                   >
@@ -507,7 +508,7 @@ export default function DashboardLayout() {
                       )}
                     </span>
                     {item.name}
-                  </NavLink>
+                  </Link>
                 );
               })}
             </nav>
@@ -794,7 +795,7 @@ export default function DashboardLayout() {
               {bottomTabs.map((tab) => {
                 const active = isActive(tab.path);
                 return (
-                  <NavLink
+                  <Link
                     key={tab.name}
                     to={tab.path}
                     className={`flex flex-col items-center gap-1 py-1.5 px-3 rounded-lg transition-all duration-200 ${
@@ -805,7 +806,7 @@ export default function DashboardLayout() {
                   >
                     <tab.icon size={20} className={active ? "text-teal-600" : ""} />
                     <span className="text-[10px] font-medium">{tab.name}</span>
-                  </NavLink>
+                  </Link>
                 );
               })}
             </div>
