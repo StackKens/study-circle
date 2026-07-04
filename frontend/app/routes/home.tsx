@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useAuthModal } from "../context/AuthModalContext";
 
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 export function meta() {
@@ -261,7 +260,7 @@ export default function Home() {
                 students
               </span>
             </p>
-            </div>
+          </div>
         </div>
 
         {/* Layered fade transition to next section */}
@@ -406,7 +405,7 @@ export default function Home() {
             </div>
 
             <div className="bg-white rounded-b-xl border border-slate-200 overflow-hidden">
-              <div className="flex h-[360px] md:h-[420px]">
+              <div className="flex h-[400px] md:h-[420px]">
                 {/* Sidebar */}
                 <div className="w-44 md:w-52 bg-white border-r border-slate-200 p-3 shrink-0 hidden sm:flex flex-col gap-1">
                   {[
@@ -420,7 +419,7 @@ export default function Home() {
                       key={label}
                       className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
                         active
-                          ? "bg-teal-50 text-teal-700"
+                          ? "bg-teal-50 text-teal-700 border-l-4 border-emerald-500"
                           : "text-slate-500 hover:bg-slate-50"
                       }`}
                     >
@@ -434,9 +433,21 @@ export default function Home() {
                 <div className="flex-1 p-4 md:p-5 space-y-3 min-w-0 bg-[var(--bg)]">
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { label: "Groups", value: "4", style: "bg-teal-50 text-teal-600" },
-                      { label: "Sessions", value: "12", style: "bg-blue-50 text-blue-600" },
-                      { label: "Resources", value: "28", style: "bg-amber-50 text-amber-600" },
+                      {
+                        label: "Groups",
+                        value: "4",
+                        style: "bg-teal-50 text-teal-600",
+                      },
+                      {
+                        label: "Sessions",
+                        value: "12",
+                        style: "bg-blue-50 text-blue-600",
+                      },
+                      {
+                        label: "Resources",
+                        value: "28",
+                        style: "bg-amber-50 text-amber-600",
+                      },
                     ].map(({ label, value, style }) => (
                       <div
                         key={label}
@@ -447,17 +458,21 @@ export default function Home() {
                         >
                           <span className="text-[10px] font-bold">{value}</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 font-medium">{label}</p>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          {label}
+                        </p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex-1 bg-white rounded-xl border border-slate-200 p-3 h-[180px] md:h-[230px]">
+                  <div className="flex-1 bg-white rounded-xl border border-slate-200 p-3 h-[220px] md:h-[230px]">
                     <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
                       <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-[8px] font-bold">
                         G
                       </div>
-                      <p className="text-xs font-semibold text-slate-700">General Chat</p>
+                      <p className="text-xs font-semibold text-slate-700">
+                        General Chat
+                      </p>
                     </div>
                     <div className="space-y-2.5">
                       <div className="flex items-start gap-2">
@@ -465,8 +480,12 @@ export default function Home() {
                           S
                         </div>
                         <div>
-                          <p className="text-[11px] font-medium text-slate-700">Sarah</p>
-                          <p className="text-[11px] text-slate-400">Anyone up for a study session tomorrow?</p>
+                          <p className="text-[11px] font-medium text-slate-700">
+                            Stackkens
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            Anyone up for a study session tomorrow?
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
@@ -474,8 +493,12 @@ export default function Home() {
                           J
                         </div>
                         <div>
-                          <p className="text-[11px] font-medium text-slate-700">James</p>
-                          <p className="text-[11px] text-slate-400">I'm in! 2pm works for me.</p>
+                          <p className="text-[11px] font-medium text-slate-700">
+                            James
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            I'm in! 2pm works for me.
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-2 opacity-60">
@@ -483,8 +506,12 @@ export default function Home() {
                           P
                         </div>
                         <div>
-                          <p className="text-[11px] font-medium text-slate-700">Peter</p>
-                          <p className="text-[11px] text-slate-400">Let's use the library group room.</p>
+                          <p className="text-[11px] font-medium text-slate-700">
+                            Peter
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            Let's use the library group room.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -720,8 +747,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-
-
       </section>
 
       {/*  FINAL CTA  */}
