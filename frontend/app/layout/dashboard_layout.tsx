@@ -487,22 +487,26 @@ export default function DashboardLayout() {
                     item.path === "/dashboard/instructor"
                   }
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                    `flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-r-lg transition-all cursor-pointer ${
                       isActive
-                        ? "border-l-4 border-emerald-500 bg-emerald-50/50 text-emerald-700 pl-[12px]"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-emerald-500 pl-[12px]"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
                     }`
                   }
                 >
-                  <span className="relative">
-                    <item.icon size={18} />
-                    {item.name === "Messages" && dmUnreadCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
-                        {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
+                  {({ isActive }) => (
+                    <>
+                      <span className="relative">
+                        <item.icon size={18} className={isActive ? "text-emerald-600" : "text-slate-400"} />
+                        {item.name === "Messages" && dmUnreadCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                            {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
+                          </span>
+                        )}
                       </span>
-                    )}
-                  </span>
-                  {item.name}
+                      {item.name}
+                    </>
+                  )}
                 </NavLink>
               ))}
             </nav>
@@ -795,15 +799,19 @@ export default function DashboardLayout() {
                     tab.path === "/dashboard/instructor"
                   }
                   className={({ isActive }) =>
-                    `flex flex-col items-center gap-1 py-1 px-2 rounded-lg transition-all duration-200 ${
+                    `flex flex-col items-center gap-1 py-1.5 px-3 rounded-lg transition-all duration-200 ${
                       isActive
-                        ? "text-teal-600 scale-105"
+                        ? "bg-teal-50 text-teal-700 font-semibold"
                         : "text-slate-500 hover:text-slate-700"
                     }`
                   }
                 >
-                  <tab.icon size={20} />
-                  <span className="text-[10px] font-medium">{tab.name}</span>
+                  {({ isActive }) => (
+                    <>
+                      <tab.icon size={20} className={isActive ? "text-teal-600" : ""} />
+                      <span className="text-[10px] font-medium">{tab.name}</span>
+                    </>
+                  )}
                 </NavLink>
               ))}
             </div>
