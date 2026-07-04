@@ -54,6 +54,7 @@ export default function CourseAssignmentsPage() {
   const [manualScore, setManualScore] = useState("");
   const [manualFeedback, setManualFeedback] = useState("");
   const [viewSubmission, setViewSubmission] = useState<Submission | null>(null);
+  const [expandedSubmission, setExpandedSubmission] = useState<string | null>(null);
 
   function load() {
     fetch(`${API_URL}/courses/${courseId}/assignments`, {
@@ -288,16 +289,24 @@ export default function CourseAssignmentsPage() {
                     submissions.map((s) => (
                       <div
                         key={s.id}
-                        className="bg-white rounded-lg border border-slate-200 p-3"
+                        className="bg-white rounded-lg border border-slate-200"
                       >
-                        <div className="flex items-start justify-between">
+                        <div
+                          onClick={() => setExpandedSubmission(expandedSubmission === s.id ? null : s.id)}
+                          className="flex items-start justify-between p-3 cursor-pointer"
+                        >
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-800">
-                              {s.student_name}
-                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-medium text-slate-800">
+                                {s.student_name}
+                              </p>
+                              {(s.feedback || s.grade != null) && (
+                                expandedSubmission === s.id ? <ChevronUp size={14} className="shrink-0 text-slate-400" /> : <ChevronDown size={14} className="shrink-0 text-slate-400" />
+                              )}
+                            </div>
                             {(s.content || s.url) && (
                               <button
-                                onClick={() => setViewSubmission(s)}
+                                onClick={(e) => { e.stopPropagation(); setViewSubmission(s); }}
                                 className="text-xs text-teal-600 font-medium mt-1 inline-flex items-center gap-1 cursor-pointer hover:underline"
                               >
                                 <ExternalLink size={12} />
@@ -354,7 +363,7 @@ export default function CourseAssignmentsPage() {
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex gap-1.5">
+                              <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={() => handleGrade(s, a)}
                                   disabled={gradingId === s.id}
@@ -377,35 +386,39 @@ export default function CourseAssignmentsPage() {
                             )}
                           </div>
                         </div>
-                        {s.feedback && (
-                          <div className="mt-2 pt-2 border-t border-slate-100">
-                            <p className="text-xs text-slate-500 leading-relaxed">
-                              {s.feedback}
-                            </p>
-                            {(() => {
-                              const st = parseList(s.strengths);
-                              const wk = parseList(s.weaknesses);
-                              return (
-                                <div className="mt-2 flex gap-4">
-                                  {st.length > 0 && (
-                                    <div className="flex-1">
-                                      <p className="text-[11px] font-medium text-emerald-600">Strengths</p>
-                                      <ul className="list-disc list-inside text-[11px] text-slate-400">
-                                        {st.map((item: string, i: number) => <li key={i}>{item}</li>)}
-                                      </ul>
-                                    </div>
-                                  )}
-                                  {wk.length > 0 && (
-                                    <div className="flex-1">
-                                      <p className="text-[11px] font-medium text-amber-600">To Improve</p>
-                                      <ul className="list-disc list-inside text-[11px] text-slate-400">
-                                        {wk.map((item: string, i: number) => <li key={i}>{item}</li>)}
-                                      </ul>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })()}
+                        {expandedSubmission === s.id && (s.feedback || (s.grade != null && (parseList(s.strengths).length > 0 || parseList(s.weaknesses).length > 0))) && (
+                          <div className="px-3 pb-3 border-t border-slate-100">
+                            <div className="pt-2">
+                              {s.feedback && (
+                                <p className="text-xs text-slate-500 leading-relaxed">
+                                  {s.feedback}
+                                </p>
+                              )}
+                              {(() => {
+                                const st = parseList(s.strengths);
+                                const wk = parseList(s.weaknesses);
+                                return st.length > 0 || wk.length > 0 ? (
+                                  <div className="mt-2 flex gap-4">
+                                    {st.length > 0 && (
+                                      <div className="flex-1">
+                                        <p className="text-[11px] font-medium text-emerald-600">Strengths</p>
+                                        <ul className="list-disc list-inside text-[11px] text-slate-400">
+                                          {st.map((item: string, i: number) => <li key={i}>{item}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {wk.length > 0 && (
+                                      <div className="flex-1">
+                                        <p className="text-[11px] font-medium text-amber-600">To Improve</p>
+                                        <ul className="list-disc list-inside text-[11px] text-slate-400">
+                                          {wk.map((item: string, i: number) => <li key={i}>{item}</li>)}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : null;
+                              })()}
+                            </div>
                           </div>
                         )}
                       </div>
