@@ -16,24 +16,13 @@ import {
   Megaphone,
   MessageSquare,
   ExternalLink,
+  FolderOpen,
+  X,
+  ChevronRight,
 } from "lucide-react";
+import { uploadToCloudinary } from "../../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-const CLOUDINARY_CLOUD = "db0oxbeck";
-const CLOUDINARY_PRESET = "p3mbqg5a";
-
-async function uploadToCloudinary(file: File): Promise<string> {
-  const form = new FormData();
-  form.append("file", file);
-  form.append("upload_preset", CLOUDINARY_PRESET);
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
-    { method: "POST", body: form },
-  );
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error?.message || "Upload failed");
-  return data.secure_url;
-}
 
 // Define types for the data we fetch
 interface UserStats {
@@ -65,12 +54,37 @@ interface Course {
   student_count: number;
 }
 
+interface EnrolledStudent {
+  id: string;
+  name: string;
+  email: string;
+  university: string;
+  course_id: string;
+  course_title: string;
+  enrolled_at: string;
+}
+
+interface CourseResource {
+  id: string;
+  course_id: string;
+  course_title: string;
+  title: string;
+  type: string;
+  url: string;
+  uploaded_by: string;
+  uploaded_by_name: string;
+  is_public: boolean;
+  created_at: string;
+}
+
 interface ActivityItem {
   type: "announcement" | "submission" | "discussion";
   label: string;
   created_at: string;
   course_title: string;
 }
+
+type ModalType = "students" | "lessons" | "resources" | null;
 
 export default function ProfilePage() {
   const { user, token, updateUser } = useAuth();
@@ -83,11 +97,16 @@ export default function ProfilePage() {
     courses: number;
     total_students: number;
     follower_count: number;
+    resource_count: number;
   } | null>(null);
   const [courses, setCourses] = useState<Course[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [enrolledStudents, setEnrolledStudents] = useState<EnrolledStudent[]>([]);
+  const [allResources, setAllResources] = useState<CourseResource[]>([]);
+  const [modalLoading, setModalLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch profile data (stats, groups, badges)
@@ -110,6 +129,7 @@ export default function ProfilePage() {
             courses: dashData.courses?.length ?? 0,
             total_students: dashData.total_students ?? 0,
             follower_count: dashData.follower_count ?? 0,
+            resource_count: dashData.resource_count ?? 0,
           });
           setCourses(dashData.courses ?? []);
           setRecentActivity(dashData.recent_activity ?? []);
@@ -212,6 +232,39 @@ export default function ProfilePage() {
       setAvatarUploading(false);
     }
   };
+
+  const openModal = async (type: ModalType) => {
+    setActiveModal(type);
+    if (type === "students") {
+      setModalLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/instructors/me/enrolled-students`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) setEnrolledStudents(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setModalLoading(false);
+      }
+    } else if (type === "resources") {
+      setModalLoading(true);
+      try {
+        const res = await fetch(`${API_URL}/instructors/me/resources`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) setAllResources(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setModalLoading(false);
+      }
+    }
+  };
+
+  const closeModal = () => setActiveModal(null);
 
   return (
     <div className="max-w-3xl mx-auto px-1">
@@ -347,17 +400,21 @@ export default function ProfilePage() {
       {user.role === "instructor" && instructorStats ? (
         <div className="grid grid-cols-3 gap-3 mb-5">
           {[
-            { icon: GraduationCap, value: instructorStats.courses, label: "Courses", color: "text-teal-600", bg: "bg-teal-50" },
-            { icon: Users, value: instructorStats.total_students, label: "Students", color: "text-blue-500", bg: "bg-blue-50" },
-            { icon: Award, value: instructorStats.follower_count, label: "Followers", color: "text-violet-500", bg: "bg-violet-50" },
-          ].map(({ icon: Icon, value, label, color, bg }) => (
-            <div key={label} className="bg-white rounded-xl border border-slate-200 p-4 text-center">
+            { icon: Users, value: instructorStats.total_students, label: "Students", color: "text-blue-500", bg: "bg-blue-50", key: "students" as ModalType },
+            { icon: BookOpen, value: instructorStats.courses, label: "Lessons", color: "text-teal-600", bg: "bg-teal-50", key: "lessons" as ModalType },
+            { icon: FolderOpen, value: instructorStats.resource_count, label: "Resources", color: "text-amber-500", bg: "bg-amber-50", key: "resources" as ModalType },
+          ].map(({ icon: Icon, value, label, color, bg, key }) => (
+            <button
+              key={label}
+              onClick={() => openModal(key)}
+              className="bg-white rounded-xl border border-slate-200 p-4 text-center hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
+            >
               <div className={`w-9 h-9 ${bg} ${color} rounded-lg flex items-center justify-center mx-auto mb-2`}>
                 <Icon size={16} />
               </div>
               <p className="text-xl font-bold text-slate-900">{value}</p>
               <p className="text-xs text-slate-400 mt-0.5">{label}</p>
-            </div>
+            </button>
           ))}
         </div>
       ) : stats ? (
@@ -538,6 +595,177 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* ── Students Modal ── */}
+      {activeModal === "students" && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-12 sm:pt-20 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Enrolled Students</h2>
+                <p className="text-xs text-slate-400 mt-0.5">{instructorStats?.total_students ?? 0} across {courses.length} course{courses.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="p-5 max-h-[60vh] overflow-y-auto">
+              {modalLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 size={20} className="animate-spin text-teal-600" />
+                </div>
+              ) : enrolledStudents.length === 0 ? (
+                <div className="text-center py-10">
+                  <Users size={28} className="text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No enrolled students yet</p>
+                </div>
+              ) : (
+                (() => {
+                  const grouped: Record<string, EnrolledStudent[]> = {};
+                  enrolledStudents.forEach((s) => {
+                    if (!grouped[s.course_title]) grouped[s.course_title] = [];
+                    grouped[s.course_title].push(s);
+                  });
+                  return Object.entries(grouped).map(([courseTitle, students]) => (
+                    <div key={courseTitle} className="mb-4 last:mb-0">
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                        <BookOpen size={12} /> {courseTitle}
+                        <span className="text-slate-300 font-normal">· {students.length}</span>
+                      </p>
+                      <div className="space-y-1">
+                        {students.map((s) => (
+                          <div key={s.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 border border-slate-100">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
+                              <p className="text-xs text-slate-400 truncate">{s.email}</p>
+                            </div>
+                            <span className="text-[11px] text-slate-400 shrink-0 ml-2">{s.university}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ));
+                })()
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Lessons Modal ── */}
+      {activeModal === "lessons" && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-12 sm:pt-20 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">My Lessons</h2>
+                <p className="text-xs text-slate-400 mt-0.5">{courses.length} course{courses.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="p-5 max-h-[60vh] overflow-y-auto space-y-2">
+              {courses.length === 0 ? (
+                <div className="text-center py-10">
+                  <BookOpen size={28} className="text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No courses yet</p>
+                </div>
+              ) : (
+                courses.map((c) => (
+                  <Link
+                    key={c.id}
+                    to={`/dashboard/instructor/courses/${c.id}`}
+                    className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-teal-200 hover:bg-teal-50/30 transition-all group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{c.title}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
+                        <span>{c.code || "No code"}</span>
+                        <span>{c.student_count} student{c.student_count !== 1 ? "s" : ""}</span>
+                      </p>
+                    </div>
+                    <ChevronRight size={15} className="text-slate-300 group-hover:text-teal-500 transition-colors shrink-0 ml-2" />
+                  </Link>
+                ))
+              )}
+              {courses.length > 0 && (
+                <Link
+                  to="/dashboard/instructor/courses"
+                  className="block text-center text-xs font-semibold text-teal-600 py-2 hover:text-teal-700 transition-colors"
+                >
+                  Manage all courses →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Resources Modal ── */}
+      {activeModal === "resources" && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-12 sm:pt-20 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Course Resources</h2>
+                <p className="text-xs text-slate-400 mt-0.5">{allResources.length} resource{allResources.length !== 1 ? "s" : ""}</p>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer">
+                <X size={18} className="text-slate-400" />
+              </button>
+            </div>
+            <div className="p-5 max-h-[60vh] overflow-y-auto space-y-2">
+              {modalLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 size={20} className="animate-spin text-teal-600" />
+                </div>
+              ) : allResources.length === 0 ? (
+                <div className="text-center py-10">
+                  <FolderOpen size={28} className="text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-500">No resources uploaded yet</p>
+                </div>
+              ) : (
+                allResources.map((r) => {
+                  const typeCfg: Record<string, { bg: string; text: string }> = {
+                    pdf:      { bg: "bg-red-50",    text: "text-red-600" },
+                    slides:   { bg: "bg-orange-50", text: "text-orange-600" },
+                    document: { bg: "bg-teal-50",   text: "text-teal-600" },
+                    link:     { bg: "bg-blue-50",   text: "text-blue-600" },
+                  };
+                  const cfg = typeCfg[r.type] ?? { bg: "bg-slate-50", text: "text-slate-600" };
+                  return (
+                    <a
+                      key={r.id}
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 hover:border-teal-200 hover:bg-teal-50/30 transition-all group"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md capitalize shrink-0 ${cfg.bg} ${cfg.text}`}>{r.type}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{r.title}</p>
+                          <p className="text-xs text-slate-400 truncate">{r.course_title}</p>
+                        </div>
+                      </div>
+                      <ExternalLink size={13} className="text-slate-300 group-hover:text-teal-500 transition-colors shrink-0 ml-2" />
+                    </a>
+                  );
+                })
+              )}
+              {allResources.length > 0 && (
+                <Link
+                  to="/dashboard/instructor/resources"
+                  className="block text-center text-xs font-semibold text-teal-600 py-2 hover:text-teal-700 transition-colors"
+                >
+                  Manage all resources →
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

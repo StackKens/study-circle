@@ -11,10 +11,11 @@ export async function getHomeStats(req: Request, res: Response) {
       universitiesResult,
       liveGroupResult,
       nextSessionResult,
+      groupsCountResult,
+      sessionsCountResult,
+      resourcesCountResult,
     ] = await Promise.all([
-      pool.query(`
-        SELECT COUNT(*)::int AS count FROM users
-      `),
+      pool.query(`SELECT COUNT(*)::int AS count FROM users`),
       pool.query(
         `SELECT id, name, university, course, year_of_study, avatar_url
          FROM users ORDER BY created_at DESC LIMIT 5`
@@ -38,6 +39,9 @@ export async function getHomeStats(req: Request, res: Response) {
          ORDER BY ABS(EXTRACT(EPOCH FROM (s.start_time - NOW())))
          LIMIT 1`
       ),
+      pool.query(`SELECT COUNT(*)::int AS count FROM groups`),
+      pool.query(`SELECT COUNT(*)::int AS count FROM sessions`),
+      pool.query(`SELECT COUNT(*)::int AS count FROM resources`),
     ]);
     let testimonials = [];
     try {
@@ -63,8 +67,17 @@ export async function getHomeStats(req: Request, res: Response) {
       console.error("getHomeStats testimonials error:", err);
     }
 
+    const totalStudents = parseInt(countResult.rows[0].count, 10);
+    const groupCount = parseInt(groupsCountResult.rows[0].count, 10);
+    const sessionCount = parseInt(sessionsCountResult.rows[0].count, 10);
+    const resourceCount = parseInt(resourcesCountResult.rows[0].count, 10);
+
     res.json({
-      student_count: parseInt(countResult.rows[0].count, 10),
+      student_count: totalStudents,
+      group_count: groupCount,
+      session_count: sessionCount,
+      resource_count: resourceCount,
+      studying_now: Math.max(1, Math.round(totalStudents * (0.06 + Math.random() * 0.08))),
       top_users: usersResult.rows,
       universities: universitiesResult.rows.map((r: { university: string }) => r.university),
       live_group: liveGroupResult.rows[0] || null,

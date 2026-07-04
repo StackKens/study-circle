@@ -9,8 +9,12 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  LayoutDashboard,
+  MessageCircle,
+  FolderOpen,
 } from "lucide-react";
 import { useAuthModal } from "../context/AuthModalContext";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -44,71 +48,13 @@ interface Testimonial {
 
 interface HomeStats {
   student_count: number;
+  group_count: number;
+  session_count: number;
+  resource_count: number;
+  studying_now: number;
   top_users: TopUser[];
   testimonials: Testimonial[];
   universities: string[];
-}
-
-// Inline SVG logo matchign the favicon (book + star)
-function StudyCircleLogo({
-  size = 14,
-  className = "",
-}: {
-  size?: number;
-  className?: string;
-}) {
-  const s = size;
-  return (
-    <svg width={s} height={s} viewBox="0 0 512 512" className={className}>
-      <path
-        d="M136 190 L256 156 L376 190 L376 350 L256 326 L136 350 Z"
-        fill="#14b8a6"
-        opacity="0.9"
-      />
-      <path
-        d="M136 190 L256 156 L256 326 L136 350 Z"
-        fill="#0d9488"
-        opacity="0.35"
-      />
-      <line
-        x1="256"
-        y1="156"
-        x2="256"
-        y2="326"
-        stroke="#0a0f1e"
-        strokeWidth="10"
-        strokeLinecap="round"
-      />
-      <path
-        d="M196 210 L256 190 L316 210"
-        fill="none"
-        stroke="#f4a261"
-        strokeWidth="5"
-        strokeLinecap="round"
-        opacity="0.7"
-      />
-      <path
-        d="M196 240 L256 220 L316 240"
-        fill="none"
-        stroke="#f4a261"
-        strokeWidth="5"
-        strokeLinecap="round"
-        opacity="0.45"
-      />
-      <path
-        d="M196 270 L256 250 L316 270"
-        fill="none"
-        stroke="#f4a261"
-        strokeWidth="5"
-        strokeLinecap="round"
-        opacity="0.25"
-      />
-      <polygon
-        points="256,96 262,114 280,114 266,126 272,144 256,134 240,144 246,126 232,114 250,114"
-        fill="#f4a261"
-      />
-    </svg>
-  );
 }
 
 //  Static content
@@ -197,10 +143,15 @@ export default function Home() {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
   useEffect(() => {
-    fetch(`${API_URL}/users/home-stats?t=${Date.now()}`)
-      .then((r) => r.json())
-      .then((data) => setStats(data))
-      .catch(console.error);
+    function fetchStats() {
+      fetch(`${API_URL}/users/home-stats?t=${Date.now()}`)
+        .then((r) => r.json())
+        .then((data) => setStats(data))
+        .catch(console.error);
+    }
+    fetchStats();
+    const interval = setInterval(fetchStats, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const studentCount = stats?.student_count ?? null;
@@ -292,21 +243,35 @@ export default function Home() {
                     />
                   ))}
             </div>
-            <p className="text-slate-500 text-sm">
-              <span className="text-slate-200 font-semibold">
-                {studentCount !== null
-                  ? `${studentCount.toLocaleString()}+`
-                  : "..."}
-              </span>{" "}
-              students studying right now
+            <p className="text-slate-500 text-sm flex items-center gap-2">
+              <span className="relative flex w-2 h-2">
+                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+                <span className="relative rounded-full w-2 h-2 bg-emerald-400" />
+              </span>
+              <span>
+                <span className="text-slate-200 font-semibold">
+                  {stats?.studying_now ?? "..."}
+                </span>
+                {" studying now · "}
+                <span className="text-slate-200 font-semibold">
+                  {studentCount !== null
+                    ? `${studentCount.toLocaleString()}+`
+                    : "..."}
+                </span>{" "}
+                students
+              </span>
             </p>
-          </div>
+            </div>
         </div>
 
+        {/* Layered fade transition to next section */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0f1e]/70 via-[#0a0f1e]/30 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white/[0.06] to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white/[0.12] to-transparent pointer-events-none" />
       </section>
 
       {/*  UNIVERSITIES ─ */}
-      <section className="border-y border-slate-100 py-10 overflow-hidden">
+      <section className="py-10 overflow-hidden">
         <div className="max-w-5xl mx-auto px-8 mb-5">
           <p className="text-center text-slate-400 text-[11px] tracking-[0.18em] uppercase font-medium">
             Trusted at
@@ -334,6 +299,47 @@ export default function Home() {
             </div>
           </div>
         )}
+      </section>
+
+      {/*  STATS STRIP ─ */}
+      <section className="py-20 px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+            {[
+              {
+                label: "Students",
+                value: stats?.student_count ?? null,
+                suffix: "+",
+              },
+              {
+                label: "Study Groups",
+                value: stats?.group_count ?? null,
+                suffix: "",
+              },
+              {
+                label: "Sessions",
+                value: stats?.session_count ?? null,
+                suffix: "+",
+              },
+              {
+                label: "Resources",
+                value: stats?.resource_count ?? null,
+                suffix: "+",
+              },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <p className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight tabular-nums">
+                  {stat.value !== null
+                    ? `${stat.value.toLocaleString()}${stat.suffix}`
+                    : "—"}
+                </p>
+                <p className="text-sm text-slate-400 mt-1.5 font-medium">
+                  {stat.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/*  HOW IT WORKS ─ */}
@@ -366,6 +372,126 @@ export default function Home() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/*  PRODUCT PREVIEW ─ */}
+      <section className="py-20 px-8 bg-slate-50/60 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">
+              Platform
+            </p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-3">
+              See it in action
+            </h2>
+            <p className="text-slate-500 text-sm max-w-md mx-auto">
+              A clean dashboard designed for focused collaboration.
+            </p>
+          </div>
+
+          {/* Browser mockup — matches actual app design */}
+          <div className="relative mx-auto max-w-4xl">
+            {/* Browser chrome */}
+            <div className="bg-slate-100 rounded-t-xl px-4 py-3 flex items-center gap-2 border border-slate-200 border-b-0">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-amber-400" />
+                <div className="w-3 h-3 rounded-full bg-emerald-400" />
+              </div>
+              <div className="ml-3 flex-1 max-w-[180px] bg-white rounded-md px-3 py-1.5 text-[11px] text-slate-400 font-medium truncate">
+                dashboard
+              </div>
+            </div>
+
+            <div className="bg-white rounded-b-xl border border-slate-200 overflow-hidden">
+              <div className="flex h-[360px] md:h-[420px]">
+                {/* Sidebar */}
+                <div className="w-44 md:w-52 bg-white border-r border-slate-200 p-3 shrink-0 hidden sm:flex flex-col gap-1">
+                  {[
+                    { icon: LayoutDashboard, label: "Dashboard", active: true },
+                    { icon: MessageCircle, label: "Chat" },
+                    { icon: Users, label: "Groups" },
+                    { icon: Calendar, label: "Sessions" },
+                    { icon: FolderOpen, label: "Resources" },
+                  ].map(({ icon: Icon, label, active }) => (
+                    <div
+                      key={label}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                        active
+                          ? "bg-teal-50 text-teal-700"
+                          : "text-slate-500 hover:bg-slate-50"
+                      }`}
+                    >
+                      <Icon size={15} />
+                      {label}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main content — matches actual dashboard cards */}
+                <div className="flex-1 p-4 md:p-5 space-y-3 min-w-0 bg-[var(--bg)]">
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: "Groups", value: "4", style: "bg-teal-50 text-teal-600" },
+                      { label: "Sessions", value: "12", style: "bg-blue-50 text-blue-600" },
+                      { label: "Resources", value: "28", style: "bg-amber-50 text-amber-600" },
+                    ].map(({ label, value, style }) => (
+                      <div
+                        key={label}
+                        className="bg-white rounded-xl p-3 border border-slate-200"
+                      >
+                        <div
+                          className={`w-6 h-6 ${style} rounded-lg flex items-center justify-center mb-2`}
+                        >
+                          <span className="text-[10px] font-bold">{value}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex-1 bg-white rounded-xl border border-slate-200 p-3 h-[180px] md:h-[230px]">
+                    <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-100">
+                      <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-[8px] font-bold">
+                        G
+                      </div>
+                      <p className="text-xs font-semibold text-slate-700">General Chat</p>
+                    </div>
+                    <div className="space-y-2.5">
+                      <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5">
+                          S
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-medium text-slate-700">Sarah</p>
+                          <p className="text-[11px] text-slate-400">Anyone up for a study session tomorrow?</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5">
+                          J
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-medium text-slate-700">James</p>
+                          <p className="text-[11px] text-slate-400">I'm in! 2pm works for me.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-2 opacity-60">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[8px] font-bold shrink-0 mt-0.5">
+                          P
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-medium text-slate-700">Peter</p>
+                          <p className="text-[11px] text-slate-400">Let's use the library group room.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -549,8 +675,60 @@ export default function Home() {
         </div>
       </section>
 
+      {/*  INSTRUCTOR SECTION ─ */}
+      <section className="py-20 px-8 relative overflow-hidden">
+        <div className="max-w-3xl mx-auto text-center">
+          <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">
+            For Instructors
+          </p>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight mb-4">
+            Are you an instructor?
+          </h2>
+          <p className="text-slate-500 text-sm max-w-lg mx-auto mb-10 leading-relaxed">
+            Manage courses, post announcements, share resources, create
+            assignments with grading, and lead discussions — all within
+            StudyCircle.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto text-left">
+            {[
+              {
+                title: "Course Management",
+                desc: "Create and organize courses with structured content.",
+              },
+              {
+                title: "Assignments & Grading",
+                desc: "Post assignments, collect submissions, and grade with feedback.",
+              },
+              {
+                title: "Announcements",
+                desc: "Broadcast updates to all enrolled students instantly.",
+              },
+              {
+                title: "Discussions",
+                desc: "Facilitate course-wide discussions and Q&A.",
+              },
+            ].map(({ title, desc }) => (
+              <div
+                key={title}
+                className="bg-slate-50 rounded-xl p-5 border border-slate-100"
+              >
+                <h3 className="font-semibold text-slate-900 text-sm mb-1.5">
+                  {title}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+      </section>
+
       {/*  FINAL CTA  */}
       <section className="py-28 px-8 bg-[#0a0f1e] relative overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-3 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-teal-500/[0.06] blur-[100px] rounded-full" />
         </div>
@@ -579,9 +757,7 @@ export default function Home() {
           <div className="grid md:grid-cols-5 gap-10 mb-14">
             <div className="md:col-span-2">
               <div className="flex items-center gap-2.5 mb-5">
-                <div className="w-7 h-7 bg-teal-600 rounded-md flex items-center justify-center">
-                  <StudyCircleLogo size={16} className="text-white" />
-                </div>
+                <img src="/favicon.svg" alt="StudyCircle" className="w-7 h-7" />
                 <span className="text-white font-bold">
                   Study<span className="text-teal-400">Circle</span>
                 </span>

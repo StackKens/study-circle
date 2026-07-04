@@ -39,7 +39,7 @@ export async function getInstructorDashboard(req: AuthRequest, res: Response) {
   }
 
   try {
-    const [coursesRes, studentsRes, followersRes, activityRes] =
+    const [coursesRes, studentsRes, followersRes, resourcesRes, activityRes] =
       await Promise.all([
         pool.query(
           `SELECT c.id, c.title, c.code, c.description, c.university, c.created_at,
@@ -58,6 +58,13 @@ export async function getInstructorDashboard(req: AuthRequest, res: Response) {
         ),
         pool.query(
           `SELECT COUNT(*)::int AS count FROM instructor_followers WHERE instructor_id = $1`,
+          [userId],
+        ),
+        pool.query(
+          `SELECT COUNT(*)::int AS count
+           FROM course_resources cr
+           JOIN courses c ON c.id = cr.course_id
+           WHERE c.instructor_id = $1`,
           [userId],
         ),
         pool.query(
@@ -93,10 +100,55 @@ export async function getInstructorDashboard(req: AuthRequest, res: Response) {
       courses: coursesRes.rows,
       total_students: studentsRes.rows[0]?.count ?? 0,
       follower_count: followersRes.rows[0]?.count ?? 0,
+      resource_count: resourcesRes.rows[0]?.count ?? 0,
       recent_activity: activityRes.rows,
     });
   } catch (err) {
     console.error("getInstructorDashboard error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// GET /instructors/me/enrolled-students — all students enrolled in the instructor's courses
+export async function getEnrolledStudents(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!(await isInstructor(userId))) { res.status(403).json({ error: "Instructor access only" }); return; }
+  try {
+    const result = await pool.query(
+      `SELECT u.id, u.name, u.email, u.university, ce.course_id, c.title AS course_title, ce.enrolled_at
+       FROM course_enrollments ce
+       JOIN users u ON u.id = ce.student_id
+       JOIN courses c ON c.id = ce.course_id
+       WHERE c.instructor_id = $1
+       ORDER BY c.title, u.name`,
+      [userId],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getEnrolledStudents error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// GET /instructors/me/resources — all resources across the instructor's courses
+export async function getInstructorResources(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!(await isInstructor(userId))) { res.status(403).json({ error: "Instructor access only" }); return; }
+  try {
+    const result = await pool.query(
+      `SELECT cr.*, c.title AS course_title, u.name AS uploaded_by_name
+       FROM course_resources cr
+       JOIN courses c ON c.id = cr.course_id
+       JOIN users u ON u.id = cr.uploaded_by
+       WHERE c.instructor_id = $1
+       ORDER BY cr.created_at DESC`,
+      [userId],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getInstructorResources error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }

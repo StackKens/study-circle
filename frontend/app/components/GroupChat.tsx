@@ -144,7 +144,7 @@ function MessageBubble({
       <div className="flex gap-1.5 items-end justify-end">
         <div className="flex flex-col items-end gap-px">
           <div className="w-fit max-w-[82%] sm:max-w-[70%] lg:max-w-[60%] bg-teal-600 text-white px-2.5 py-1 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words">
-            {renderMessageContent(msg.content)}
+            {renderMessageContent(msg.content, "font-semibold underline underline-offset-2 decoration-white/50")}
           </div>
           <span className="text-[10px] text-slate-400 pr-0.5">
             {formatTime(msg.created_at)}

@@ -26,7 +26,7 @@ export default function GroupChatPage() {
       >
         <ArrowLeft size={15} /> Back to group
       </Link>
-      <div className="h-[600px] lg:h-[calc(100vh-10rem)]">
+      <div className="mt-16 md:mt-0 h-[calc(100vh-16rem)] lg:h-[calc(100vh-10rem)]">
         <GroupChat groupId={groupId} groupName={group?.name ?? "Group Chat"} />
       </div>
     </div>

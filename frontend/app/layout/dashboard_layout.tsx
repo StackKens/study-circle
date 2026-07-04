@@ -249,9 +249,9 @@ function MobileDrawerChatLink({ onClick }: { onClick: () => void }) {
       to="/dashboard/chat"
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center justify-between py-2 text-sm ${
+        `flex items-center justify-between py-2.5 pl-3 text-sm font-medium ${
           isActive
-            ? "text-teal-600 font-semibold"
+            ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]"
             : "text-slate-600 hover:text-teal-600"
         }`
       }
@@ -271,7 +271,7 @@ const studentBottomTabs = [
   { name: "Home", path: "/dashboard", icon: LayoutDashboard },
   { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
   { name: "Groups", path: "/dashboard/groups", icon: Users },
-  { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
+  { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
@@ -441,15 +441,16 @@ export default function DashboardLayout() {
                 </span>
               )}
             </div>
-            <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <nav className="flex-1 py-6 overflow-y-auto">
               {sidebarItems.map((item) => (
                 <NavLink
                   key={item.name}
                   to={item.path}
+                  end={item.path === "/dashboard" || item.path === "/dashboard/instructor"}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                    `flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
                       isActive
-                        ? "bg-teal-50 text-teal-700"
+                        ? "border-l-4 border-emerald-500 bg-emerald-50/50 text-emerald-700 pl-[12px]"
                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     }`
                   }
@@ -596,7 +597,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/friends"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -605,7 +606,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/sessions"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -614,7 +615,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/progress"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -623,7 +624,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/instructors"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -632,7 +633,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/library"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -645,7 +646,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/instructor/announcements"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -654,7 +655,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/instructor/resources"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -663,7 +664,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/instructor/assignments"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -672,7 +673,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/instructor/discussions"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -681,7 +682,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/groups"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -690,7 +691,7 @@ export default function DashboardLayout() {
                     <NavLink
                       to="/dashboard/sessions"
                       className={({ isActive }) =>
-                        `block py-2 text-sm ${isActive ? "text-teal-600 font-semibold" : "text-slate-600 hover:text-teal-600"}`
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >

@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, Outlet } from "react-router";
-import { Menu, X, BookOpen } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { AuthModal } from "../components/ui/AuthModal";
 import { useAuthModal } from "../context/AuthModalContext";
+
 
 // useAuth is imported only if you need user data in the layout (optional)
 // import { useAuth } from "../context/AuthContext";
@@ -29,9 +30,7 @@ export default function AppLayout() {
             className="flex items-center gap-2.5 group"
             onClick={() => setMenuOpen(false)}
           >
-            <div className="w-9 h-9 bg-teal-600 rounded-xl flex items-center justify-center shadow-sm group-hover:bg-teal-500 transition-colors">
-              <BookOpen size={18} className="text-white" strokeWidth={2.5} />
-            </div>
+            <img src="/favicon.svg" alt="StudyCircle" className="w-9 h-9" />
             <span className="text-xl font-bold text-slate-800 tracking-tight">
               Study<span className="text-teal-600">Circle</span>
             </span>

@@ -33,12 +33,12 @@ export function avatarColor(id: string): string {
 }
 
 /** Render @mentions highlighted in message text */
-export function renderMessageContent(content: string) {
+export function renderMessageContent(content: string, mentionClass = "text-teal-600 font-semibold") {
   const parts = content.split(/(@[\w\s]+?(?=\s|$|@))/g);
   return parts.map((part, i) => {
     if (part.startsWith("@")) {
       return (
-        <span key={i} className="text-teal-600 font-semibold">
+        <span key={i} className={mentionClass}>
           {part}
         </span>
       );

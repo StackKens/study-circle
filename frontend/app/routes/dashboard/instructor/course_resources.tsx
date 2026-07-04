@@ -1,9 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router";
-import { FolderOpen, Plus, ExternalLink, Globe, Lock, Check, X } from "lucide-react";
+import { FolderOpen, Plus, ExternalLink, Globe, Lock, Check, X, Upload } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import { uploadToCloudinary } from "../../../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
+const acceptMap: Record<string, string> = {
+  pdf:      ".pdf",
+  slides:   ".ppt,.pptx",
+  document: ".doc,.docx,.ppt,.pptx,.txt",
+};
 
 interface Resource {
   id: string;
@@ -35,9 +42,11 @@ export default function CourseResourcesPage() {
   const [title, setTitle]         = useState("");
   const [type, setType]           = useState<string>("pdf");
   const [url, setUrl]             = useState("");
+  const [file, setFile]           = useState<File | null>(null);
   const [isPublic, setIsPublic]   = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]         = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function load() {
     fetch(`${API_URL}/courses/${courseId}/resources`, {
@@ -53,15 +62,19 @@ export default function CourseResourcesPage() {
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true); setError("");
+    const isFileType = type !== "link";
+    if (isFileType && !file) { setError("Please select a file"); setSubmitting(false); return; }
+    if (!isFileType && !url.trim()) { setError("Please enter a URL"); setSubmitting(false); return; }
     try {
+      const finalUrl = isFileType ? await uploadToCloudinary(file!) : url.trim();
       const res = await fetch(`${API_URL}/courses/${courseId}/resources`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: title.trim(), type, url: url.trim(), is_public: isPublic }),
+        body: JSON.stringify({ title: title.trim(), type, url: finalUrl, is_public: isPublic }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
-      setShowForm(false); setTitle(""); setUrl(""); setIsPublic(false);
+      setShowForm(false); setTitle(""); setUrl(""); setFile(null); setIsPublic(false);
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -101,20 +114,40 @@ export default function CourseResourcesPage() {
             className={inputClass}
           />
 
-          <select value={type} onChange={(e) => setType(e.target.value)} className={inputClass}>
+          <select value={type} onChange={(e) => { setType(e.target.value); setFile(null); }} className={inputClass}>
             {TYPES.map((t) => (
               <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
             ))}
           </select>
 
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder={type === "link" ? "YouTube, Google Drive URL, etc." : "Link to file (Google Drive, Dropbox, etc.)"}
-            required
-            type="url"
-            className={inputClass}
-          />
+          {type === "link" ? (
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="YouTube, Google Drive URL, etc."
+              required
+              type="url"
+              className={inputClass}
+            />
+          ) : (
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={acceptMap[type] ?? acceptMap.document}
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center gap-2 px-3 py-2.5 border border-dashed border-slate-300 rounded-xl text-sm text-slate-500 hover:border-teal-400 hover:text-teal-600 transition-colors cursor-pointer"
+              >
+                <Upload size={15} />
+                {file ? file.name : "Click to select a file from your device"}
+              </button>
+            </div>
+          )}
 
           {/* Visibility toggle */}
           <button

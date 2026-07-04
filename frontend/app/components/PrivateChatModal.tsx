@@ -139,7 +139,7 @@ export default function PrivateChatModal() {
                       : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm"
                   }`}
                 >
-                  {renderMessageContent(msg.content)}
+                  {renderMessageContent(msg.content, isOwn ? "font-semibold underline underline-offset-2 decoration-white/50" : undefined)}
                   <p
                     className={`text-[10px] mt-1 ${isOwn ? "text-teal-100" : "text-slate-400"}`}
                   >
