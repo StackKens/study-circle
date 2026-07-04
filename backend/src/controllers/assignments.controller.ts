@@ -351,6 +351,31 @@ export async function getInstructorAssignments(req: AuthRequest, res: Response) 
   }
 }
 
+// GET /students/me/assignments — all assignments across enrolled courses (student view)
+export async function getStudentAssignments(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const result = await pool.query(
+      `SELECT a.*,
+         c.id AS course_id, c.title AS course_title, c.code AS course_code,
+         s.id IS NOT NULL AS submitted,
+         s.grade, s.feedback, s.strengths, s.weaknesses, s.graded_at
+       FROM course_assignments a
+       JOIN courses c ON c.id = a.course_id
+       JOIN course_enrollments e ON e.course_id = a.course_id AND e.student_id = $1
+       LEFT JOIN assignment_submissions s ON s.assignment_id = a.id AND s.student_id = $1
+       ORDER BY a.due_date ASC NULLS LAST, a.created_at DESC`,
+      [userId],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getStudentAssignments error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
 // POST /instructors/me/assignments — instructor creates an assignment for a course
 export async function createInstructorAssignment(req: AuthRequest, res: Response) {
   const userId = req.user?.id;

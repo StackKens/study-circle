@@ -271,7 +271,7 @@ export default function ProfilePage() {
       {/* Identity card */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-5">
         <div className="flex items-start gap-5">
-          <div className="relative flex-shrink-0">
+          <div className="relative flex-shrink-0 flex flex-col items-center">
             <input
               ref={fileInputRef}
               type="file"
@@ -281,7 +281,7 @@ export default function ProfilePage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-16 h-16 rounded-full overflow-hidden group"
+              className="relative w-16 h-16 rounded-full overflow-hidden group cursor-pointer"
               title="Change profile photo"
             >
               {user.avatar_url ? (
@@ -303,6 +303,11 @@ export default function ProfilePage() {
                 )}
               </div>
             </button>
+            {!user.avatar_url && (
+              <p className="text-[10px] text-slate-400 mt-2 text-center">
+                Tap to set your photo
+              </p>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">

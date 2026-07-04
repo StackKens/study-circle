@@ -15,9 +15,16 @@ import {
   Loader2,
   ExternalLink,
   Send,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Heart,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AiCourseChat from "../../components/AiCourseChat";
+import { UserAvatar } from "../../components/UserAvatar";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -48,14 +55,23 @@ export default function StudentCourseDetailPage() {
   const [submitContent, setSubmitContent] = useState("");
   const [submitUrl, setSubmitUrl] = useState("");
   const [submittingId, setSubmittingId] = useState<string | null>(null);
+  const [expandedAssignments, setExpandedAssignments] = useState<
+    Record<string, boolean>
+  >({});
+
+  const toggleAssignment = (id: string) => {
+    setExpandedAssignments((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const [newDiscussionTitle, setNewDiscussionTitle] = useState("");
   const [newDiscussionContent, setNewDiscussionContent] = useState("");
-  const [expandedDiscussion, setExpandedDiscussion] = useState<string | null>(
-    null,
-  );
+  const [expandedDiscussions, setExpandedDiscussions] = useState<
+    Record<string, boolean>
+  >({});
   const [replies, setReplies] = useState<Record<string, any[]>>({});
   const [replyText, setReplyText] = useState("");
+  const [likingReply, setLikingReply] = useState<string | null>(null);
+  const [showAskForm, setShowAskForm] = useState(false);
   const assignmentRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -159,14 +175,44 @@ export default function StudentCourseDetailPage() {
     }
   }
 
-  async function loadReplies(discussionId: string) {
-    setExpandedDiscussion(discussionId);
-    const res = await fetch(`${API_URL}/discussions/${discussionId}/replies`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (Array.isArray(data)) {
-      setReplies((prev) => ({ ...prev, [discussionId]: data }));
+  function formatDateTime(iso: string) {
+    return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  async function handleToggleLike(replyId: string) {
+    if (likingReply) return;
+    setLikingReply(replyId);
+    try {
+      await fetch(`${API_URL}/discussions/reply/${replyId}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setReplies((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(next)) {
+          next[key] = next[key].map((r: any) =>
+            r.id === replyId ? { ...r, liked: !r.liked, like_count: r.liked ? r.like_count - 1 : r.like_count + 1 } : r
+          );
+        }
+        return next;
+      });
+    } finally {
+      setLikingReply(null);
+    }
+  }
+
+  async function toggleDiscussion(discussionId: string) {
+    const willOpen = !expandedDiscussions[discussionId];
+    setExpandedDiscussions((prev) => ({ ...prev, [discussionId]: willOpen }));
+    if (willOpen && !replies[discussionId]) {
+      const res = await fetch(
+        `${API_URL}/discussions/${discussionId}/replies`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setReplies((prev) => ({ ...prev, [discussionId]: data }));
+      }
     }
   }
 
@@ -181,7 +227,14 @@ export default function StudentCourseDetailPage() {
       body: JSON.stringify({ content: replyText }),
     });
     setReplyText("");
-    loadReplies(discussionId);
+    const res = await fetch(
+      `${API_URL}/discussions/${discussionId}/replies`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      setReplies((prev) => ({ ...prev, [discussionId]: data }));
+    }
   }
 
   const tabs: { id: Tab; label: string; icon: typeof Megaphone }[] = [
@@ -220,22 +273,92 @@ export default function StudentCourseDetailPage() {
 
       {courseId && <AiCourseChat courseId={courseId} />}
 
-      <div className="flex gap-1 overflow-x-auto mb-5 pb-1">
-        {tabs.map((t) => (
+      <div className="mb-5">
+        <div className="hidden md:flex gap-1">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                tab === t.id
+                  ? "bg-teal-600 text-white"
+                  : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <t.icon size={14} />
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex md:hidden items-center gap-2">
           <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap cursor-pointer transition-colors ${
-              tab === t.id
-                ? "bg-teal-600 text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
+            onClick={() => {
+              const idx = tabs.findIndex((t) => t.id === tab);
+              if (idx > 0) setTab(tabs[idx - 1].id);
+            }}
+            disabled={tab === tabs[0].id}
+            className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
-            <t.icon size={14} />
-            {t.label}
+            <ChevronLeft size={18} />
           </button>
-        ))}
+          <div className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200">
+            {(() => {
+              const t = tabs.find((t) => t.id === tab)!;
+              const Icon = t.icon;
+              return <Icon size={16} className="text-teal-600" />;
+            })()}
+            <span className="text-sm font-semibold text-slate-800">
+              {tabs.find((t) => t.id === tab)!.label}
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              const idx = tabs.findIndex((t) => t.id === tab);
+              if (idx < tabs.length - 1) setTab(tabs[idx + 1].id);
+            }}
+            disabled={tab === tabs[tabs.length - 1].id}
+            className="p-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
       </div>
+
+      {tab === "discussions" && showAskForm && (
+        <form onSubmit={handleCreateDiscussion} className="bg-slate-50 rounded-xl border border-slate-200 p-5 mb-5">
+          <p className="text-sm font-semibold text-slate-700 mb-3">Ask a question</p>
+          <input
+            value={newDiscussionTitle}
+            onChange={(e) => setNewDiscussionTitle(e.target.value)}
+            placeholder="Subject"
+            required
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none mb-2"
+          />
+          <textarea
+            value={newDiscussionContent}
+            onChange={(e) => setNewDiscussionContent(e.target.value)}
+            placeholder="Describe your question…"
+            required
+            rows={3}
+            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none resize-none mb-3"
+          />
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="bg-teal-600 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer"
+            >
+              Post question
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAskForm(false)}
+              className="text-xs text-slate-500 cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         {tab === "announcements" &&
@@ -286,35 +409,34 @@ export default function StudentCourseDetailPage() {
           (tabLoading ? (
             <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
           ) : assignments.length ? (
-            assignments.map((a) => (
-              <div
-                key={a.id}
-                id={`assignment-${a.id}`}
-                ref={(el) => { assignmentRefs.current[a.id] = el; }}
-                className="py-4 border-b border-slate-100 last:border-0"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-slate-900">{a.title}</p>
-                    {a.description && (
-                      <p className="text-sm text-slate-500 mt-1">
-                        {a.description}
-                      </p>
-                    )}
-                    {a.due_date && (
-                      <p className="text-xs text-slate-400 mt-1">
-                        Due {new Date(a.due_date).toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {a.submitted && (
-                      <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
-                        Submitted
-                      </span>
-                    )}
-                    {a.grade != null && (
-                      <>
+            assignments.map((a) => {
+              const open = expandedAssignments[a.id] ?? false;
+              return (
+                <div
+                  key={a.id}
+                  id={`assignment-${a.id}`}
+                  ref={(el) => { assignmentRefs.current[a.id] = el; }}
+                  className="border-b border-slate-100 last:border-0"
+                >
+                  <button
+                    onClick={() => toggleAssignment(a.id)}
+                    className="w-full flex items-center justify-between gap-3 py-4 px-1 text-left cursor-pointer hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-900">{a.title}</p>
+                      {a.due_date && (
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Due {new Date(a.due_date).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {a.submitted && (
+                        <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full font-medium">
+                          Submitted
+                        </span>
+                      )}
+                      {a.grade != null && (
                         <span
                           className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                             a.grade >= 70
@@ -326,66 +448,96 @@ export default function StudentCourseDetailPage() {
                         >
                           {a.grade}/100
                         </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {a.grade != null && a.feedback && (
-                  <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <p className="text-xs font-semibold text-slate-700 mb-1">Feedback</p>
-                    <p className="text-xs text-slate-600 leading-relaxed">{a.feedback}</p>
-                    {(() => {
-                      const strengths = parseList(a.strengths);
-                      const weaknesses = parseList(a.weaknesses);
-                      return (
-                        <div className="mt-2 space-y-1.5">
-                          {strengths.length > 0 && (
-                            <div>
-                              <p className="text-[11px] font-medium text-emerald-600">Strengths</p>
-                              <ul className="list-disc list-inside text-[11px] text-slate-500">
-                                {strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                              </ul>
-                            </div>
-                          )}
-                          {weaknesses.length > 0 && (
-                            <div>
-                              <p className="text-[11px] font-medium text-amber-600">Areas to Improve</p>
-                              <ul className="list-disc list-inside text-[11px] text-slate-500">
-                                {weaknesses.map((w: string, i: number) => <li key={i}>{w}</li>)}
-                              </ul>
-                            </div>
-                          )}
+                      )}
+                      {open ? (
+                        <ChevronUp size={16} className="text-slate-400" />
+                      ) : (
+                        <ChevronDown size={16} className="text-slate-400" />
+                      )}
+                    </div>
+                  </button>
+
+                  {open && (
+                    <div className="pb-4 px-1">
+                      {a.description && (
+                        <p className="text-sm text-slate-600 mb-3">
+                          {a.description}
+                        </p>
+                      )}
+
+                      {a.file_url && (
+                        <a
+                          href={a.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 bg-teal-50 px-3 py-1.5 rounded-lg mb-3"
+                        >
+                          <FileText size={14} />
+                          Attached file
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+
+                      {a.grade != null && a.feedback && (
+                        <div className="mt-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                          <p className="text-xs font-semibold text-slate-700 mb-1">Feedback</p>
+                          <p className="text-xs text-slate-600 leading-relaxed">{a.feedback}</p>
+                          {(() => {
+                            const strengths = parseList(a.strengths);
+                            const weaknesses = parseList(a.weaknesses);
+                            return (
+                              <div className="mt-2 space-y-1.5">
+                                {strengths.length > 0 && (
+                                  <div>
+                                    <p className="text-[11px] font-medium text-emerald-600">Strengths</p>
+                                    <ul className="list-disc list-inside text-[11px] text-slate-500">
+                                      {strengths.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                                    </ul>
+                                  </div>
+                                )}
+                                {weaknesses.length > 0 && (
+                                  <div>
+                                    <p className="text-[11px] font-medium text-amber-600">Areas to Improve</p>
+                                    <ul className="list-disc list-inside text-[11px] text-slate-500">
+                                      {weaknesses.map((w: string, i: number) => <li key={i}>{w}</li>)}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
-                      );
-                    })()}
-                  </div>
-                )}
-                {!a.submitted && (
-                  <div className="mt-3 space-y-2">
-                    <textarea
-                      value={submitContent}
-                      onChange={(e) => setSubmitContent(e.target.value)}
-                      placeholder="Your answer or notes…"
-                      rows={2}
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none resize-none"
-                    />
-                    <input
-                      value={submitUrl}
-                      onChange={(e) => setSubmitUrl(e.target.value)}
-                      placeholder="Link to file (optional)"
-                      className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none"
-                    />
-                    <button
-                      onClick={() => handleSubmit(a.id)}
-                      disabled={submittingId === a.id}
-                      className="bg-teal-600 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
-                    >
-                      {submittingId === a.id ? "Submitting…" : "Submit"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
+                      )}
+
+                      {!a.submitted && (
+                        <div className="mt-3 space-y-2">
+                          <textarea
+                            value={submitContent}
+                            onChange={(e) => setSubmitContent(e.target.value)}
+                            placeholder="Your answer or notes…"
+                            rows={2}
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none resize-none"
+                          />
+                          <input
+                            value={submitUrl}
+                            onChange={(e) => setSubmitUrl(e.target.value)}
+                            placeholder="Link to file (optional)"
+                            className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none"
+                          />
+                          <button
+                            onClick={() => handleSubmit(a.id)}
+                            disabled={submittingId === a.id}
+                            className="bg-teal-600 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer disabled:opacity-50"
+                          >
+                            {submittingId === a.id ? "Submitting…" : "Submit"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           ) : (
             <p className="text-sm text-slate-400 text-center py-8">
               No assignments yet
@@ -393,82 +545,99 @@ export default function StudentCourseDetailPage() {
           ))}
 
         {tab === "discussions" && (
-          <div className="space-y-4">
-            <form onSubmit={handleCreateDiscussion} className="space-y-2 pb-4 border-b border-slate-100">
-              <p className="text-sm font-semibold text-slate-700">Ask a question</p>
-              <input
-                value={newDiscussionTitle}
-                onChange={(e) => setNewDiscussionTitle(e.target.value)}
-                placeholder="Subject"
-                required
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none"
-              />
-              <textarea
-                value={newDiscussionContent}
-                onChange={(e) => setNewDiscussionContent(e.target.value)}
-                placeholder="Describe your question…"
-                required
-                rows={3}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm outline-none resize-none"
-              />
-              <button
-                type="submit"
-                className="bg-teal-600 text-white px-4 py-2 rounded-lg text-xs font-semibold cursor-pointer"
-              >
-                Post question
-              </button>
-            </form>
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-semibold text-slate-700">All Questions</p>
+              {!showAskForm && (
+                <button
+                  onClick={() => setShowAskForm(true)}
+                  className="flex items-center gap-1.5 bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  <MessageSquare size={13} /> Ask a question
+                </button>
+              )}
+            </div>
+
             {tabLoading ? (
               <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
             ) : discussions.length ? (
-              discussions.map((d) => (
-                <div key={d.id} className="py-3 border-b border-slate-100 last:border-0">
-                  <p className="font-semibold text-slate-900">{d.title}</p>
-                  <p className="text-sm text-slate-600 mt-1">{d.content}</p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {d.author_name} · {d.reply_count} replies
-                    {d.is_answered && " · Answered"}
-                  </p>
-                  <button
-                    onClick={() => loadReplies(d.id)}
-                    className="text-xs text-teal-600 font-medium mt-2 cursor-pointer"
-                  >
-                    {expandedDiscussion === d.id ? "Hide replies" : "View replies"}
-                  </button>
-                  {expandedDiscussion === d.id && (
-                    <div className="mt-3 pl-3 border-l-2 border-teal-100 space-y-2">
-                      {(replies[d.id] || []).map((r) => (
-                        <div key={r.id} className="text-sm">
-                          <p className="font-medium text-slate-700">
-                            {r.author_name}
+              <div className="divide-y divide-slate-100">
+                {discussions.map((d) => {
+                  const open = expandedDiscussions[d.id] ?? false;
+                  return (
+                    <div key={d.id}>
+                      <button
+                        onClick={() => toggleDiscussion(d.id)}
+                        className="w-full flex items-center justify-between gap-3 py-4 text-left cursor-pointer hover:bg-slate-50 transition-colors"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-900">{d.title}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">
+                            {d.author_name} · {d.reply_count} replies
+                            {d.is_answered && (
+                              <span className="text-emerald-600 font-medium ml-1">
+                                · Answered
+                              </span>
+                            )}
                           </p>
-                          <p className="text-slate-600">{r.content}</p>
                         </div>
-                      ))}
-                      <div className="flex gap-2 mt-2">
-                        <input
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          placeholder="Add a reply…"
-                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm outline-none"
-                        />
-                        <button
-                          onClick={() => handleReply(d.id)}
-                          className="p-2 bg-teal-600 text-white rounded-lg cursor-pointer"
-                        >
-                          <Send size={14} />
-                        </button>
-                      </div>
+                        {open ? (
+                          <ChevronUp size={16} className="text-slate-400 shrink-0" />
+                        ) : (
+                          <ChevronDown size={16} className="text-slate-400 shrink-0" />
+                        )}
+                      </button>
+                      {open && (
+                        <div className="pb-4">
+                          <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                            {d.content}
+                          </p>
+                          <div className="divide-y divide-slate-100 border rounded-lg">
+                            {(replies[d.id] || []).map((r) => (
+                              <div key={r.id} className="px-4 py-3 bg-slate-50/50">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <UserAvatar userId={r.author_id} name={r.author_name} avatarUrl={r.author_avatar} size="sm" />
+                                  <span className="text-xs font-medium text-slate-700">{r.author_name}</span>
+                                  <span className="text-[10px] text-slate-400">{formatDateTime(r.created_at)}</span>
+                                  <button
+                                    onClick={() => handleToggleLike(r.id)}
+                                    disabled={!!likingReply}
+                                    className={`ml-auto flex items-center gap-1 text-xs cursor-pointer ${r.liked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
+                                  >
+                                    <Heart size={11} fill={r.liked ? "currentColor" : "none"} />
+                                    {r.like_count > 0 && r.like_count}
+                                  </button>
+                                </div>
+                                <p className="text-sm text-slate-600">{r.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <input
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="Add a reply…"
+                              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm outline-none"
+                            />
+                            <button
+                              onClick={() => handleReply(d.id)}
+                              className="p-2 bg-teal-600 text-white rounded-lg cursor-pointer"
+                            >
+                              <Send size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              ))
+                  );
+                })}
+              </div>
             ) : (
-              <p className="text-sm text-slate-400 text-center py-4">
-                No discussions yet — be the first to ask
+              <p className="text-sm text-slate-400 text-center py-8">
+                No discussions yet
               </p>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>

@@ -9,10 +9,12 @@ import {
   getInstructorSubmissions,
   getInstructorAssignments,
   createInstructorAssignment,
+  getStudentAssignments,
 } from "../controllers/assignments.controller";
 
 const router = Router();
 
+router.get("/students/me/assignments", authenticateToken, getStudentAssignments);
 router.get("/instructors/me/assignments", authenticateToken, getInstructorAssignments);
 router.post("/instructors/me/assignments", authenticateToken, createInstructorAssignment);
 router.get("/courses/:id/assignments", authenticateToken, getAssignments);

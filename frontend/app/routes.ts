@@ -23,6 +23,7 @@ export default [
     route("dashboard", "routes/dashboard/index.tsx"),
 
     // Student routes
+    route("dashboard/assignments", "routes/dashboard/student_assignments.tsx"),
     route("dashboard/groups", "routes/dashboard/groups.tsx"),
     route("dashboard/groups/:groupId", "routes/dashboard/group_detail.tsx"),
     route("dashboard/groups/:groupId/chat", "routes/dashboard/group_chat.tsx"),

@@ -290,7 +290,7 @@ function MobileDrawerChatLink({ onClick }: { onClick: () => void }) {
 const studentBottomTabs = [
   { name: "Home", path: "/dashboard", icon: LayoutDashboard },
   { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
-  { name: "Groups", path: "/dashboard/groups", icon: Users },
+  { name: "Assignments", path: "/dashboard/assignments", icon: ClipboardList },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
@@ -318,6 +318,7 @@ const studentSidebarItems = [
   { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
   { name: "Messages", path: "/dashboard/messages", icon: Mail },
   { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
+  { name: "Assignments", path: "/dashboard/assignments", icon: ClipboardList },
   { name: "My Groups", path: "/dashboard/groups", icon: Users },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Resources", path: "/dashboard/resources", icon: FolderOpen },
