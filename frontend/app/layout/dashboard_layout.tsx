@@ -500,7 +500,12 @@ export default function DashboardLayout() {
                     }`}
                   >
                     <span className="relative">
-                      <item.icon size={18} className={active ? "text-emerald-600" : "text-slate-400"} />
+                      <item.icon
+                        size={18}
+                        className={
+                          active ? "text-emerald-600" : "text-slate-400"
+                        }
+                      />
                       {item.name === "Messages" && dmUnreadCount > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
                           {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
@@ -666,6 +671,15 @@ export default function DashboardLayout() {
                         Progress
                       </NavLink>
                       <NavLink
+                        to="/dashboard/friends"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Friends
+                      </NavLink>
+                      <NavLink
                         to="/dashboard/instructors"
                         className={({ isActive }) =>
                           `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
@@ -804,7 +818,10 @@ export default function DashboardLayout() {
                         : "text-slate-500 hover:text-slate-700"
                     }`}
                   >
-                    <tab.icon size={20} className={active ? "text-teal-600" : ""} />
+                    <tab.icon
+                      size={20}
+                      className={active ? "text-teal-600" : ""}
+                    />
                     <span className="text-[10px] font-medium">{tab.name}</span>
                   </Link>
                 );
