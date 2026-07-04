@@ -379,10 +379,11 @@ export default function DashboardLayout() {
   const bottomTabs = isInstructor ? instructorBottomTabs : studentBottomTabs;
 
   const isActive = (path: string) => {
+    const p = location.pathname.replace(/\/$/, "");
     if (path === "/dashboard" || path === "/dashboard/instructor") {
-      return location.pathname === path;
+      return p === path;
     }
-    return location.pathname.startsWith(path);
+    return p.startsWith(path);
   };
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
