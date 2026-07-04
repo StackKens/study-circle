@@ -417,9 +417,9 @@ export default function Home() {
                   ].map(({ icon: Icon, label, active }) => (
                     <div
                       key={label}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                      className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors ${
                         active
-                          ? "bg-teal-50 text-teal-700 border-l-4 border-emerald-500"
+                          ? "bg-teal-50 text-teal-700 border-l-4 border-solid border-emerald-500"
                           : "text-slate-500 hover:bg-slate-50"
                       }`}
                     >
