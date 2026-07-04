@@ -62,12 +62,32 @@ const notifIconMap: Record<string, { icon: any; bg: string; text: string }> = {
   },
   group: { icon: Users, bg: "bg-indigo-50", text: "text-indigo-500" },
   course: { icon: GraduationCap, bg: "bg-teal-50", text: "text-teal-600" },
-  course_announcement: { icon: Megaphone, bg: "bg-orange-50", text: "text-orange-500" },
-  course_assignment: { icon: ClipboardList, bg: "bg-rose-50", text: "text-rose-500" },
-  course_discussion: { icon: MessageCircle, bg: "bg-sky-50", text: "text-sky-500" },
-  course_resource: { icon: FolderOpen, bg: "bg-teal-50", text: "text-teal-600" },
+  course_announcement: {
+    icon: Megaphone,
+    bg: "bg-orange-50",
+    text: "text-orange-500",
+  },
+  course_assignment: {
+    icon: ClipboardList,
+    bg: "bg-rose-50",
+    text: "text-rose-500",
+  },
+  course_discussion: {
+    icon: MessageCircle,
+    bg: "bg-sky-50",
+    text: "text-sky-500",
+  },
+  course_resource: {
+    icon: FolderOpen,
+    bg: "bg-teal-50",
+    text: "text-teal-600",
+  },
   private_message: { icon: Mail, bg: "bg-blue-50", text: "text-blue-500" },
-  assignment_graded: { icon: CheckCheck, bg: "bg-emerald-50", text: "text-emerald-600" },
+  assignment_graded: {
+    icon: CheckCheck,
+    bg: "bg-emerald-50",
+    text: "text-emerald-600",
+  },
 };
 
 function NotificationPanel({
@@ -283,7 +303,11 @@ const instructorBottomTabs = [
     path: "/dashboard/instructor/courses",
     icon: GraduationCap,
   },
-  { name: "Assignments", path: "/dashboard/instructor/assignments", icon: ClipboardList },
+  {
+    name: "Assignments",
+    path: "/dashboard/instructor/assignments",
+    icon: ClipboardList,
+  },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
@@ -358,7 +382,13 @@ export default function DashboardLayout() {
   const [mobileNotifOpen, setMobileNotifOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
-  const { unreadCount, dmUnreadCount, setUnreadCount, incrementUnread, resetDmUnread } = useNotificationStore();
+  const {
+    unreadCount,
+    dmUnreadCount,
+    setUnreadCount,
+    incrementUnread,
+    resetDmUnread,
+  } = useNotificationStore();
   const notifSocketRef = useRef<Socket | null>(null);
 
   const refreshUnreadCount = useCallback(async () => {
@@ -451,7 +481,10 @@ export default function DashboardLayout() {
                 <NavLink
                   key={item.name}
                   to={item.path}
-                  end={item.path === "/dashboard" || item.path === "/dashboard/instructor"}
+                  end={
+                    item.path === "/dashboard" ||
+                    item.path === "/dashboard/instructor"
+                  }
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
                       isActive
@@ -602,172 +635,146 @@ export default function DashboardLayout() {
                   className="md:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-3 shadow-lg absolute inset-x-0 top-0 z-50"
                   style={{ animation: "slideDown 0.2s ease" }}
                 >
-                {!isInstructor && (
-                  <>
-                    <MobileDrawerChatLink
-                      onClick={() => setMobileMenuOpen(false)}
-                    />
-                    <NavLink
-                      to="/dashboard/sessions"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
+                  {!isInstructor && (
+                    <>
+                      <MobileDrawerChatLink
+                        onClick={() => setMobileMenuOpen(false)}
+                      />
+                      <NavLink
+                        to="/dashboard/sessions"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Sessions
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/progress"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Progress
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/instructors"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Instructors
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/library"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Library
+                      </NavLink>
+                    </>
+                  )}
+                  {isInstructor && (
+                    <>
+                      <NavLink
+                        to="/dashboard/instructor/announcements"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Announcements
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/instructor/resources"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Resources
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/instructor/assignments"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Assignments
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/instructor/submissions"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Submissions
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/instructor/discussions"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Discussions
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/groups"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Groups
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/sessions"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Sessions
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/chat"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        General Chat
+                      </NavLink>
+                    </>
+                  )}
+                  <div className="border-t border-slate-100 pt-2 mt-1 flex items-center justify-between px-0">
+                    <button
+                      onClick={() => {
+                        setShowLogoutModal(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="py-2 text-sm text-red-600 hover:text-red-700 cursor-pointer"
                     >
-                      Sessions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/sessions"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
+                      Logout
+                    </button>
+                    <button
                       onClick={() => setMobileMenuOpen(false)}
+                      className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+                      aria-label="Close menu"
                     >
-                      Sessions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/chat"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      General Chat
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/sessions"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sessions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/progress"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Progress
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/instructors"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Instructors
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/library"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Library
-                    </NavLink>
-                  </>
-                )}
-                {isInstructor && (
-                  <>
-                    <NavLink
-                      to="/dashboard/instructor/announcements"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Announcements
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/instructor/resources"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Resources
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/instructor/assignments"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Assignments
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/instructor/submissions"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Submissions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/instructor/discussions"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Discussions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/groups"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Groups
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/sessions"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Sessions
-                    </NavLink>
-                    <NavLink
-                      to="/dashboard/chat"
-                      className={({ isActive }) =>
-                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                      }
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      General Chat
-                    </NavLink>
-                  </>
-                )}
-                <div className="border-t border-slate-100 pt-2 mt-1 flex items-center justify-between px-0">
-                  <button
-                    onClick={() => {
-                      setShowLogoutModal(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="py-2 text-sm text-red-600 hover:text-red-700 cursor-pointer"
-                  >
-                    Logout
-                  </button>
-                  <button
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
-                    aria-label="Close menu"
-                  >
-                    <X size={18} />
-                  </button>
+                      <X size={18} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </>)}
+              </>
+            )}
 
             {/* Page content - important: pb-20 adds space for fixed bottom bar */}
             <main className="flex-1 overflow-y-auto pb-20 md:pb-6">

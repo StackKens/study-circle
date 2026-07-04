@@ -140,7 +140,8 @@ export async function listInstructors(req: AuthRequest, res: Response) {
       `SELECT u.id, u.name, u.email, u.university, u.avatar_url,
               i.department, i.bio,
               (SELECT COUNT(*)::int FROM instructor_followers WHERE instructor_id = u.id) AS follower_count,
-              EXISTS(SELECT 1 FROM instructor_followers WHERE instructor_id = u.id AND follower_id = $1) AS is_following
+              (SELECT COUNT(*)::int FROM courses WHERE instructor_id = u.id) AS course_count,
+              EXISTS(SELECT 1 FROM instructor_followers WHERE instructor_id = u.id AND student_id = $1) AS is_following
        FROM users u
        JOIN instructors i ON i.user_id = u.id
        ORDER BY follower_count DESC`,
@@ -166,7 +167,7 @@ export async function followInstructor(req: AuthRequest, res: Response) {
     if (inst.rowCount === 0) { res.status(404).json({ error: "Instructor not found" }); return; }
 
     await pool.query(
-      `INSERT INTO instructor_followers (instructor_id, follower_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      `INSERT INTO instructor_followers (instructor_id, student_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [instructorId, followerId],
     );
     res.json({ success: true });
@@ -185,7 +186,7 @@ export async function unfollowInstructor(req: AuthRequest, res: Response) {
 
   try {
     await pool.query(
-      `DELETE FROM instructor_followers WHERE instructor_id = $1 AND follower_id = $2`,
+      `DELETE FROM instructor_followers WHERE instructor_id = $1 AND student_id = $2`,
       [instructorId, followerId],
     );
     res.json({ success: true });
@@ -203,11 +204,11 @@ export async function getMyFollowers(req: AuthRequest, res: Response) {
 
   try {
     const result = await pool.query(
-      `SELECT u.id, u.name, u.email, u.university, u.avatar_url, f.created_at AS followed_at
+      `SELECT u.id, u.name, u.email, u.university, u.avatar_url, f.followed_at
        FROM instructor_followers f
-       JOIN users u ON u.id = f.follower_id
+       JOIN users u ON u.id = f.student_id
        WHERE f.instructor_id = $1
-       ORDER BY f.created_at DESC`,
+       ORDER BY f.followed_at DESC`,
       [userId],
     );
     res.json(result.rows);
