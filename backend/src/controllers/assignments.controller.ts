@@ -194,7 +194,7 @@ export async function gradeAssignment(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
   const assignmentId = paramId(req.params.id);
   const studentId = paramId(req.params.studentId);
-  const { grade, feedback, strengths, weaknesses } = req.body;
+  const { grade, feedback, strengths, weaknesses } = req.body || {};
 
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });

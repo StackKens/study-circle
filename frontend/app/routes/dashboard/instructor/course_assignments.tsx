@@ -119,7 +119,8 @@ export default function CourseAssignmentsPage() {
         `${API_URL}/assignments/${expandedId}/grade/${submission.student_id}`,
         {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({}),
         },
       );
       if (res.ok) {
@@ -127,6 +128,9 @@ export default function CourseAssignmentsPage() {
         setSubmissions((prev) =>
           prev.map((s) => (s.id === submission.id ? { ...s, ...updated } : s)),
         );
+      } else {
+        const err = await res.json().catch(() => ({ error: "Grading failed" }));
+        alert(err.error || "AI grading failed. Try again or grade manually.");
       }
     } finally {
       setGradingId(null);

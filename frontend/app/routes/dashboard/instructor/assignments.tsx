@@ -138,13 +138,17 @@ export default function InstructorAssignmentsPage() {
     try {
       const res = await fetch(`${API_URL}/assignments/${assignmentId}/grade/${studentId}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
       });
       if (res.ok) {
         const updated = await res.json();
         setSubmissions((prev) =>
           prev.map((s) => (s.student_id === studentId ? { ...s, ...updated } : s)),
         );
+      } else {
+        const err = await res.json().catch(() => ({ error: "Grading failed" }));
+        alert(err.error || "AI grading failed. Try again or grade manually.");
       }
     } finally {
       setGradingId(null);
