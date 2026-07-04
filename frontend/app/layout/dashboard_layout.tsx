@@ -491,7 +491,7 @@ export default function DashboardLayout() {
                   <NavLink
                     key={item.name}
                     to={item.path}
-                    className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-r-lg transition-all cursor-pointer ${
+                    className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all cursor-pointer ${
                       active
                         ? "bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-emerald-500 pl-[12px]"
                         : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
