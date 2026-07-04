@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, Loader2, ChevronDown, ChevronUp, Sparkles, X, ExternalLink, BookOpen, Users } from "lucide-react";
+import { ClipboardList, Loader2, ChevronDown, ChevronUp, Sparkles, X, ExternalLink, BookOpen, Users, FileText } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import { uploadToCloudinary } from "../../../utils/cloudinary";
 
 function parseList(val: string | string[] | null | undefined): string[] {
   if (!val) return [];
@@ -15,6 +16,7 @@ interface Assignment {
   title: string;
   description: string | null;
   due_date: string | null;
+  file_url: string | null;
   submission_count: number;
   course_id: string;
   course_title: string;
@@ -53,10 +55,16 @@ export default function InstructorAssignmentsPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newDue, setNewDue] = useState("");
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingSubs, setLoadingSubs] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [gradingId, setGradingId] = useState<string | null>(null);
+  const [manualGradeId, setManualGradeId] = useState<string | null>(null);
+  const [manualScore, setManualScore] = useState("");
+  const [manualFeedback, setManualFeedback] = useState("");
   const [viewSubmission, setViewSubmission] = useState<Submission | null>(null);
 
   function load() {
@@ -85,10 +93,15 @@ export default function InstructorAssignmentsPage() {
     if (!newCourse || !newTitle.trim()) return;
     setCreating(true);
     try {
+      let fileUrl = "";
+      if (newFile) {
+        setUploading(true);
+        fileUrl = await uploadToCloudinary(newFile);
+      }
       const res = await fetch(`${API_URL}/instructors/me/assignments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ course_id: newCourse, title: newTitle, description: newDesc, due_date: newDue || null }),
+        body: JSON.stringify({ course_id: newCourse, title: newTitle, description: newDesc, due_date: newDue || null, file_url: fileUrl || null }),
       });
       if (res.ok) {
         setShowNew(false);
@@ -96,9 +109,11 @@ export default function InstructorAssignmentsPage() {
         setNewTitle("");
         setNewDesc("");
         setNewDue("");
+        setNewFile(null);
         load();
       }
     } finally {
+      setUploading(false);
       setCreating(false);
     }
   }
@@ -109,11 +124,13 @@ export default function InstructorAssignmentsPage() {
       return;
     }
     setExpandedId(assignmentId);
+    setLoadingSubs(true);
     const res = await fetch(`${API_URL}/assignments/${assignmentId}/submissions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
     if (Array.isArray(data)) setSubmissions(data);
+    setLoadingSubs(false);
   }
 
   async function handleGrade(assignmentId: string, studentId: string) {
@@ -128,6 +145,38 @@ export default function InstructorAssignmentsPage() {
         setSubmissions((prev) =>
           prev.map((s) => (s.student_id === studentId ? { ...s, ...updated } : s)),
         );
+      }
+    } finally {
+      setGradingId(null);
+    }
+  }
+
+  function openManualGrade(sub: Submission) {
+    setManualGradeId(sub.student_id);
+    setManualScore(sub.grade != null ? String(sub.grade) : "");
+    setManualFeedback(sub.feedback || "");
+  }
+
+  function closeManualGrade() {
+    setManualGradeId(null);
+    setManualScore("");
+    setManualFeedback("");
+  }
+
+  async function handleManualGrade(assignmentId: string, studentId: string) {
+    setGradingId(studentId);
+    try {
+      const res = await fetch(`${API_URL}/assignments/${assignmentId}/grade/${studentId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ grade: Number(manualScore), feedback: manualFeedback }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSubmissions((prev) =>
+          prev.map((s) => (s.student_id === studentId ? { ...s, ...updated } : s)),
+        );
+        closeManualGrade();
       }
     } finally {
       setGradingId(null);
@@ -204,12 +253,22 @@ export default function InstructorAssignmentsPage() {
               onChange={(e) => setNewDue(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none"
             />
+            <label className="flex items-center gap-3 px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-500 cursor-pointer hover:border-teal-400 transition-colors">
+              <FileText size={16} className="shrink-0" />
+              <span className="flex-1">{newFile ? newFile.name : "Attach a file (optional)"}</span>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"
+                onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+            </label>
             <button
               type="submit"
-              disabled={creating}
+              disabled={creating || uploading}
               className="w-full bg-teal-600 hover:bg-teal-500 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 cursor-pointer"
             >
-              {creating ? "Creating…" : "Create Assignment"}
+              {uploading ? "Uploading…" : creating ? "Creating…" : "Create Assignment"}
             </button>
           </form>
         </div>
@@ -283,6 +342,17 @@ export default function InstructorAssignmentsPage() {
                 {a.description && (
                   <p className="text-sm text-slate-500 mt-2">{a.description}</p>
                 )}
+                {a.file_url && (
+                  <a
+                    href={a.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-teal-600 font-medium mt-2 hover:underline"
+                  >
+                    <FileText size={13} />
+                    View attached file
+                  </a>
+                )}
                 <div className="flex items-center gap-3 mt-3">
                   <button
                     onClick={() => toggleSubmissions(a.id)}
@@ -295,7 +365,11 @@ export default function InstructorAssignmentsPage() {
               </div>
               {expandedId === a.id && (
                 <div className="border-t border-slate-100 bg-slate-50 p-4 space-y-2">
-                  {submissions.length === 0 ? (
+                  {loadingSubs ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 size={18} className="animate-spin text-teal-600" />
+                    </div>
+                  ) : submissions.length === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-4">No submissions yet</p>
                   ) : (
                     submissions.map((s) => (
@@ -324,18 +398,62 @@ export default function InstructorAssignmentsPage() {
                                 {s.grade}/100
                               </span>
                             )}
-                            <button
-                              onClick={() => handleGrade(a.id, s.student_id)}
-                              disabled={gradingId === s.student_id}
-                              className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2.5 py-1 rounded-lg font-medium cursor-pointer disabled:opacity-50"
-                            >
-                              {gradingId === s.student_id ? (
-                                <Loader2 size={12} className="animate-spin" />
-                              ) : (
-                                <Sparkles size={12} />
-                              )}
-                              {gradingId === s.student_id ? "Grading…" : s.grade != null ? "Regrade" : "Grade with AI"}
-                            </button>
+                            {manualGradeId === s.student_id ? (
+                              <div className="flex flex-col items-end gap-1.5">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={manualScore}
+                                  onChange={(e) => setManualScore(e.target.value)}
+                                  placeholder="Score (0-100)"
+                                  className="w-24 px-2 py-1 rounded border border-slate-200 text-xs outline-none"
+                                />
+                                <textarea
+                                  value={manualFeedback}
+                                  onChange={(e) => setManualFeedback(e.target.value)}
+                                  placeholder="Feedback"
+                                  rows={2}
+                                  className="w-48 px-2 py-1 rounded border border-slate-200 text-xs outline-none resize-none"
+                                />
+                                <div className="flex gap-1">
+                                  <button
+                                    onClick={() => handleManualGrade(a.id, s.student_id)}
+                                    disabled={gradingId === s.student_id || !manualScore}
+                                    className="text-xs bg-teal-600 text-white px-2 py-1 rounded-lg font-medium cursor-pointer disabled:opacity-50"
+                                  >
+                                    {gradingId === s.student_id ? "Saving…" : "Save"}
+                                  </button>
+                                  <button
+                                    onClick={closeManualGrade}
+                                    className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded-lg font-medium cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex gap-1.5">
+                                <button
+                                  onClick={() => handleGrade(a.id, s.student_id)}
+                                  disabled={gradingId === s.student_id}
+                                  className="flex items-center gap-1 text-xs bg-purple-600 text-white px-2.5 py-1 rounded-lg font-medium cursor-pointer disabled:opacity-50"
+                                >
+                                  {gradingId === s.student_id ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <Sparkles size={12} />
+                                  )}
+                                  {gradingId === s.student_id ? "Grading…" : "Grade with AI"}
+                                </button>
+                                <button
+                                  onClick={() => openManualGrade(s)}
+                                  className="text-xs bg-slate-600 text-white px-2.5 py-1 rounded-lg font-medium cursor-pointer"
+                                >
+                                  Grade Manually
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {s.feedback && (

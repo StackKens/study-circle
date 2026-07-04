@@ -58,7 +58,7 @@ export async function getAssignments(req: AuthRequest, res: Response) {
 export async function createAssignment(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
   const courseId = paramId(req.params.id);
-  const { title, description, due_date } = req.body;
+  const { title, description, due_date, file_url } = req.body;
 
   if (!userId || !(await ownsCourse(userId, courseId))) {
     res.status(403).json({ error: "Only the course instructor can create assignments" });
@@ -72,10 +72,10 @@ export async function createAssignment(req: AuthRequest, res: Response) {
 
   try {
     const result = await pool.query(
-      `INSERT INTO course_assignments (course_id, title, description, due_date, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO course_assignments (course_id, title, description, due_date, file_url, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [courseId, title.trim(), description?.trim() || null, due_date || null, userId],
+      [courseId, title.trim(), description?.trim() || null, due_date || null, file_url || null, userId],
     );
     const assignment = result.rows[0];
     const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [courseId]);
@@ -194,6 +194,7 @@ export async function gradeAssignment(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
   const assignmentId = paramId(req.params.id);
   const studentId = paramId(req.params.studentId);
+  const { grade, feedback, strengths, weaknesses } = req.body;
 
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
@@ -227,11 +228,24 @@ export async function gradeAssignment(req: AuthRequest, res: Response) {
     }
 
     const sub = submission.rows[0];
-    const result = await gradeSubmission(
-      sub.content || "",
-      assignment.rows[0].title,
-      assignment.rows[0].description,
-    );
+    let result;
+
+    if (grade != null) {
+      // Manual grading
+      result = {
+        score: Math.max(0, Math.min(100, Number(grade))),
+        feedback: feedback?.trim() || null,
+        strengths: Array.isArray(strengths) ? strengths : [],
+        weaknesses: Array.isArray(weaknesses) ? weaknesses : [],
+      };
+    } else {
+      // AI grading
+      result = await gradeSubmission(
+        sub.content || "",
+        assignment.rows[0].title,
+        assignment.rows[0].description,
+      );
+    }
 
     await pool.query(
       `UPDATE assignment_submissions
@@ -340,7 +354,7 @@ export async function getInstructorAssignments(req: AuthRequest, res: Response) 
 // POST /instructors/me/assignments — instructor creates an assignment for a course
 export async function createInstructorAssignment(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
-  const { course_id, title, description, due_date } = req.body;
+  const { course_id, title, description, due_date, file_url } = req.body;
 
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   if (!(await isInstructor(userId))) { res.status(403).json({ error: "Instructor access only" }); return; }
@@ -358,10 +372,10 @@ export async function createInstructorAssignment(req: AuthRequest, res: Response
     if (owns.rows.length === 0) { res.status(403).json({ error: "You don't own this course" }); return; }
 
     const result = await pool.query(
-      `INSERT INTO course_assignments (course_id, title, description, due_date, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO course_assignments (course_id, title, description, due_date, file_url, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [course_id, title.trim(), description?.trim() || null, due_date || null, userId],
+      [course_id, title.trim(), description?.trim() || null, due_date || null, file_url || null, userId],
     );
     const assignment = result.rows[0];
     const courseRes = await pool.query(`SELECT title FROM courses WHERE id = $1`, [course_id]);
