@@ -15,6 +15,10 @@ import userRoutes from "./routes/users";
 import friendRoutes from "./routes/friends";
 import notificationRoutes from "./routes/notifications";
 import courseRoutes from "./routes/courses";
+import announcementRoutes from "./routes/announcements";
+import courseResourceRoutes from "./routes/course-resources";
+import assignmentRoutes from "./routes/assignments";
+import discussionRoutes from "./routes/discussions";
 import messageRoutes from "./routes/messages";
 
 import { createServer } from "http";
@@ -79,6 +83,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api", courseRoutes);
+app.use("/api", announcementRoutes);
+app.use("/api", courseResourceRoutes);
+app.use("/api", assignmentRoutes);
+app.use("/api", discussionRoutes);
 app.use("/api/messages", messageRoutes);
 
 //  Health check

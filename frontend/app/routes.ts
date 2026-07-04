@@ -57,6 +57,10 @@ export default [
       "routes/dashboard/instructor/assignments.tsx",
     ),
     route(
+      "dashboard/instructor/submissions",
+      "routes/dashboard/instructor/submissions.tsx",
+    ),
+    route(
       "dashboard/instructor/discussions",
       "routes/dashboard/instructor/discussions.tsx",
     ),

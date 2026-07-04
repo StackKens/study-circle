@@ -13,28 +13,11 @@ import {
   updateCourse,
   getCourse,
   enrollCourse,
-  getAnnouncements,
-  createAnnouncement,
-  getCourseResources,
-  uploadCourseResource,
-  getAssignments,
-  createAssignment,
-  getSubmissions,
-  submitAssignment,
-  gradeAssignment,
-  getDiscussions,
-  createDiscussion,
-  replyToDiscussion,
   listAvailableCourses,
-  getDiscussionReplies,
   chatWithAI,
 } from "../controllers/courses.controller";
 
 const router = Router();
-
-// Instructor management data
-router.get("/instructors/me/enrolled-students", authenticateToken, getEnrolledStudents);
-router.get("/instructors/me/resources", authenticateToken, getInstructorResources);
 
 // Short cache for browse-only GET endpoints (60s fresh, 5 min stale-while-revalidate)
 function shortCache(req: Request, res: Response, next: NextFunction) {
@@ -59,25 +42,6 @@ router.get("/courses/:id", authenticateToken, shortCache, getCourse);
 router.put("/courses/:id", authenticateToken, updateCourse);
 router.post("/courses/:id/enroll", authenticateToken, enrollCourse);
 
-router.get("/courses/:id/announcements", authenticateToken, getAnnouncements);
-router.post("/courses/:id/announcements", authenticateToken, createAnnouncement);
-
-router.get("/courses/:id/resources", authenticateToken, getCourseResources);
-router.post("/courses/:id/resources", authenticateToken, uploadCourseResource);
-
-router.get("/courses/:id/assignments", authenticateToken, getAssignments);
-router.post("/courses/:id/assignments", authenticateToken, createAssignment);
-
-router.get("/courses/:id/discussions", authenticateToken, getDiscussions);
-router.post("/courses/:id/discussions", authenticateToken, createDiscussion);
-
 router.post("/courses/:id/chat", authenticateToken, chatWithAI);
-
-router.get("/assignments/:id/submissions", authenticateToken, getSubmissions);
-router.post("/assignments/:id/submit", authenticateToken, submitAssignment);
-router.post("/assignments/:id/grade/:studentId", authenticateToken, gradeAssignment);
-
-router.post("/discussions/:id/reply", authenticateToken, replyToDiscussion);
-router.get("/discussions/:id/replies", authenticateToken, getDiscussionReplies);
 
 export default router;

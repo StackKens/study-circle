@@ -145,7 +145,7 @@ export default function InstructorResourcesHub() {
         <button
           onClick={startUpload}
           disabled={courses.length === 0}
-          className="mb-6 flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="mb-6 flex items-center gap-2 px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
           <FolderOpen size={16} /> Share a Resource
         </button>

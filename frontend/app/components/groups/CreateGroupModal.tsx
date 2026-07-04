@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Loader2, Plus } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useGroupStore } from "../../store/groupStore";
 
@@ -180,7 +180,7 @@ export function CreateGroupModal({
                   onClick={() => setShowCustomInput(true)}
                   className="mt-2 text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
                 >
-                  <Plus size={14} /> Add university not listed
+                  Add university not listed
                 </button>
               </>
             ) : (

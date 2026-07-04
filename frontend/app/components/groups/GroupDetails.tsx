@@ -12,7 +12,6 @@ import {
   Calendar,
   Crown,
   LogOut,
-  UserPlus,
   Loader2,
   Clock,
   AlertCircle,
@@ -333,9 +332,7 @@ export default function GroupDetailPage() {
               >
                 {actionLoading ? (
                   <Loader2 size={15} className="animate-spin" />
-                ) : (
-                  <UserPlus size={15} />
-                )}
+                ) : null}
                 Join group
               </button>
             )}

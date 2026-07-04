@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  UserPlus, UserMinus, Search, X, Check, Loader2, Users, Sparkles, RefreshCw, MessageCircle,
+  UserMinus, Search, X, Check, Loader2, Users, Sparkles, RefreshCw, MessageCircle,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { usePrivateChat } from "../../context/PrivateChatContext";
@@ -249,7 +249,7 @@ export default function FriendsPage() {
                       disabled={loadingId === user.id}
                       className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 disabled:bg-teal-300 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                     >
-                      {loadingId === user.id ? <Loader2 size={12} className="animate-spin" /> : <><UserPlus size={12} /> Add</>}
+                      {loadingId === user.id ? <Loader2 size={12} className="animate-spin" /> : <>Add</>}
                     </button>
                   )}
                 </div>
@@ -312,7 +312,7 @@ export default function FriendsPage() {
                       disabled={loadingId === person.id}
                       className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-60 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
-                      {loadingId === person.id ? <Loader2 size={12} className="animate-spin" /> : <><UserPlus size={12} /> Add</>}
+                      {loadingId === person.id ? <Loader2 size={12} className="animate-spin" /> : <>Add</>}
                     </button>
                   </div>
                 </div>

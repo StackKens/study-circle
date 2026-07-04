@@ -6,7 +6,6 @@ import {
   BookOpen,
   ArrowRight,
   Loader2,
-  Plus,
   X,
   Pencil,
 } from "lucide-react";
@@ -171,7 +170,6 @@ function CustomSelectField({
             }}
             className="inline-flex w-fit items-center cursor-pointer gap-1.5 rounded-lg border border-dashed border-teal-300 bg-teal-50 px-3 py-2 text-xs font-medium text-teal-700 transition hover:border-teal-400 hover:bg-teal-100"
           >
-            <Plus size={13} />
             {addLabel}
           </button>
         </div>

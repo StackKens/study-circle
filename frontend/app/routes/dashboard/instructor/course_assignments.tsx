@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router";
-import { ClipboardList, Plus, Loader2, ChevronDown, ChevronUp, Sparkles, X, ExternalLink } from "lucide-react";
+import { ClipboardList, Loader2, ChevronDown, ChevronUp, Sparkles, X, ExternalLink } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
 function parseList(val: string | string[] | null | undefined): string[] {
@@ -125,7 +125,7 @@ export default function CourseAssignmentsPage() {
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
         >
-          <Plus size={14} /> Create
+          Create
         </button>
       </div>
 

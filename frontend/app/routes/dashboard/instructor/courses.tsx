@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { Plus, GraduationCap, Users, Loader2, X } from "lucide-react";
+import { GraduationCap, Users, Loader2, X } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -80,7 +80,7 @@ export default function InstructorCoursesPage() {
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-lg text-sm font-semibold cursor-pointer"
         >
-          <Plus size={15} /> New Course
+          New Course
         </button>
       </div>
 

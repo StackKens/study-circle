@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useOutletContext } from "react-router";
-import { FolderOpen, Plus, ExternalLink, Globe, Lock, Check, X, Upload } from "lucide-react";
+import { FolderOpen, ExternalLink, Globe, Lock, Check, X, Upload } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 import { uploadToCloudinary } from "../../../utils/cloudinary";
 
@@ -92,7 +92,7 @@ export default function CourseResourcesPage() {
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer hover:bg-teal-500"
           >
-            <Plus size={14} /> Upload
+            Upload
           </button>
         )}
       </div>

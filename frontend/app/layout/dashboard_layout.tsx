@@ -283,7 +283,7 @@ const instructorBottomTabs = [
     path: "/dashboard/instructor/courses",
     icon: GraduationCap,
   },
-  { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
+  { name: "Submissions", path: "/dashboard/instructor/submissions", icon: CheckCheck },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
@@ -326,6 +326,11 @@ const instructorSidebarItems = [
     name: "Assignments",
     path: "/dashboard/instructor/assignments",
     icon: ClipboardList,
+  },
+  {
+    name: "Submissions",
+    path: "/dashboard/instructor/submissions",
+    icon: CheckCheck,
   },
   {
     name: "Discussions",
@@ -595,13 +600,31 @@ export default function DashboardLayout() {
                       onClick={() => setMobileMenuOpen(false)}
                     />
                     <NavLink
-                      to="/dashboard/friends"
+                      to="/dashboard/sessions"
                       className={({ isActive }) =>
                         `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                       }
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Friends
+                      Sessions
+                    </NavLink>
+                    <NavLink
+                      to="/dashboard/sessions"
+                      className={({ isActive }) =>
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Sessions
+                    </NavLink>
+                    <NavLink
+                      to="/dashboard/chat"
+                      className={({ isActive }) =>
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      General Chat
                     </NavLink>
                     <NavLink
                       to="/dashboard/sessions"
@@ -671,6 +694,15 @@ export default function DashboardLayout() {
                       Assignments
                     </NavLink>
                     <NavLink
+                      to="/dashboard/instructor/submissions"
+                      className={({ isActive }) =>
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Submissions
+                    </NavLink>
+                    <NavLink
                       to="/dashboard/instructor/discussions"
                       className={({ isActive }) =>
                         `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
@@ -696,6 +728,15 @@ export default function DashboardLayout() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Sessions
+                    </NavLink>
+                    <NavLink
+                      to="/dashboard/chat"
+                      className={({ isActive }) =>
+                        `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      General Chat
                     </NavLink>
                   </>
                 )}

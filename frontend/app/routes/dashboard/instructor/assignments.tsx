@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Users,
   BookOpen,
-  PlusCircle,
   CheckCircle2,
   Clock,
 } from "lucide-react";
@@ -84,7 +83,7 @@ export default function InstructorAssignmentsHub() {
             to="/dashboard/instructor/courses"
             className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-semibold hover:bg-teal-500 transition-colors"
           >
-            <PlusCircle size={15} /> New Assignment
+            New Assignment
           </Link>
           <Link
             to="/dashboard/instructor/courses"
@@ -130,7 +129,7 @@ export default function InstructorAssignmentsHub() {
             to="/dashboard/instructor/courses"
             className="inline-flex items-center gap-1.5 bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-teal-500"
           >
-            <PlusCircle size={14} /> Create a Course
+            Create a Course
           </Link>
         </div>
       ) : (

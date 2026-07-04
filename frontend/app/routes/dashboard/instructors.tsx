@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, Loader2, MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
 import { usePrivateChat } from "../../context/PrivateChatContext";
@@ -93,7 +93,6 @@ export default function InstructorsPage() {
                         : "bg-teal-600 text-white hover:bg-teal-500"
                     }`}
                   >
-                    <UserPlus size={14} />
                     {inst.is_following ? "Following" : "Follow"}
                   </button>
                   <button

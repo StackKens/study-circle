@@ -101,6 +101,9 @@ type Pages = {
   "/dashboard/instructor/assignments": {
     params: {};
   };
+  "/dashboard/instructor/submissions": {
+    params: {};
+  };
   "/dashboard/instructor/discussions": {
     params: {};
   };
@@ -134,7 +137,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/messages" | "/dashboard/instructors" | "/dashboard/courses" | "/dashboard/courses/:courseId" | "/dashboard/profile" | "/dashboard/instructor" | "/dashboard/instructor/courses" | "/dashboard/instructor/announcements" | "/dashboard/instructor/resources" | "/dashboard/instructor/assignments" | "/dashboard/instructor/discussions" | "/dashboard/instructor/courses/:courseId" | "/dashboard/instructor/courses/:courseId/announcements" | "/dashboard/instructor/courses/:courseId/resources" | "/dashboard/instructor/courses/:courseId/assignments" | "/dashboard/instructor/courses/:courseId/discussions";
+    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/messages" | "/dashboard/instructors" | "/dashboard/courses" | "/dashboard/courses/:courseId" | "/dashboard/profile" | "/dashboard/instructor" | "/dashboard/instructor/courses" | "/dashboard/instructor/announcements" | "/dashboard/instructor/resources" | "/dashboard/instructor/assignments" | "/dashboard/instructor/submissions" | "/dashboard/instructor/discussions" | "/dashboard/instructor/courses/:courseId" | "/dashboard/instructor/courses/:courseId/announcements" | "/dashboard/instructor/courses/:courseId/resources" | "/dashboard/instructor/courses/:courseId/assignments" | "/dashboard/instructor/courses/:courseId/discussions";
   };
   "layout/app_layout.tsx": {
     id: "layout/app_layout";
@@ -174,7 +177,7 @@ type RouteFiles = {
   };
   "layout/dashboard_layout.tsx": {
     id: "layout/dashboard_layout";
-    page: "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/messages" | "/dashboard/instructors" | "/dashboard/courses" | "/dashboard/courses/:courseId" | "/dashboard/profile" | "/dashboard/instructor" | "/dashboard/instructor/courses" | "/dashboard/instructor/announcements" | "/dashboard/instructor/resources" | "/dashboard/instructor/assignments" | "/dashboard/instructor/discussions" | "/dashboard/instructor/courses/:courseId" | "/dashboard/instructor/courses/:courseId/announcements" | "/dashboard/instructor/courses/:courseId/resources" | "/dashboard/instructor/courses/:courseId/assignments" | "/dashboard/instructor/courses/:courseId/discussions";
+    page: "/dashboard" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/messages" | "/dashboard/instructors" | "/dashboard/courses" | "/dashboard/courses/:courseId" | "/dashboard/profile" | "/dashboard/instructor" | "/dashboard/instructor/courses" | "/dashboard/instructor/announcements" | "/dashboard/instructor/resources" | "/dashboard/instructor/assignments" | "/dashboard/instructor/submissions" | "/dashboard/instructor/discussions" | "/dashboard/instructor/courses/:courseId" | "/dashboard/instructor/courses/:courseId/announcements" | "/dashboard/instructor/courses/:courseId/resources" | "/dashboard/instructor/courses/:courseId/assignments" | "/dashboard/instructor/courses/:courseId/discussions";
   };
   "routes/dashboard/index.tsx": {
     id: "routes/dashboard/index";
@@ -256,6 +259,10 @@ type RouteFiles = {
     id: "routes/dashboard/instructor/assignments";
     page: "/dashboard/instructor/assignments";
   };
+  "routes/dashboard/instructor/submissions.tsx": {
+    id: "routes/dashboard/instructor/submissions";
+    page: "/dashboard/instructor/submissions";
+  };
   "routes/dashboard/instructor/discussions.tsx": {
     id: "routes/dashboard/instructor/discussions";
     page: "/dashboard/instructor/discussions";
@@ -314,6 +321,7 @@ type RouteModules = {
   "routes/dashboard/instructor/announcements": typeof import("./app/routes/dashboard/instructor/announcements.tsx");
   "routes/dashboard/instructor/resources": typeof import("./app/routes/dashboard/instructor/resources.tsx");
   "routes/dashboard/instructor/assignments": typeof import("./app/routes/dashboard/instructor/assignments.tsx");
+  "routes/dashboard/instructor/submissions": typeof import("./app/routes/dashboard/instructor/submissions.tsx");
   "routes/dashboard/instructor/discussions": typeof import("./app/routes/dashboard/instructor/discussions.tsx");
   "routes/dashboard/instructor/course_detail": typeof import("./app/routes/dashboard/instructor/course_detail.tsx");
   "routes/dashboard/instructor/course_announcements": typeof import("./app/routes/dashboard/instructor/course_announcements.tsx");

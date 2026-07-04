@@ -5,7 +5,6 @@ import {
   Calendar,
   FolderOpen,
   Clock,
-  PlusCircle,
   BookOpen,
   ArrowRight,
   Loader2,
@@ -35,7 +34,7 @@ const colorMap: Record<string, string> = {
 };
 
 const quickActions = [
-  { label: "Create Group", icon: PlusCircle, modal: true, color: "teal" },
+  { label: "Create Group", icon: Users, modal: true, color: "teal" },
   {
     label: "Schedule Session",
     icon: Calendar,

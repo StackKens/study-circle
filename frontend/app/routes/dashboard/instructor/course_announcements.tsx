@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router";
-import { Megaphone, Plus, Bell, X } from "lucide-react";
+import { Megaphone, Bell, X } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -67,7 +67,7 @@ export default function CourseAnnouncementsPage() {
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer hover:bg-teal-500"
           >
-            <Plus size={14} /> Post
+            Post
           </button>
         )}
       </div>

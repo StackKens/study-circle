@@ -5,7 +5,6 @@ import {
   Loader2,
   Users,
   BookOpen,
-  UserPlus,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../context/AuthContext";
@@ -183,9 +182,7 @@ export default function StudentCoursesPage() {
                           >
                             {enrollingId === c.id ? (
                               <Loader2 size={14} className="animate-spin" />
-                            ) : (
-                              <UserPlus size={14} />
-                            )}
+                            ) : null}
                             Enroll
                           </button>
                         </div>
