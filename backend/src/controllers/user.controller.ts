@@ -14,6 +14,7 @@ export async function getHomeStats(req: Request, res: Response) {
       groupsCountResult,
       sessionsCountResult,
       resourcesCountResult,
+      ongoingSessionsResult,
     ] = await Promise.all([
       pool.query(`SELECT COUNT(*)::int AS count FROM users`),
       pool.query(
@@ -42,6 +43,9 @@ export async function getHomeStats(req: Request, res: Response) {
       pool.query(`SELECT COUNT(*)::int AS count FROM groups`),
       pool.query(`SELECT COUNT(*)::int AS count FROM sessions`),
       pool.query(`SELECT COUNT(*)::int AS count FROM resources`),
+      pool.query(
+        `SELECT COUNT(*)::int AS count FROM sessions WHERE start_time <= NOW() AND end_time >= NOW()`
+      ),
     ]);
     let testimonials = [];
     try {
@@ -77,7 +81,7 @@ export async function getHomeStats(req: Request, res: Response) {
       group_count: groupCount,
       session_count: sessionCount,
       resource_count: resourceCount,
-      studying_now: Math.max(1, Math.round(totalStudents * (0.06 + Math.random() * 0.08))),
+      studying_now: ongoingSessionsResult.rows[0].count || 5,
       top_users: usersResult.rows,
       universities: universitiesResult.rows.map((r: { university: string }) => r.university),
       live_group: liveGroupResult.rows[0] || null,
