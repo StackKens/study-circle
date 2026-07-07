@@ -223,7 +223,7 @@ export default function ResourcesPage() {
                         </div>
                       </div>
                       <p className="text-xs text-slate-400 mt-1">{config.label} · {rec.group_name}</p>
-                      <p className="text-sm text-slate-500 leading-relaxed mt-2">{rec.reason}</p>
+                      <p className={`text-sm leading-relaxed mt-2 ${rec.score >= 50 ? "text-slate-500" : "text-amber-600"}`}>{rec.reason}</p>
                       <div className="flex items-center justify-between mt-3">
                         <span className="text-xs text-slate-400 flex items-center gap-1">
                           <Download size={11} /> {rec.downloads}
