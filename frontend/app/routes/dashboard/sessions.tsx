@@ -65,7 +65,7 @@ function getStatus(start: string, end: string): SessionStatus {
 
 export default function SessionsPage() {
   const { token } = useAuth();
-  const { sessions, isLoading, fetchSessions, addSession, markSessionJoined } =
+  const { sessions, isLoading, hasMore, fetchSessions, fetchMoreSessions, addSession, markSessionJoined } =
     useSessionStore();
   const { groups, fetchGroups } = useGroupStore();
 
@@ -453,6 +453,19 @@ export default function SessionsPage() {
             </div>
           )}
         </>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchMoreSessions(token!)}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+            {isLoading ? "Loading..." : "Load More"}
+          </button>
+        </div>
       )}
 
       {/* Past Session Details Modal */}

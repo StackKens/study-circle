@@ -6,25 +6,53 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 interface ResourceStore {
   resources: Resource[];
   isLoading: boolean;
+  page: number;
+  hasMore: boolean;
   fetchResources: (token: string) => Promise<void>;
+  fetchMoreResources: (token: string) => Promise<void>;
   addResource: (resource: Resource) => void;
   incrementDownload: (id: string) => void;
 }
 
-export const useResourceStore = create<ResourceStore>((set) => ({
+export const useResourceStore = create<ResourceStore>((set, get) => ({
   resources: [],
   isLoading: false,
+  page: 1,
+  hasMore: false,
 
   fetchResources: async (token) => {
-    set({ isLoading: true });
+    set({ isLoading: true, page: 1 });
     try {
-      const res = await fetch(`${API_URL}/resources/all`, {
+      const res = await fetch(`${API_URL}/resources/all?page=1&limit=20`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      if (res.ok) set({ resources: data });
+      const json = await res.json();
+      if (res.ok) set({ resources: json.data, hasMore: json.page * json.limit < json.total });
     } catch (err) {
       console.error("fetchResources error:", err);
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchMoreResources: async (token) => {
+    const currentPage = get().page;
+    const nextPage = currentPage + 1;
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${API_URL}/resources/all?page=${nextPage}&limit=20`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (res.ok) {
+        set({
+          resources: [...get().resources, ...json.data],
+          page: nextPage,
+          hasMore: json.page * json.limit < json.total,
+        });
+      }
+    } catch (err) {
+      console.error("fetchMoreResources error:", err);
     } finally {
       set({ isLoading: false });
     }

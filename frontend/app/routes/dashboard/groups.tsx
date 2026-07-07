@@ -37,7 +37,7 @@ function formatDate(iso: string) {
 
 export default function GroupsPage() {
   const { token } = useAuth();
-  const { groups, isLoading, fetchGroups } = useGroupStore();
+  const { groups, isLoading, hasMore, fetchGroups, fetchMoreGroups } = useGroupStore();
   const [searchParams] = useSearchParams();
   const [showModal, setShowModal] = useState(false);
   const [recommendations, setRecommendations] = useState<GroupRecommendation[]>(
@@ -218,7 +218,7 @@ export default function GroupsPage() {
           ))}
         </div>
       ) : groups.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* 2-column grid of summary cards */}
           <div className="grid md:grid-cols-2 gap-4">
             {groups.map((group) => {
@@ -264,6 +264,18 @@ export default function GroupsPage() {
               );
             })}
           </div>
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={() => fetchMoreGroups(token!)}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                {isLoading ? "Loading..." : "Load More"}
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-20 bg-white rounded-xl border border-slate-200">

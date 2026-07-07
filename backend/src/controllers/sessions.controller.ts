@@ -226,8 +226,20 @@ export async function getRecentActivity(req: AuthRequest, res: Response) {
 
 export async function getMySessions(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const offset = (page - 1) * limit;
 
   try {
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM sessions s
+       JOIN groups g ON g.id = s.group_id
+       JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1`,
+      [userId],
+    );
+    const total = countResult.rows[0].total;
+
     const result = await pool.query(
       `SELECT s.*, g.name AS group_name,
         (SELECT COUNT(*) FROM session_attendees WHERE session_id = s.id) AS participant_count,
@@ -238,11 +250,12 @@ export async function getMySessions(req: AuthRequest, res: Response) {
        FROM sessions s
        JOIN groups g ON g.id = s.group_id
        JOIN group_members gm ON gm.group_id = s.group_id AND gm.user_id = $1
-       ORDER BY s.start_time ASC`,
-      [userId],
+       ORDER BY s.start_time ASC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset],
     );
 
-    res.json(result.rows);
+    res.json({ data: result.rows, total, page, limit });
   } catch (err) {
     console.error("getMySessions error:", err);
     res.status(500).json({ error: "Internal server error" });

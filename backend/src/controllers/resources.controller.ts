@@ -99,18 +99,31 @@ export async function uploadResource(req: AuthRequest, res: Response) {
 
 export async function getAllResources(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const offset = (page - 1) * limit;
+
   try {
-    // Only return resources from groups the authenticated user is a member of
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM resources r
+       JOIN groups g ON g.id = r.group_id
+       JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1`,
+      [userId]
+    );
+    const total = countResult.rows[0].total;
+
     const result = await pool.query(
       `SELECT r.*, u.name AS uploaded_by_name, g.name AS group_name, g.subject
        FROM resources r
        JOIN users u ON u.id = r.uploaded_by
        JOIN groups g ON g.id = r.group_id
        JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1
-       ORDER BY r.created_at DESC`,
-      [userId]
+       ORDER BY r.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
     );
-    res.json(result.rows);
+    res.json({ data: result.rows, total, page, limit });
   } catch (err) {
     console.error("getAllResources error:", err);
     res.status(500).json({ error: "Internal server error" });
@@ -137,19 +150,32 @@ export async function incrementDownload(req: AuthRequest, res: Response) {
 
 export async function getMyResources(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const offset = (page - 1) * limit;
 
   try {
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM resources r
+       JOIN groups g ON g.id = r.group_id
+       JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1`,
+      [userId]
+    );
+    const total = countResult.rows[0].total;
+
     const result = await pool.query(
       `SELECT r.*, u.name AS uploaded_by_name, g.name AS group_name
        FROM resources r
        JOIN users u ON u.id = r.uploaded_by
        JOIN groups g ON g.id = r.group_id
        JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1
-       ORDER BY r.created_at DESC`,
-      [userId]
+       ORDER BY r.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
     );
 
-    res.json(result.rows);
+    res.json({ data: result.rows, total, page, limit });
   } catch (err) {
     console.error("getMyResources error:", err);
     res.status(500).json({ error: "Internal server error" });

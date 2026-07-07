@@ -68,7 +68,7 @@ async function trackDownload(id: string, token: string) {
 
 export default function ResourcesPage() {
   const { token } = useAuth();
-  const { resources, isLoading, fetchResources, addResource, incrementDownload } = useResourceStore();
+  const { resources, isLoading, hasMore, fetchResources, fetchMoreResources, addResource, incrementDownload } = useResourceStore();
   const { groups, fetchGroups } = useGroupStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -320,6 +320,19 @@ export default function ResourcesPage() {
           <p className="text-sm text-slate-400 mb-5">Share a link, PDF, or document with your group</p>
           <button onClick={() => setIsModalOpen(true)} className="text-sm text-teal-600 font-semibold cursor-pointer">
             Upload the first resource →
+          </button>
+        </div>
+      )}
+
+      {hasMore && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchMoreResources(token!)}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-6 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+            {isLoading ? "Loading..." : "Load More"}
           </button>
         </div>
       )}

@@ -48,19 +48,32 @@ export async function createGroup(req: AuthRequest, res: Response) {
 
 export async function getMyGroups(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const offset = (page - 1) * limit;
 
   try {
+    const countResult = await pool.query(
+      `SELECT COUNT(*)::int AS total
+       FROM groups g
+       JOIN group_members gm ON gm.group_id = g.id
+       WHERE gm.user_id = $1`,
+      [userId]
+    );
+    const total = countResult.rows[0].total;
+
     const result = await pool.query(
       `SELECT g.*, gm.role,
         (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS total_members
        FROM groups g
        JOIN group_members gm ON gm.group_id = g.id
        WHERE gm.user_id = $1
-       ORDER BY g.created_at DESC`,
-      [userId]
+       ORDER BY g.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
     );
 
-    res.json(result.rows);
+    res.json({ data: result.rows, total, page, limit });
   } catch (err) {
     console.error("getMyGroups error:", err);
     res.status(500).json({ error: "Internal server error" });
