@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
   Users,
@@ -46,24 +46,30 @@ export default function GroupsPage() {
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
   const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
   const focusedGroupId = searchParams.get("focus");
+  const pendingRecs = useRef<Promise<void> | null>(null);
 
   async function fetchRecommendations() {
     if (!token) return;
+    if (pendingRecs.current) return pendingRecs.current;
     setRecommendationsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/groups/recommendations`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.error || "Failed to load recommendations");
-      setRecommendations(data);
-    } catch (err) {
-      console.error("fetchRecommendations error:", err);
-      setRecommendations([]);
-    } finally {
-      setRecommendationsLoading(false);
-    }
+    pendingRecs.current = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/groups/recommendations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok)
+          throw new Error(data.error || "Failed to load recommendations");
+        setRecommendations(data);
+      } catch (err) {
+        console.error("fetchRecommendations error:", err);
+        setRecommendations([]);
+      } finally {
+        setRecommendationsLoading(false);
+        pendingRecs.current = null;
+      }
+    })();
+    return pendingRecs.current;
   }
 
   async function handleJoinGroup(groupId: string) {

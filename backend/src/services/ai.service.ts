@@ -75,6 +75,9 @@ export async function callAiChatStream(
 
   const body: Record<string, any> = { model, messages, stream: true };
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
   try {
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
@@ -83,6 +86,7 @@ export async function callAiChatStream(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -127,6 +131,8 @@ export async function callAiChatStream(
   } catch (err) {
     console.error("callAiChatStream error:", err);
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -139,6 +145,9 @@ export async function callAiChat(
   const body: Record<string, any> = { model, messages };
   if (!isGroq) body.response_format = { type: "json_object" };
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
   try {
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
@@ -147,6 +156,7 @@ export async function callAiChat(
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
     if (!response.ok) return null;
@@ -159,6 +169,8 @@ export async function callAiChat(
     return content;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 

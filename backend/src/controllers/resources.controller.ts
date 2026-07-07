@@ -2,6 +2,7 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { recommendResourcesForUser } from "../services/ai-resources.service";
+import { getCached, setCache } from "../utils/cache";
 import { extractTextFromUrl } from "../services/content-extractor";
 import { notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
@@ -31,7 +32,12 @@ export async function getResourceRecommendations(req: AuthRequest, res: Response
       [userId]
     );
 
-    const recommendations = await recommendResourcesForUser(profileResult.rows[0], candidatesResult.rows);
+    const cacheKey = `resource-recs:${userId}`;
+    let recommendations = getCached<Awaited<ReturnType<typeof recommendResourcesForUser>>>(cacheKey);
+    if (!recommendations) {
+      recommendations = await recommendResourcesForUser(profileResult.rows[0], candidatesResult.rows);
+      setCache(cacheKey, recommendations);
+    }
     res.json(recommendations);
   } catch (err) {
     console.error("getResourceRecommendations error:", err);

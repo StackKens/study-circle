@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   UserMinus, Search, X, Check, Loader2, Users, Sparkles, RefreshCw, MessageCircle,
 } from "lucide-react";
@@ -98,18 +98,25 @@ export default function FriendsPage() {
     if (token) fetchFriends();
   }, [token, fetchFriends]);
 
+  const pendingRecs = useRef<Promise<void> | null>(null);
+
   const fetchRecommendations = useCallback(async () => {
     if (!token) return;
+    if (pendingRecs.current) return pendingRecs.current;
     setRecommendationsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/friends/recommendations`, { headers });
-      const data = await res.json();
-      if (Array.isArray(data)) setRecommendations(data);
-    } catch (err) {
-      console.error("fetchRecommendations error:", err);
-    } finally {
-      setRecommendationsLoading(false);
-    }
+    pendingRecs.current = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/friends/recommendations`, { headers });
+        const data = await res.json();
+        if (Array.isArray(data)) setRecommendations(data);
+      } catch (err) {
+        console.error("fetchRecommendations error:", err);
+      } finally {
+        setRecommendationsLoading(false);
+        pendingRecs.current = null;
+      }
+    })();
+    return pendingRecs.current;
   }, [token]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Users,
   Calendar,
@@ -168,10 +168,13 @@ export default function ProgressPage() {
       .finally(() => setIsLoading(false));
   }, [token]);
 
+  const pendingRecs = useRef<Promise<void> | null>(null);
+
   useEffect(() => {
     if (!token || groups.length > 0 || isLoading) return;
+    if (pendingRecs.current) return;
     setRecsLoading(true);
-    fetch(`${API_URL}/groups/recommendations`, {
+    pendingRecs.current = fetch(`${API_URL}/groups/recommendations`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
@@ -179,7 +182,10 @@ export default function ProgressPage() {
         if (Array.isArray(data)) setRecommendations(data);
       })
       .catch(console.error)
-      .finally(() => setRecsLoading(false));
+      .finally(() => {
+        setRecsLoading(false);
+        pendingRecs.current = null;
+      });
   }, [token, groups.length, isLoading]);
 
   async function handleJoin(groupId: string) {

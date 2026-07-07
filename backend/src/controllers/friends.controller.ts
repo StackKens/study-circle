@@ -3,6 +3,7 @@ import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 import { recommendFriendsForUser } from "../services/ai.service";
+import { getCached, setCache } from "../utils/cache";
 
 // GET /api/friends/recommendations
 export async function getFriendRecommendations(req: AuthRequest, res: Response) {
@@ -33,7 +34,12 @@ export async function getFriendRecommendations(req: AuthRequest, res: Response) 
       [userId]
     );
 
-    const recommendations = await recommendFriendsForUser(profileResult.rows[0], candidatesResult.rows);
+    const cacheKey = `friend-recs:${userId}`;
+    let recommendations = getCached<Awaited<ReturnType<typeof recommendFriendsForUser>>>(cacheKey);
+    if (!recommendations) {
+      recommendations = await recommendFriendsForUser(profileResult.rows[0], candidatesResult.rows);
+      setCache(cacheKey, recommendations);
+    }
     res.json(recommendations);
   } catch (err) {
     console.error("getFriendRecommendations error:", err);

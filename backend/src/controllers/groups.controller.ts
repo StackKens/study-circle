@@ -2,6 +2,7 @@ import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { recommendGroupsForUser } from "../services/ai.service";
+import { getCached, setCache } from "../utils/cache";
 import { createNotification, notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
 import crypto from "crypto";
@@ -221,10 +222,15 @@ export async function getGroupRecommendations(req: AuthRequest, res: Response) {
       [userId, userResult.rows[0].university],
     );
 
-    const recommendations = await recommendGroupsForUser(
-      userResult.rows[0],
-      candidatesResult.rows,
-    );
+    const cacheKey = `group-recs:${userId}`;
+    let recommendations = getCached<Awaited<ReturnType<typeof recommendGroupsForUser>>>(cacheKey);
+    if (!recommendations) {
+      recommendations = await recommendGroupsForUser(
+        userResult.rows[0],
+        candidatesResult.rows,
+      );
+      setCache(cacheKey, recommendations);
+    }
 
     res.json(recommendations);
   } catch (err) {

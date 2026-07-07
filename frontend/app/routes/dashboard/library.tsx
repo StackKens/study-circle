@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { FileText, Link, Video, Download, Search, X, Sparkles, RefreshCw, Loader2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import type { Resource } from "../../types/resource";
@@ -57,21 +57,27 @@ export default function LibraryPage() {
   const [activeCourse, setActiveCourse] = useState("all");
   const [recommendations, setRecommendations] = useState<ResourceRecommendation[]>([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const pendingRecs = useRef<Promise<void> | null>(null);
 
   async function fetchRecommendations() {
     if (!token) return;
+    if (pendingRecs.current) return pendingRecs.current;
     setRecommendationsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/resources/recommendations`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) setRecommendations(data);
-    } catch (err) {
-      console.error("fetchRecommendations error:", err);
-    } finally {
-      setRecommendationsLoading(false);
-    }
+    pendingRecs.current = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/resources/recommendations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) setRecommendations(data);
+      } catch (err) {
+        console.error("fetchRecommendations error:", err);
+      } finally {
+        setRecommendationsLoading(false);
+        pendingRecs.current = null;
+      }
+    })();
+    return pendingRecs.current;
   }
 
   useEffect(() => {

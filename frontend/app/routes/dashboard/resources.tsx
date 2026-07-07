@@ -91,20 +91,27 @@ export default function ResourcesPage() {
     if (groups.length === 0) fetchGroups(token);
   }, [token, fetchResources, fetchGroups]);
 
+  const pendingRecs = useRef<Promise<void> | null>(null);
+
   async function fetchRecommendations() {
     if (!token) return;
+    if (pendingRecs.current) return pendingRecs.current;
     setRecommendationsLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/resources/recommendations`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (Array.isArray(data)) setRecommendations(data);
-    } catch (err) {
-      console.error("fetchRecommendations error:", err);
-    } finally {
-      setRecommendationsLoading(false);
-    }
+    pendingRecs.current = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/resources/recommendations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (Array.isArray(data)) setRecommendations(data);
+      } catch (err) {
+        console.error("fetchRecommendations error:", err);
+      } finally {
+        setRecommendationsLoading(false);
+        pendingRecs.current = null;
+      }
+    })();
+    return pendingRecs.current;
   }
 
   useEffect(() => {
