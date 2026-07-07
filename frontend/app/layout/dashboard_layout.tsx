@@ -653,6 +653,15 @@ export default function DashboardLayout() {
                         onClick={() => setMobileMenuOpen(false)}
                       />
                       <NavLink
+                        to="/dashboard/groups"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Groups
+                      </NavLink>
+                      <NavLink
                         to="/dashboard/sessions"
                         className={({ isActive }) =>
                           `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
