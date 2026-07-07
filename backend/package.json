@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon --exec ts-node src/index.ts",
-    "seed": "ts-node src/db/seed.ts"
+    "seed": "ts-node src/db/seed.ts",
+    "backfill-contents": "ts-node src/db/backfill-contents.ts"
   },
   "author": "stackkens",
   "license": "ISC",
