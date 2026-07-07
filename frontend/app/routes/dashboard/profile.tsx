@@ -267,11 +267,12 @@ export default function ProfilePage() {
   const closeModal = () => setActiveModal(null);
 
   return (
-    <div className="max-w-3xl mx-auto px-1">
+    <div className="max-w-4xl mx-auto px-1">
       {/* Identity card */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-5">
-        <div className="flex items-start gap-5">
-          <div className="relative flex-shrink-0 flex flex-col items-center">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+          {/* Avatar */}
+          <div className="flex flex-col items-center sm:items-start flex-shrink-0">
             <input
               ref={fileInputRef}
               type="file"
@@ -281,17 +282,17 @@ export default function ProfilePage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-16 h-16 rounded-full overflow-hidden group cursor-pointer"
+              className="relative w-20 h-20 rounded-full overflow-hidden group cursor-pointer"
               title="Change profile photo"
             >
               {user.avatar_url ? (
                 <img
                   src={user.avatar_url}
                   alt={user.name}
-                  className="w-full h-full object-cover "
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-teal-600 flex items-center justify-center text-white text-2xl font-bold">
+                <div className="w-full h-full bg-teal-600 flex items-center justify-center text-white text-3xl font-bold">
                   {user.name.charAt(0)}
                 </div>
               )}
@@ -303,16 +304,16 @@ export default function ProfilePage() {
                 )}
               </div>
             </button>
-            {!user.avatar_url && (
-              <p className="text-[10px] text-slate-400 mt-2 text-center">
-                Tap to set your photo
-              </p>
-            )}
+            <p className="text-[10px] text-slate-400 mt-2 text-center">
+              {avatarUploading ? "Uploading…" : "Tap to change"}
+            </p>
           </div>
+
+          {/* Name + meta + bio */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="font-bold text-slate-900 text-lg tracking-tight">
+              <div className="min-w-0">
+                <h2 className="font-bold text-slate-900 text-xl tracking-tight leading-tight">
                   {user.name}
                 </h2>
                 {user.role === "instructor" && (
@@ -320,15 +321,15 @@ export default function ProfilePage() {
                     Instructor
                   </span>
                 )}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5">
-                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <Mail size={12} /> {user.email}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2">
+                  <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <Mail size={12} className="shrink-0" /> {user.email}
                   </span>
-                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <MapPin size={12} /> {user.university}
+                  <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <MapPin size={12} className="shrink-0" /> {user.university}
                   </span>
-                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <GraduationCap size={12} />{" "}
+                  <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                    <GraduationCap size={12} className="shrink-0" />{" "}
                     {user.role === "instructor"
                       ? user.department || user.course
                       : `${user.course} · Year ${user.year_of_study}`}
@@ -337,7 +338,7 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => setEditing(!editing)}
-                className="flex items-center gap-1.5 border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                className="flex items-center gap-1.5 border border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex-shrink-0 cursor-pointer"
               >
                 <Edit3 size={12} /> Edit
               </button>
@@ -371,7 +372,7 @@ export default function ProfilePage() {
                         }
                         setEditing(false);
                       }}
-                      className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                      className="bg-teal-600 hover:bg-teal-500 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                     >
                       Save
                     </button>
@@ -392,7 +393,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        <p className="text-xs text-slate-400 mt-5 pt-5 border-t border-slate-100">
+        <p className="text-xs text-slate-400 mt-5 pt-4 border-t border-slate-100">
           Member since{" "}
           {new Date(user.created_at).toLocaleDateString(undefined, {
             month: "long",
@@ -401,9 +402,15 @@ export default function ProfilePage() {
         </p>
       </div>
 
+      {/* Two-column layout on large screens */}
+      <div className="lg:grid lg:grid-cols-3 lg:gap-5 space-y-5 lg:space-y-0">
+
+        {/* LEFT COLUMN — stats + badges */}
+        <div className="space-y-5">
+
       {/* Stats grid */}
       {user.role === "instructor" && instructorStats ? (
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-3 gap-3">
           {[
             { icon: Users, value: instructorStats.total_students, label: "Students", color: "text-blue-500", bg: "bg-blue-50", key: "students" as ModalType },
             { icon: BookOpen, value: instructorStats.courses, label: "Lessons", color: "text-teal-600", bg: "bg-teal-50", key: "lessons" as ModalType },
@@ -423,7 +430,7 @@ export default function ProfilePage() {
           ))}
         </div>
       ) : stats ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
           {[
             {
               icon: Users,
@@ -538,7 +545,7 @@ export default function ProfilePage() {
 
       {/* Badges — students only */}
       {user.role !== "instructor" && badges.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 mb-5">
+        <div className="bg-white rounded-xl border border-slate-200 p-5">
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em] mb-3">
             Badges
           </p>
@@ -554,6 +561,11 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+        </div>{/* end LEFT COLUMN */}
+
+        {/* RIGHT COLUMN — groups + courses/activity */}
+        <div className="lg:col-span-2 space-y-5">
 
       {/* Active groups */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -600,6 +612,9 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+        </div>{/* end RIGHT COLUMN */}
+      </div>{/* end two-column grid */}
 
       {/* ── Students Modal ── */}
       {activeModal === "students" && (
