@@ -5,6 +5,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { usePrivateChat } from "../../context/PrivateChatContext";
 import { UserAvatar } from "../../components/UserAvatar";
+import { getOptimizedAvatarUrl } from "../../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -52,7 +53,7 @@ interface FriendRecommendation {
 function Avatar({ name, url, size = 9 }: { name: string; url?: string; size?: number }) {
   const cls = `w-${size} h-${size} rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-sm font-semibold`;
   return url
-    ? <img src={url} alt={name} className={`${cls} object-cover`} />
+    ? <img src={getOptimizedAvatarUrl(url) ?? url} alt={name} className={`${cls} object-cover`} />
     : <div className={`${cls} bg-teal-600 text-white`}>{name.charAt(0)}</div>;
 }
 

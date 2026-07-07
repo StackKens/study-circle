@@ -14,6 +14,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import { useAuthModal } from "../context/AuthModalContext";
+import { getOptimizedAvatarUrl } from "../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -217,7 +218,7 @@ export default function Home() {
                     u.avatar_url ? (
                       <img
                         key={u.id}
-                        src={u.avatar_url}
+                        src={getOptimizedAvatarUrl(u.avatar_url, 64) ?? u.avatar_url}
                         alt={u.name}
                         className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] object-cover"
                       />
@@ -607,7 +608,7 @@ export default function Home() {
                   <div className="hidden lg:flex col-span-2 bg-slate-50/80 flex-col items-center justify-center p-10 text-center border-l border-slate-100">
                     {activeTestimonial.avatar_url ? (
                       <img
-                        src={activeTestimonial.avatar_url}
+                        src={getOptimizedAvatarUrl(activeTestimonial.avatar_url, 128) ?? activeTestimonial.avatar_url}
                         alt={activeTestimonial.name}
                         className="w-16 h-16 rounded-full object-cover ring-4 ring-white shadow-sm mb-4"
                       />
@@ -632,7 +633,7 @@ export default function Home() {
                   <div className="flex lg:hidden items-center gap-3 px-8 pb-8 md:px-10 md:pb-10">
                     {activeTestimonial.avatar_url ? (
                       <img
-                        src={activeTestimonial.avatar_url}
+                        src={getOptimizedAvatarUrl(activeTestimonial.avatar_url, 80) ?? activeTestimonial.avatar_url}
                         alt={activeTestimonial.name}
                         className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100"
                       />

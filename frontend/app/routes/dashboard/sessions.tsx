@@ -15,6 +15,7 @@ import { Link } from "react-router";
 import { useSessionStore } from "../../store/sessionStore";
 import { useGroupStore } from "../../store/groupStore";
 import type { Session } from "../../types/session";
+import { getOptimizedAvatarUrl } from "../../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -535,7 +536,7 @@ export default function SessionsPage() {
                       >
                         {attendee.avatar_url ? (
                           <img
-                            src={attendee.avatar_url}
+                            src={getOptimizedAvatarUrl(attendee.avatar_url) ?? attendee.avatar_url}
                             alt={attendee.name}
                             className="w-9 h-9 rounded-full object-cover"
                           />

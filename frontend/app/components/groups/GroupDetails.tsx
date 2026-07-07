@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { usePrivateChat } from "../../context/PrivateChatContext";
 import { UserAvatar } from "../UserAvatar";
+import { getOptimizedAvatarUrl } from "../../utils/cloudinary";
 import {
   Users,
   BookOpen,
@@ -73,7 +74,7 @@ function Avatar({
     <div className="relative flex-shrink-0">
       {url ? (
         <img
-          src={url}
+          src={getOptimizedAvatarUrl(url) ?? url}
           alt={name}
           className={`${sizes[size]} rounded-full object-cover border border-slate-100`}
         />

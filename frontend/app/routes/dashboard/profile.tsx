@@ -20,7 +20,7 @@ import {
   X,
   ChevronRight,
 } from "lucide-react";
-import { uploadToCloudinary } from "../../utils/cloudinary";
+import { getOptimizedAvatarUrl, uploadToCloudinary } from "../../utils/cloudinary";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -287,7 +287,7 @@ export default function ProfilePage() {
             >
               {user.avatar_url ? (
                 <img
-                  src={user.avatar_url}
+                  src={getOptimizedAvatarUrl(user.avatar_url) ?? user.avatar_url}
                   alt={user.name}
                   className="w-full h-full object-cover"
                 />

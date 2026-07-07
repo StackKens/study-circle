@@ -1,4 +1,5 @@
 import { avatarColor, initials } from "../utils/chat";
+import { getOptimizedAvatarUrl } from "../utils/cloudinary";
 
 interface UserAvatarProps {
   userId: string;
@@ -31,7 +32,7 @@ export function UserAvatar({
 
   if (avatarUrl) {
     const el = (
-      <img src={avatarUrl} alt={name} className={`${base} ${interactive}`} />
+      <img src={getOptimizedAvatarUrl(avatarUrl) ?? avatarUrl} alt={name} className={`${base} ${interactive}`} />
     );
     return onClick ? (
       <button type="button" onClick={onClick} className="rounded-full">
