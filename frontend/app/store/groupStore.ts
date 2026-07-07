@@ -3,6 +3,9 @@ import type { Group } from "../types/group";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
+let pendingFetch: Promise<void> | null = null;
+let pendingFetchMore: Promise<void> | null = null;
+
 interface GroupStore {
   groups: Group[];
   isLoading: boolean;
@@ -20,41 +23,51 @@ export const useGroupStore = create<GroupStore>((set, get) => ({
   hasMore: false,
 
   fetchGroups: async (token) => {
+    if (pendingFetch) return pendingFetch;
     set({ isLoading: true, page: 1 });
-    try {
-      const res = await fetch(`${API_URL}/groups?page=1&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (res.ok) set({ groups: json.data, hasMore: json.page * json.limit < json.total });
-    } catch (err) {
-      console.error("fetchGroups error:", err);
-    } finally {
-      set({ isLoading: false });
-    }
+    pendingFetch = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/groups?page=1&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (res.ok) set({ groups: json.data, hasMore: json.page * json.limit < json.total });
+      } catch (err) {
+        console.error("fetchGroups error:", err);
+      } finally {
+        pendingFetch = null;
+        set({ isLoading: false });
+      }
+    })();
+    return pendingFetch;
   },
 
   fetchMoreGroups: async (token) => {
+    if (pendingFetchMore) return pendingFetchMore;
     const currentPage = get().page;
     const nextPage = currentPage + 1;
     set({ isLoading: true });
-    try {
-      const res = await fetch(`${API_URL}/groups?page=${nextPage}&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (res.ok) {
-        set({
-          groups: [...get().groups, ...json.data],
-          page: nextPage,
-          hasMore: json.page * json.limit < json.total,
+    pendingFetchMore = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/groups?page=${nextPage}&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        const json = await res.json();
+        if (res.ok) {
+          set({
+            groups: [...get().groups, ...json.data],
+            page: nextPage,
+            hasMore: json.page * json.limit < json.total,
+          });
+        }
+      } catch (err) {
+        console.error("fetchMoreGroups error:", err);
+      } finally {
+        pendingFetchMore = null;
+        set({ isLoading: false });
       }
-    } catch (err) {
-      console.error("fetchMoreGroups error:", err);
-    } finally {
-      set({ isLoading: false });
-    }
+    })();
+    return pendingFetchMore;
   },
 
   addGroup: (group) =>

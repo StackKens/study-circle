@@ -3,6 +3,9 @@ import type { Resource } from "../types/resource";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
+let pendingFetch: Promise<void> | null = null;
+let pendingFetchMore: Promise<void> | null = null;
+
 interface ResourceStore {
   resources: Resource[];
   isLoading: boolean;
@@ -21,41 +24,51 @@ export const useResourceStore = create<ResourceStore>((set, get) => ({
   hasMore: false,
 
   fetchResources: async (token) => {
+    if (pendingFetch) return pendingFetch;
     set({ isLoading: true, page: 1 });
-    try {
-      const res = await fetch(`${API_URL}/resources/all?page=1&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (res.ok) set({ resources: json.data, hasMore: json.page * json.limit < json.total });
-    } catch (err) {
-      console.error("fetchResources error:", err);
-    } finally {
-      set({ isLoading: false });
-    }
+    pendingFetch = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/resources/all?page=1&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (res.ok) set({ resources: json.data, hasMore: json.page * json.limit < json.total });
+      } catch (err) {
+        console.error("fetchResources error:", err);
+      } finally {
+        pendingFetch = null;
+        set({ isLoading: false });
+      }
+    })();
+    return pendingFetch;
   },
 
   fetchMoreResources: async (token) => {
+    if (pendingFetchMore) return pendingFetchMore;
     const currentPage = get().page;
     const nextPage = currentPage + 1;
     set({ isLoading: true });
-    try {
-      const res = await fetch(`${API_URL}/resources/all?page=${nextPage}&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (res.ok) {
-        set({
-          resources: [...get().resources, ...json.data],
-          page: nextPage,
-          hasMore: json.page * json.limit < json.total,
+    pendingFetchMore = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/resources/all?page=${nextPage}&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        const json = await res.json();
+        if (res.ok) {
+          set({
+            resources: [...get().resources, ...json.data],
+            page: nextPage,
+            hasMore: json.page * json.limit < json.total,
+          });
+        }
+      } catch (err) {
+        console.error("fetchMoreResources error:", err);
+      } finally {
+        pendingFetchMore = null;
+        set({ isLoading: false });
       }
-    } catch (err) {
-      console.error("fetchMoreResources error:", err);
-    } finally {
-      set({ isLoading: false });
-    }
+    })();
+    return pendingFetchMore;
   },
 
   addResource: (resource) =>

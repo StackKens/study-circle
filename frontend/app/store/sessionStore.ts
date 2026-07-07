@@ -3,6 +3,9 @@ import type { Session } from "../types/session";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
+let pendingFetch: Promise<void> | null = null;
+let pendingFetchMore: Promise<void> | null = null;
+
 interface SessionStore {
   sessions: Session[];
   isLoading: boolean;
@@ -22,41 +25,51 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
   hasMore: false,
 
   fetchSessions: async (token) => {
+    if (pendingFetch) return pendingFetch;
     set({ isLoading: true, page: 1 });
-    try {
-      const res = await fetch(`${API_URL}/sessions?page=1&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (res.ok) set({ sessions: json.data, hasMore: json.page * json.limit < json.total });
-    } catch (err) {
-      console.error("fetchSessions error:", err);
-    } finally {
-      set({ isLoading: false });
-    }
+    pendingFetch = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/sessions?page=1&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (res.ok) set({ sessions: json.data, hasMore: json.page * json.limit < json.total });
+      } catch (err) {
+        console.error("fetchSessions error:", err);
+      } finally {
+        pendingFetch = null;
+        set({ isLoading: false });
+      }
+    })();
+    return pendingFetch;
   },
 
   fetchMoreSessions: async (token) => {
+    if (pendingFetchMore) return pendingFetchMore;
     const currentPage = get().page;
     const nextPage = currentPage + 1;
     set({ isLoading: true });
-    try {
-      const res = await fetch(`${API_URL}/sessions?page=${nextPage}&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const json = await res.json();
-      if (res.ok) {
-        set({
-          sessions: [...get().sessions, ...json.data],
-          page: nextPage,
-          hasMore: json.page * json.limit < json.total,
+    pendingFetchMore = (async () => {
+      try {
+        const res = await fetch(`${API_URL}/sessions?page=${nextPage}&limit=20`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        const json = await res.json();
+        if (res.ok) {
+          set({
+            sessions: [...get().sessions, ...json.data],
+            page: nextPage,
+            hasMore: json.page * json.limit < json.total,
+          });
+        }
+      } catch (err) {
+        console.error("fetchMoreSessions error:", err);
+      } finally {
+        pendingFetchMore = null;
+        set({ isLoading: false });
       }
-    } catch (err) {
-      console.error("fetchMoreSessions error:", err);
-    } finally {
-      set({ isLoading: false });
-    }
+    })();
+    return pendingFetchMore;
   },
 
   addSession: (session) =>
