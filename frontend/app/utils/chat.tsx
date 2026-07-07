@@ -32,10 +32,25 @@ export function avatarColor(id: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-/** Render @mentions highlighted in message text */
+/** Render @mentions highlighted and URLs as clickable links in message text */
 export function renderMessageContent(content: string, mentionClass = "text-teal-600 font-semibold") {
-  const parts = content.split(/(@[\w\s]+?(?=\s|$|@))/g);
+  // Split on URLs or @mentions, keeping the delimiters
+  const parts = content.split(/(https?:\/\/[^\s]+|@[\w\s]+?(?=\s|$|@))/g);
   return parts.map((part, i) => {
+    if (/^https?:\/\//.test(part)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 break-all hover:opacity-80"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
     if (part.startsWith("@")) {
       return (
         <span key={i} className={mentionClass}>

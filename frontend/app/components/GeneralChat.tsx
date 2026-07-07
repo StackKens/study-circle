@@ -141,9 +141,9 @@ function MessageBubble({
   if (isOwn) {
     return (
       <div className="flex gap-1.5 items-end justify-end">
-        <div className="flex flex-col items-end gap-px">
+        <div className="flex flex-col items-end gap-px min-w-0 max-w-[82%] sm:max-w-[70%] lg:max-w-[60%]">
           <div
-            className="relative w-fit max-w-[82%] sm:max-w-[70%] lg:max-w-[60%] bg-teal-600 text-white px-2.5 py-1 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words cursor-pointer select-none"
+            className="relative bg-teal-600 text-white px-2.5 py-1 rounded-2xl rounded-tr-sm text-sm leading-relaxed [overflow-wrap:break-word] cursor-pointer select-none self-end"
             onClick={() => setShowTrash((v) => !v)}
           >
             {renderMessageContent(msg.content, "font-semibold underline underline-offset-2 decoration-white/50")}
@@ -188,7 +188,7 @@ function MessageBubble({
             {msg.sender_university}
           </span>
         </div>
-        <div className="w-fit bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed break-words">
+        <div className="w-fit bg-slate-100 border border-slate-200 text-slate-800 px-3 py-1.5 rounded-2xl rounded-tl-sm text-sm leading-relaxed [overflow-wrap:break-word]">
           {renderMessageContent(msg.content)}
         </div>
         <span className="text-[10px] text-slate-400 pl-0.5">
@@ -384,7 +384,7 @@ export default function GeneralChat() {
       </div>
 
       {/* Input */}
-      <div className="px-3 py-2 lg:px-6 lg:py-3 border-t border-slate-200 bg-white">
+      <div className="px-3 py-2 lg:px-6 lg:py-3 bg-white">
         <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 focus-within:border-teal-400 focus-within:ring-1 focus-within:ring-teal-100 transition-all">
           <MentionTextarea
             inputRef={inputRef}

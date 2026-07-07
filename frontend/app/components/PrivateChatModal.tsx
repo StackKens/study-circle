@@ -135,7 +135,7 @@ export default function PrivateChatModal() {
                 className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`relative max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed cursor-pointer select-none ${
+                  className={`relative max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed cursor-pointer select-none [overflow-wrap:break-word] ${
                     isOwn
                       ? "bg-teal-600 text-white rounded-tr-sm"
                       : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm"
@@ -185,7 +185,7 @@ export default function PrivateChatModal() {
         )}
 
         {/* Input */}
-        <div className="px-3 py-3 border-t border-slate-100 bg-white">
+        <div className="px-3 py-3 bg-white">
           <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus-within:border-teal-400 focus-within:ring-1 focus-within:ring-teal-100">
             <textarea
               ref={inputRef}
