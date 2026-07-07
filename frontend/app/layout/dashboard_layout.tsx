@@ -438,12 +438,10 @@ export default function DashboardLayout() {
     }
   }, [location.pathname, resetDmUnread]);
 
-  // Poll unread count every 30s as fallback
+  // Initial unread count fetch; WebSocket keeps it updated
   useEffect(() => {
     if (!token) return;
     refreshUnreadCount();
-    const interval = setInterval(refreshUnreadCount, 30000);
-    return () => clearInterval(interval);
   }, [token, refreshUnreadCount]);
 
   // Close notifications when clicking outside
