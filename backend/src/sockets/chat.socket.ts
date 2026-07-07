@@ -172,8 +172,9 @@ function dmRoom(userA: string, userB: string): string {
 
 /**
  * Auto-create the general_messages table if it doesn't exist yet.
+ * Called once at server startup — not on every connection.
  */
-async function ensureGeneralTable() {
+export async function ensureGeneralTable() {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS general_messages (
@@ -237,8 +238,6 @@ export function initChat(httpServer: HTTPServer) {
     console.log(`[chat] connected: ${user.name} (${user.id})`);
 
     // ── join_room
-    // Client sends this when opening a group's chat tab.
-    // We verify membership before letting them in.
     socket.on("join_room", async ({ group_id }: JoinRoomPayload) => {
       if (!group_id) {
         socket.emit("error", { message: "group_id required" });
@@ -331,9 +330,6 @@ export function initChat(httpServer: HTTPServer) {
 
     // ── GENERAL CHAT EVENTS
     // No room needed — joining is implicit. All authenticated users participate.
-
-    // ensure the table exists on first connection
-    ensureGeneralTable();
 
     socket.on("general_message_history", async () => {
       try {

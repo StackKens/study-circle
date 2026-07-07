@@ -8,6 +8,8 @@ import {
   getMyGroups,
   joinGroup,
   leaveGroup,
+  generateInviteLink,
+  acceptInvite,
 } from "../controllers/groups.controller";
 
 const router = Router();
@@ -21,5 +23,9 @@ router.get("/:id/members", getGroupMembers);
 router.post("/", createGroup);
 router.post("/:id/join", joinGroup);
 router.delete("/:id/leave", leaveGroup);
+
+// Invite link endpoints
+router.post("/:id/invite", generateInviteLink);          // admin generates link
+router.post("/invite/:token/accept", acceptInvite);      // anyone accepts link
 
 export default router;

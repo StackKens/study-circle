@@ -7,5 +7,6 @@ export interface Group {
   created_by: string;
   total_members: number;
   created_at: string;
+  is_private: boolean;
   role?: "admin" | "member";
 }

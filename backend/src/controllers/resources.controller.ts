@@ -98,13 +98,17 @@ export async function uploadResource(req: AuthRequest, res: Response) {
 }
 
 export async function getAllResources(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
   try {
+    // Only return resources from groups the authenticated user is a member of
     const result = await pool.query(
       `SELECT r.*, u.name AS uploaded_by_name, g.name AS group_name, g.subject
        FROM resources r
        JOIN users u ON u.id = r.uploaded_by
        JOIN groups g ON g.id = r.group_id
-       ORDER BY r.created_at DESC`
+       JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1
+       ORDER BY r.created_at DESC`,
+      [userId]
     );
     res.json(result.rows);
   } catch (err) {

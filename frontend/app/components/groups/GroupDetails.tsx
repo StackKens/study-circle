@@ -15,6 +15,10 @@ import {
   Loader2,
   Clock,
   AlertCircle,
+  Link2,
+  Copy,
+  Check,
+  X,
 } from "lucide-react";
 import type { Group } from "../../types/group";
 import type { GroupMember } from "../../types/groupMember";
@@ -103,6 +107,13 @@ export default function GroupDetailPage() {
   const [pageError, setPageError] = useState("");
   const [actionError, setActionError] = useState("");
 
+  // Invite link state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [copied, setCopied] = useState(false);
+
   const fetchGroup = useCallback(async () => {
     if (!groupId || !token) return;
     setIsLoadingGroup(true);
@@ -157,6 +168,37 @@ export default function GroupDetailPage() {
 
   const isMember = !!group?.role;
   const isAdmin = group?.role === "admin";
+
+  const handleGetInviteLink = async () => {
+    if (!token || !groupId) return;
+    setInviteLoading(true);
+    setInviteError("");
+    setShowInviteModal(true);
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}/invite`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate invite link");
+      setInviteUrl(data.invite_url);
+    } catch (err) {
+      setInviteError(err instanceof Error ? err.message : "Failed to generate link");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
+  const handleCopy = async () => {
+    if (!inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback: select the input
+    }
+  };
 
   const handleJoin = async () => {
     if (!token || !groupId) return;
@@ -239,6 +281,7 @@ export default function GroupDetailPage() {
   }
 
   return (
+    <>
     <div className="max-w-3xl mx-auto space-y-5">
       {/* Back link */}
       <Link
@@ -309,6 +352,15 @@ export default function GroupDetailPage() {
                   <MessageSquare size={16} />
                   Open group chat
                 </Link>
+                {isAdmin && (
+                  <button
+                    onClick={handleGetInviteLink}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 border border-teal-200 text-teal-700 hover:bg-teal-50 text-sm font-medium rounded-xl transition-colors cursor-pointer"
+                  >
+                    <Link2 size={15} />
+                    Invite members
+                  </button>
+                )}
                 {!isAdmin && (
                   <button
                     onClick={handleLeave}
@@ -470,5 +522,73 @@ export default function GroupDetailPage() {
         )}
       </div>
     </div>
+
+      {/* ── Invite link modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => { setShowInviteModal(false); setInviteUrl(""); setInviteError(""); setCopied(false); }}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 bg-teal-50 text-teal-600 rounded-lg flex items-center justify-center">
+                  <Link2 size={17} />
+                </div>
+                <h2 className="text-base font-bold text-slate-900">Invite members</h2>
+              </div>
+              <button
+                onClick={() => { setShowInviteModal(false); setInviteUrl(""); setInviteError(""); setCopied(false); }}
+                className="p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X size={17} />
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-500 mb-4">
+              Share this link with anyone you want to invite to{" "}
+              <span className="font-semibold text-slate-700">{group?.name}</span>.
+              {group?.is_private && (
+                <span className="block mt-1 text-xs text-amber-600">
+                  This is a private group — only people with this link can join.
+                </span>
+              )}
+            </p>
+
+            {inviteLoading ? (
+              <div className="flex items-center justify-center gap-2 py-6 text-sm text-slate-400">
+                <Loader2 size={16} className="animate-spin" />
+                Generating link…
+              </div>
+            ) : inviteError ? (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                {inviteError}
+              </p>
+            ) : inviteUrl ? (
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={inviteUrl}
+                  className="flex-1 text-xs px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 truncate focus:outline-none focus:border-teal-400"
+                  onFocus={(e) => e.target.select()}
+                />
+                <button
+                  onClick={handleCopy}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer shrink-0 ${
+                    copied
+                      ? "bg-teal-600 text-white"
+                      : "bg-teal-600 hover:bg-teal-500 text-white"
+                  }`}
+                >
+                  {copied ? <Check size={14} /> : <Copy size={14} />}
+                  {copied ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

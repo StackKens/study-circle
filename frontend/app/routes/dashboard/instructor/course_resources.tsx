@@ -224,7 +224,7 @@ export default function CourseResourcesPage() {
                   </span>
                   <p className="font-medium text-slate-800 text-sm truncate">{r.title}</p>
                   {r.is_public && (
-                    <Globe size={12} className="text-teal-500 shrink-0" title="Visible in library" />
+                    <Globe size={12} className="text-teal-500 shrink-0" aria-label="Visible in library" />
                   )}
                 </div>
                 <ExternalLink size={14} className="text-slate-400 group-hover:text-teal-600 transition-colors shrink-0 ml-2" />

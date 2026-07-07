@@ -1,6 +1,16 @@
 .DS_Store
 .vscode/
+
+# Environment files — never commit secrets
 .env
+.env.local
+.env.production
+.env.*.local
+frontend/.env
+frontend/.env.production
+frontend/.env.local
+backend/.env
+
 /node_modules/
 
 # React Router
@@ -14,3 +24,5 @@
 
 .codex/
 .agents/
+node_modules/
+dist/

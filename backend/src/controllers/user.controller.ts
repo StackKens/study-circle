@@ -245,6 +245,24 @@ export async function updateUserAvatar(req: AuthRequest, res: Response) {
     return;
   }
 
+  // Only allow Cloudinary URLs — prevents SSRF and arbitrary URL storage
+  const isValidAvatarUrl = (() => {
+    try {
+      const parsed = new URL(avatar_url);
+      return (
+        parsed.protocol === "https:" &&
+        parsed.hostname === "res.cloudinary.com"
+      );
+    } catch {
+      return false;
+    }
+  })();
+
+  if (!isValidAvatarUrl) {
+    res.status(400).json({ error: "avatar_url must be a valid Cloudinary URL (https://res.cloudinary.com/...)" });
+    return;
+  }
+
   try {
     const result = await pool.query(
       `UPDATE users SET avatar_url = $1 WHERE id = $2

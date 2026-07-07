@@ -25,6 +25,7 @@ export default [
     // Student routes
     route("dashboard/assignments", "routes/dashboard/student_assignments.tsx"),
     route("dashboard/groups", "routes/dashboard/groups.tsx"),
+    route("dashboard/groups/join/:token", "routes/dashboard/group_join.tsx"),
     route("dashboard/groups/:groupId", "routes/dashboard/group_detail.tsx"),
     route("dashboard/groups/:groupId/chat", "routes/dashboard/group_chat.tsx"),
     route("dashboard/chat", "routes/dashboard/general_chat.tsx"),

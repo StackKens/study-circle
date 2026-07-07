@@ -22,7 +22,7 @@ import discussionRoutes from "./routes/discussions";
 import messageRoutes from "./routes/messages";
 
 import { createServer } from "http";
-import { initChat } from "./sockets/chat.socket";
+import { initChat, ensureGeneralTable } from "./sockets/chat.socket";
 import { initDatabase } from "./db/init";
 
 const app = express();
@@ -106,6 +106,8 @@ async function startServer() {
   try {
     await initDatabase();
     console.log("Database initialized successfully");
+    await ensureGeneralTable();
+    console.log("General chat table verified");
   } catch (err) {
     console.error("Database initialization failed:", err);
   }

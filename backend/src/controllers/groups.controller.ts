@@ -4,9 +4,10 @@ import { AuthRequest } from "../middleware/auth.middleware";
 import { recommendGroupsForUser } from "../services/ai.service";
 import { createNotification, notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
+import crypto from "crypto";
 
 export async function createGroup(req: AuthRequest, res: Response) {
-  const { name, subject, university, description } = req.body;
+  const { name, subject, university, description, is_private } = req.body;
   const userId = req.user!.id;
 
   if (!name || !subject || !university) {
@@ -16,10 +17,10 @@ export async function createGroup(req: AuthRequest, res: Response) {
 
   try {
     const result = await pool.query(
-      `INSERT INTO groups (name, subject, university, description, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO groups (name, subject, university, description, created_by, is_private)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [name.trim(), subject.trim(), university.trim(), description?.trim() || null, userId]
+      [name.trim(), subject.trim(), university.trim(), description?.trim() || null, userId, Boolean(is_private)]
     );
 
     const group = result.rows[0];
@@ -195,6 +196,7 @@ export async function getGroupRecommendations(req: AuthRequest, res: Response) {
          SELECT 1 FROM group_members my_groups
          WHERE my_groups.group_id = g.id AND my_groups.user_id = $1
        )
+       AND g.is_private = FALSE
        GROUP BY g.id
        ORDER BY
          CASE
@@ -223,12 +225,18 @@ export async function joinGroup(req: AuthRequest, res: Response) {
   const groupId = req.params.id;
 
   try {
-    const groupExists = await pool.query("SELECT id FROM groups WHERE id = $1", [
+    const groupExists = await pool.query("SELECT id, is_private FROM groups WHERE id = $1", [
       groupId,
     ]);
 
     if (groupExists.rows.length === 0) {
       res.status(404).json({ error: "Group not found" });
+      return;
+    }
+
+    // Private groups can only be joined via invite link
+    if (groupExists.rows[0].is_private) {
+      res.status(403).json({ error: "This group is private. You need an invite link to join." });
       return;
     }
 
@@ -251,6 +259,137 @@ export async function joinGroup(req: AuthRequest, res: Response) {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error("joinGroup error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// ── Generate an invite link for a group (admin only)
+export async function generateInviteLink(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  const groupId = req.params.id;
+
+  try {
+    // Only admins can generate invite links
+    const membership = await pool.query(
+      `SELECT role FROM group_members WHERE user_id = $1 AND group_id = $2`,
+      [userId, groupId]
+    );
+    if (membership.rows.length === 0) {
+      res.status(403).json({ error: "You are not a member of this group" });
+      return;
+    }
+    if (membership.rows[0].role !== "admin") {
+      res.status(403).json({ error: "Only group admins can generate invite links" });
+      return;
+    }
+
+    // Reuse existing non-expired token for this group if one exists
+    const existing = await pool.query(
+      `SELECT token FROM group_invite_tokens
+       WHERE group_id = $1 AND created_by = $2
+         AND (expires_at IS NULL OR expires_at > NOW())
+       ORDER BY created_at DESC LIMIT 1`,
+      [groupId, userId]
+    );
+
+    if (existing.rows.length > 0) {
+      const inviteUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard/groups/join/${existing.rows[0].token}`;
+      res.json({ token: existing.rows[0].token, invite_url: inviteUrl });
+      return;
+    }
+
+    // Generate a new token
+    const token = crypto.randomBytes(32).toString("hex");
+    await pool.query(
+      `INSERT INTO group_invite_tokens (group_id, token, created_by)
+       VALUES ($1, $2, $3)`,
+      [groupId, token, userId]
+    );
+
+    const inviteUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard/groups/join/${token}`;
+    res.status(201).json({ token, invite_url: inviteUrl });
+  } catch (err) {
+    console.error("generateInviteLink error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// ── Accept an invite link and join the group
+export async function acceptInvite(req: AuthRequest, res: Response) {
+  const userId = req.user!.id;
+  const { token } = req.params;
+
+  try {
+    const inviteRes = await pool.query(
+      `SELECT git.*, g.name AS group_name, g.is_private
+       FROM group_invite_tokens git
+       JOIN groups g ON g.id = git.group_id
+       WHERE git.token = $1`,
+      [token]
+    );
+
+    if (inviteRes.rows.length === 0) {
+      res.status(404).json({ error: "Invalid or expired invite link" });
+      return;
+    }
+
+    const invite = inviteRes.rows[0];
+
+    // Check expiry
+    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+      res.status(410).json({ error: "This invite link has expired" });
+      return;
+    }
+
+    // Check max uses
+    if (invite.max_uses !== null && invite.use_count >= invite.max_uses) {
+      res.status(410).json({ error: "This invite link has reached its maximum uses" });
+      return;
+    }
+
+    // Already a member? Just return the group
+    const alreadyMember = await pool.query(
+      `SELECT role FROM group_members WHERE user_id = $1 AND group_id = $2`,
+      [userId, invite.group_id]
+    );
+    if (alreadyMember.rows.length > 0) {
+      const groupRes = await pool.query(
+        `SELECT g.*, gm.role,
+          (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS total_members
+         FROM groups g
+         JOIN group_members gm ON gm.group_id = g.id
+         WHERE g.id = $1 AND gm.user_id = $2`,
+        [invite.group_id, userId]
+      );
+      res.json({ already_member: true, group: groupRes.rows[0] });
+      return;
+    }
+
+    // Join the group
+    await pool.query(
+      `INSERT INTO group_members (user_id, group_id, role)
+       VALUES ($1, $2, 'member')`,
+      [userId, invite.group_id]
+    );
+
+    // Increment use count
+    await pool.query(
+      `UPDATE group_invite_tokens SET use_count = use_count + 1 WHERE token = $1`,
+      [token]
+    );
+
+    const groupRes = await pool.query(
+      `SELECT g.*, gm.role,
+        (SELECT COUNT(*) FROM group_members WHERE group_id = g.id)::int AS total_members
+       FROM groups g
+       JOIN group_members gm ON gm.group_id = g.id
+       WHERE g.id = $1 AND gm.user_id = $2`,
+      [invite.group_id, userId]
+    );
+
+    res.status(201).json({ already_member: false, group: groupRes.rows[0] });
+  } catch (err) {
+    console.error("acceptInvite error:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 }
