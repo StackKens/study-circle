@@ -74,8 +74,13 @@ async function downloadWithLimit(
   return Buffer.concat(chunks);
 }
 
+// pdf-parse v1 uses module.exports directly (no default export).
+const pdfParse: (dataBuffer: Buffer) => Promise<{
+  text: string;
+  numpages: number;
+}> = require("pdf-parse");
+
 async function extractFromPdf(buffer: Buffer): Promise<ExtractResult> {
-  const pdfParse = (await import("pdf-parse")).default;
   const data = await pdfParse(buffer);
   return {
     content: truncate(data.text),
