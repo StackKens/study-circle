@@ -1,7 +1,8 @@
 import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
-import { recommendResourcesForUser } from "../services/ai.service";
+import { recommendResourcesForUser } from "../services/ai-resources.service";
+import { extractTextFromUrl } from "../services/content-extractor";
 import { notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
 
@@ -15,10 +16,13 @@ export async function getResourceRecommendations(req: AuthRequest, res: Response
     if (profileResult.rows.length === 0) { res.status(404).json({ error: "User not found" }); return; }
 
     const candidatesResult = await pool.query(
-      `SELECT r.id, r.title, r.type, r.url, r.downloads, g.subject, g.name AS group_name, u.name AS uploaded_by_name
+      `SELECT r.id, r.title, r.type, r.url, r.downloads,
+              g.subject, g.name AS group_name, u.name AS uploaded_by_name,
+              rc.content AS content_preview
        FROM resources r
        JOIN groups g ON g.id = r.group_id
        JOIN users u ON u.id = r.uploaded_by
+       LEFT JOIN resource_contents rc ON rc.resource_id = r.id
        WHERE NOT EXISTS (
          SELECT 1 FROM group_members gm WHERE gm.group_id = r.group_id AND gm.user_id = $1
        )
@@ -69,6 +73,11 @@ export async function uploadResource(req: AuthRequest, res: Response) {
 
     const resource = result.rows[0];
 
+    // Fire-and-forget content extraction for PDFs and documents
+    if (type === "pdf" || type === "document") {
+      extractAndStoreContent(resource.id, url.trim(), type);
+    }
+
     const enriched = await pool.query(
       `SELECT r.*, u.name AS uploaded_by_name, g.name AS group_name
        FROM resources r
@@ -94,6 +103,22 @@ export async function uploadResource(req: AuthRequest, res: Response) {
   } catch (err) {
     console.error("uploadResource error:", err);
     res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+async function extractAndStoreContent(resourceId: string, url: string, fileType: string) {
+  try {
+    const extracted = await extractTextFromUrl(url, fileType);
+    if (!extracted || !extracted.content) return;
+
+    await pool.query(
+      `INSERT INTO resource_contents (resource_id, content)
+       VALUES ($1, $2)
+       ON CONFLICT (resource_id) DO UPDATE SET content = EXCLUDED.content, extracted_at = NOW()`,
+      [resourceId, extracted.content]
+    );
+  } catch (err) {
+    console.error(`extractAndStoreContent error for resource ${resourceId}:`, err);
   }
 }
 
