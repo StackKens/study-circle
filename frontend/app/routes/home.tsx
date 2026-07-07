@@ -220,6 +220,8 @@ export default function Home() {
                         key={u.id}
                         src={getOptimizedAvatarUrl(u.avatar_url, 64) ?? u.avatar_url}
                         alt={u.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] object-cover"
                       />
                     ) : (
@@ -610,6 +612,8 @@ export default function Home() {
                       <img
                         src={getOptimizedAvatarUrl(activeTestimonial.avatar_url, 128) ?? activeTestimonial.avatar_url}
                         alt={activeTestimonial.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-16 h-16 rounded-full object-cover ring-4 ring-white shadow-sm mb-4"
                       />
                     ) : (
@@ -635,6 +639,8 @@ export default function Home() {
                       <img
                         src={getOptimizedAvatarUrl(activeTestimonial.avatar_url, 80) ?? activeTestimonial.avatar_url}
                         alt={activeTestimonial.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-10 h-10 rounded-full object-cover flex-shrink-0 ring-2 ring-slate-100"
                       />
                     ) : (

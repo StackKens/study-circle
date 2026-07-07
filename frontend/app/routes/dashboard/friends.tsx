@@ -53,7 +53,7 @@ interface FriendRecommendation {
 function Avatar({ name, url, size = 9 }: { name: string; url?: string; size?: number }) {
   const cls = `w-${size} h-${size} rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center text-sm font-semibold`;
   return url
-    ? <img src={getOptimizedAvatarUrl(url) ?? url} alt={name} className={`${cls} object-cover`} />
+    ? <img src={getOptimizedAvatarUrl(url) ?? url} alt={name} loading="lazy" decoding="async" className={`${cls} object-cover`} />
     : <div className={`${cls} bg-teal-600 text-white`}>{name.charAt(0)}</div>;
 }
 

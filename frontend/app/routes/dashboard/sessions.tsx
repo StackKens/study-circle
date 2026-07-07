@@ -551,6 +551,8 @@ export default function SessionsPage() {
                           <img
                             src={getOptimizedAvatarUrl(attendee.avatar_url) ?? attendee.avatar_url}
                             alt={attendee.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-9 h-9 rounded-full object-cover"
                           />
                         ) : (

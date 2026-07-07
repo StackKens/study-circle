@@ -289,6 +289,8 @@ export default function ProfilePage() {
                 <img
                   src={getOptimizedAvatarUrl(user.avatar_url) ?? user.avatar_url}
                   alt={user.name}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
               ) : (

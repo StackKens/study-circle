@@ -76,6 +76,8 @@ function Avatar({
         <img
           src={getOptimizedAvatarUrl(url) ?? url}
           alt={name}
+          loading="lazy"
+          decoding="async"
           className={`${sizes[size]} rounded-full object-cover border border-slate-100`}
         />
       ) : (

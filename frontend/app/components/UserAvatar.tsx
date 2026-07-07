@@ -32,7 +32,7 @@ export function UserAvatar({
 
   if (avatarUrl) {
     const el = (
-      <img src={getOptimizedAvatarUrl(avatarUrl) ?? avatarUrl} alt={name} className={`${base} ${interactive}`} />
+      <img src={getOptimizedAvatarUrl(avatarUrl) ?? avatarUrl} alt={name} loading="lazy" decoding="async" className={`${base} ${interactive}`} />
     );
     return onClick ? (
       <button type="button" onClick={onClick} className="rounded-full">
