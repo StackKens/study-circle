@@ -49,15 +49,19 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading, streamingContent]);
 
-  // Close sessions dropdown on outside click
+  // Close sessions panel on outside click (use click not mousedown to avoid conflict with toggle button)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
+      const header = document.getElementById("chat-header");
+      if (header?.contains(e.target as Node)) return;
       if (sessionsRef.current && !sessionsRef.current.contains(e.target as Node)) {
         setShowSessions(false);
       }
     }
-    if (showSessions) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    if (showSessions) {
+      document.addEventListener("click", handleClick);
+    }
+    return () => document.removeEventListener("click", handleClick);
   }, [showSessions]);
 
   // Load sessions when opening; auto-create one if none exist
@@ -67,13 +71,15 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
       const res = await fetch(`${API_URL}/courses/${courseId}/chat/sessions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error("loadSessions failed:", res.status, res.statusText);
+        return;
+      }
       const data: ChatSession[] = await res.json();
       setSessions(data);
       if (data.length > 0) {
         setActiveSessionId((prev) => prev ?? data[0].id);
       } else {
-        // Auto-create a session so the input isn't blocked
         const created = await fetch(`${API_URL}/courses/${courseId}/chat/sessions`, {
           method: "POST",
           headers: {
@@ -85,9 +91,13 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
           const session: ChatSession = await created.json();
           setSessions([session]);
           setActiveSessionId(session.id);
+        } else {
+          console.error("auto-create session failed:", created.status);
         }
       }
-    } catch {}
+    } catch (err) {
+      console.error("loadSessions error:", err);
+    }
   }, [token, courseId]);
 
   useEffect(() => {
@@ -105,13 +115,14 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
     fetch(`${API_URL}/courses/${courseId}/chat/sessions/${activeSessionId}/messages`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => res.json())
-      .then((data) => {
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
         if (Array.isArray(data)) {
           setMessages(data.map((m: any) => ({ role: m.role, content: m.content })));
         }
       })
-      .catch(() => {});
+      .catch((err) => console.error("loadMessages error:", err));
   }, [activeSessionId, token, courseId]);
 
   async function createNewSession() {
@@ -124,13 +135,14 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const session: ChatSession = await res.json();
       setSessions((prev) => [session, ...prev]);
       setActiveSessionId(session.id);
       setMessages([]);
-      setShowSessions(false);
-    } catch {}
+    } catch (err) {
+      console.error("createNewSession error:", err);
+    }
   }
 
   async function deleteSession(sid: string) {
@@ -140,14 +152,18 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Failed");
-      setSessions((prev) => prev.filter((s) => s.id !== sid));
-      if (activeSessionId === sid) {
-        const remaining = sessions.filter((s) => s.id !== sid);
-        setActiveSessionId(remaining.length > 0 ? remaining[0].id : null);
-        setMessages([]);
-      }
-    } catch {}
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setSessions((prev) => {
+        const updated = prev.filter((s) => s.id !== sid);
+        if (sid === activeSessionId) {
+          setActiveSessionId(updated.length > 0 ? updated[0].id : null);
+          setMessages([]);
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error("deleteSession error:", err);
+    }
   }
 
   async function renameSession(sid: string) {
@@ -162,10 +178,12 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
         },
         body: JSON.stringify({ title: newTitle.trim() }),
       });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const updated: ChatSession = await res.json();
       setSessions((prev) => prev.map((s) => (s.id === sid ? updated : s)));
-    } catch {}
+    } catch (err) {
+      console.error("renameSession error:", err);
+    }
   }
 
   const handleSend = useCallback(async (e: React.FormEvent) => {
@@ -260,7 +278,7 @@ export default function AiCourseChat({ courseId }: { courseId: string }) {
         <>
           <div className="fixed inset-0 z-40 bg-black/20" />
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 w-[85%] h-[55vh] sm:left-auto sm:translate-x-0 sm:right-6 sm:w-[32rem] sm:h-[55vh] z-50 flex flex-col bg-white rounded-xl shadow-2xl border border-slate-200">
-            <div className="relative flex items-center justify-between px-4 py-3 bg-teal-600 text-white rounded-t-xl shrink-0">
+            <div id="chat-header" className="relative flex items-center justify-between px-4 py-3 bg-teal-600 text-white rounded-t-xl shrink-0">
               <button
                 onClick={() => setShowSessions((s) => !s)}
                 className="flex items-center gap-1.5 cursor-pointer hover:text-teal-100"
