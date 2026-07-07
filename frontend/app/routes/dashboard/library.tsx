@@ -80,7 +80,10 @@ export default function LibraryPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data)) setResources(data); })
+      .then((data) => {
+        if (Array.isArray(data)) setResources(data);
+        else if (data?.data) setResources(data.data);
+      })
       .catch(console.error)
       .finally(() => setIsLoading(false));
   }, [token]);

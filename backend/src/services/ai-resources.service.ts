@@ -57,14 +57,27 @@ function fallbackResourceRecommendations(
 ): ResourceRecommendation[] {
   return candidates
     .map((r) => {
-      const relevance = overlapScore(
+      const metadataRelevance = overlapScore(
         profile.course,
         `${r.title} ${r.subject} ${r.group_name}`,
       );
+      // If we have extracted content, score against that too for deeper signal
+      let contentRelevance = 0;
+      if (r.content_preview) {
+        contentRelevance = overlapScore(
+          profile.course,
+          r.content_preview,
+        );
+      }
+      const combinedRelevance = r.content_preview
+        ? metadataRelevance * 0.4 + contentRelevance * 0.6
+        : metadataRelevance;
       const popularity = Math.min(15, toNumber(r.downloads) * 2);
-      const score = Math.min(98, Math.round(30 + relevance * 45 + popularity));
-      const reason = `Relevant to your ${profile.course} studies — shared in ${r.group_name}.`;
-      return { ...r, downloads: toNumber(r.downloads), score, reason };
+      const score = Math.min(98, Math.round(30 + combinedRelevance * 45 + popularity));
+      const reasonText = r.content_preview
+        ? `Matched your ${profile.course} course based on its actual content — shared in ${r.group_name}.`
+        : `Relevant to your ${profile.course} studies — shared in ${r.group_name}.`;
+      return { ...r, downloads: toNumber(r.downloads), score, reason: reasonText };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
