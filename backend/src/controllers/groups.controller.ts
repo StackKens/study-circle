@@ -293,7 +293,7 @@ export async function generateInviteLink(req: AuthRequest, res: Response) {
     );
 
     if (existing.rows.length > 0) {
-      const inviteUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard/groups/join/${existing.rows[0].token}`;
+      const inviteUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/join/${existing.rows[0].token}`;
       res.json({ token: existing.rows[0].token, invite_url: inviteUrl });
       return;
     }
@@ -306,7 +306,7 @@ export async function generateInviteLink(req: AuthRequest, res: Response) {
       [groupId, token, userId]
     );
 
-    const inviteUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/dashboard/groups/join/${token}`;
+    const inviteUrl = `${process.env.FRONTEND_URL || "http://localhost:5173"}/join/${token}`;
     res.status(201).json({ token, invite_url: inviteUrl });
   } catch (err) {
     console.error("generateInviteLink error:", err);

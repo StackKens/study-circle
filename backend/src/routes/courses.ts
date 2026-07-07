@@ -15,6 +15,11 @@ import {
   enrollCourse,
   listAvailableCourses,
   chatWithAI,
+  listChatSessions,
+  createChatSession,
+  updateChatSession,
+  deleteChatSession,
+  getChatSessionMessages,
 } from "../controllers/courses.controller";
 
 const router = Router();
@@ -42,6 +47,14 @@ router.get("/courses/:id", authenticateToken, shortCache, getCourse);
 router.put("/courses/:id", authenticateToken, updateCourse);
 router.post("/courses/:id/enroll", authenticateToken, enrollCourse);
 
+// Chat session routes
+router.get("/courses/:id/chat/sessions", authenticateToken, listChatSessions);
+router.post("/courses/:id/chat/sessions", authenticateToken, createChatSession);
+router.put("/courses/:id/chat/sessions/:sid", authenticateToken, updateChatSession);
+router.delete("/courses/:id/chat/sessions/:sid", authenticateToken, deleteChatSession);
+
+// Chat messages within a session
+router.get("/courses/:id/chat/sessions/:sid/messages", authenticateToken, getChatSessionMessages);
 router.post("/courses/:id/chat", authenticateToken, chatWithAI);
 
 export default router;

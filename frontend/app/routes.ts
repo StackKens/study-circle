@@ -16,6 +16,7 @@ export default [
     route("terms", "routes/legal/terms.tsx"),
     route("guidelines", "routes/legal/guidelines.tsx"),
     route("verify-email", "routes/verify-email.tsx"),
+    route("join/:token", "routes/group_join.tsx"),
   ]),
 
   // Private routes, protected by a component
@@ -25,7 +26,6 @@ export default [
     // Student routes
     route("dashboard/assignments", "routes/dashboard/student_assignments.tsx"),
     route("dashboard/groups", "routes/dashboard/groups.tsx"),
-    route("dashboard/groups/join/:token", "routes/dashboard/group_join.tsx"),
     route("dashboard/groups/:groupId", "routes/dashboard/group_detail.tsx"),
     route("dashboard/groups/:groupId/chat", "routes/dashboard/group_chat.tsx"),
     route("dashboard/chat", "routes/dashboard/general_chat.tsx"),

@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db";
 import { paramId, isInstructor, ownsCourse } from "../utils/course-helpers";
-import { callAiChat } from "../services/ai.service";
+import { callAiChat, callAiChatStream } from "../services/ai.service";
 
 // GET /instructors/dashboard — overview stats for instructor home
 export async function getInstructorDashboard(req: AuthRequest, res: Response) {
@@ -389,48 +389,232 @@ export async function listAvailableCourses(req: AuthRequest, res: Response) {
   }
 }
 
-// POST /courses/:id/chat — AI tutor chat scoped to a course
+// ─── Chat Sessions ─────────────────────────────────────────
+
+// GET /courses/:id/chat/sessions — list all sessions for this user+course
+export async function listChatSessions(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const result = await pool.query(
+      `SELECT id, title, created_at, updated_at FROM chat_sessions
+       WHERE user_id = $1 AND course_id = $2
+       ORDER BY updated_at DESC`,
+      [userId, courseId],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("listChatSessions error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// POST /courses/:id/chat/sessions — create a new chat session
+export async function createChatSession(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO chat_sessions (user_id, course_id) VALUES ($1, $2) RETURNING id, title, created_at, updated_at`,
+      [userId, courseId],
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error("createChatSession error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// PUT /courses/:id/chat/sessions/:sid — rename a session
+export async function updateChatSession(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  const sessionId = req.params.sid;
+  const { title } = req.body;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!title?.trim()) { res.status(400).json({ error: "Title is required" }); return; }
+
+  try {
+    const result = await pool.query(
+      `UPDATE chat_sessions SET title = $1, updated_at = NOW()
+       WHERE id = $2 AND user_id = $3 AND course_id = $4
+       RETURNING id, title, created_at, updated_at`,
+      [title.trim(), sessionId, userId, courseId],
+    );
+    if (result.rows.length === 0) { res.status(404).json({ error: "Session not found" }); return; }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("updateChatSession error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// DELETE /courses/:id/chat/sessions/:sid — delete a session (messages cascade)
+export async function deleteChatSession(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  const sessionId = req.params.sid;
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM chat_sessions WHERE id = $1 AND user_id = $2 AND course_id = $3 RETURNING id`,
+      [sessionId, userId, courseId],
+    );
+    if (result.rows.length === 0) { res.status(404).json({ error: "Session not found" }); return; }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("deleteChatSession error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// ─── Chat Messages ─────────────────────────────────────────
+
+// GET /courses/:id/chat/sessions/:sid/messages — load persisted messages for a session
+export async function getChatSessionMessages(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  const courseId = paramId(req.params.id);
+  const sessionId = req.params.sid;
+
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  try {
+    const result = await pool.query(
+      `SELECT role, content, created_at FROM chat_messages
+       WHERE user_id = $1 AND course_id = $2 AND session_id = $3
+       ORDER BY created_at ASC`,
+      [userId, courseId, sessionId],
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("getChatSessionMessages error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+}
+
+// POST /courses/:id/chat — AI tutor chat scoped to a course session (streaming)
 export async function chatWithAI(req: AuthRequest, res: Response) {
   const userId = req.user?.id;
   const courseId = paramId(req.params.id);
-  const { message, history } = req.body;
+  const { message, sessionId } = req.body;
 
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-  if (!message?.trim()) {
-    res.status(400).json({ error: "Message is required" });
-    return;
-  }
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  if (!message?.trim()) { res.status(400).json({ error: "Message is required" }); return; }
+  if (!sessionId) { res.status(400).json({ error: "sessionId is required" }); return; }
 
   try {
     const course = await pool.query(
       `SELECT title, description FROM courses WHERE id = $1`,
       [courseId],
     );
-    if (course.rows.length === 0) {
-      res.status(404).json({ error: "Course not found" });
-      return;
+    if (course.rows.length === 0) { res.status(404).json({ error: "Course not found" }); return; }
+
+    // Verify session belongs to this user+course
+    const session = await pool.query(
+      `SELECT id, title FROM chat_sessions WHERE id = $1 AND user_id = $2 AND course_id = $3`,
+      [sessionId, userId, courseId],
+    );
+    if (session.rows.length === 0) { res.status(404).json({ error: "Session not found" }); return; }
+
+    // Save user message
+    await pool.query(
+      `INSERT INTO chat_messages (user_id, course_id, session_id, role, content) VALUES ($1, $2, $3, 'user', $4)`,
+      [userId, courseId, sessionId, message.trim()],
+    );
+
+    // Auto-title: if this is the first message in the session, set the title
+    const msgCount = await pool.query(
+      `SELECT COUNT(*)::int AS count FROM chat_messages WHERE session_id = $1`,
+      [sessionId],
+    );
+    const isFirstMessage = msgCount.rows[0]?.count === 1;
+
+    if (isFirstMessage) {
+      const autoTitle = message.trim().length > 55
+        ? message.trim().slice(0, 55) + "…"
+        : message.trim();
+      await pool.query(
+        `UPDATE chat_sessions SET updated_at = NOW() WHERE id = $1`,
+        [sessionId],
+      );
+      // We'll send the title in the SSE response so the frontend can update
     }
+
+    // Load full history from DB
+    const history = await pool.query(
+      `SELECT role, content FROM chat_messages
+       WHERE session_id = $1
+       ORDER BY created_at ASC`,
+      [sessionId],
+    );
+
+    const autoTitle = isFirstMessage
+      ? (message.trim().length > 55 ? message.trim().slice(0, 55) + "…" : message.trim())
+      : null;
 
     const systemMsg = `You are a helpful AI tutor for the course "${course.rows[0].title}". ${course.rows[0].description ? `Course description: ${course.rows[0].description}` : ""} Answer the student's questions clearly and concisely. If you don't know something, say so honestly. Keep responses under 200 words.`;
 
     const messages = [
       { role: "system", content: systemMsg },
-      ...(Array.isArray(history) ? history : []),
-      { role: "user", content: message },
+      ...history.rows,
     ];
 
-    const reply = await callAiChat(messages);
-    if (!reply) {
-      res.status(503).json({ error: "AI tutor is temporarily unavailable. Please try again." });
+    // Set SSE headers
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    let fullReply = "";
+
+    const result = await callAiChatStream(messages, (token) => {
+      fullReply += token;
+      res.write(`data: ${JSON.stringify({ token })}\n\n`);
+    });
+
+    if (!result && !fullReply) {
+      res.write(`data: ${JSON.stringify({ error: "AI tutor is temporarily unavailable. Please try again." })}\n\n`);
+      res.write(`data: [DONE]\n\n`);
+      res.end();
       return;
     }
 
-    res.json({ reply });
+    // Save assistant message to DB
+    await pool.query(
+      `INSERT INTO chat_messages (user_id, course_id, session_id, role, content) VALUES ($1, $2, $3, 'assistant', $4)`,
+      [userId, courseId, sessionId, fullReply],
+    );
+
+    // Update session timestamp
+    await pool.query(
+      `UPDATE chat_sessions SET updated_at = NOW() WHERE id = $1`,
+      [sessionId],
+    );
+
+    // Send title in the final event if this was the first message
+    const finalEvent: any = { done: true };
+    if (autoTitle) {
+      finalEvent.title = autoTitle;
+      await pool.query(
+        `UPDATE chat_sessions SET title = $1 WHERE id = $2`,
+        [autoTitle, sessionId],
+      );
+    }
+    res.write(`data: ${JSON.stringify(finalEvent)}\n\n`);
+    res.end();
   } catch (err) {
     console.error("chatWithAI error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    } else {
+      res.write(`data: ${JSON.stringify({ error: "Internal server error" })}\n\n`);
+      res.write(`data: [DONE]\n\n`);
+      res.end();
+    }
   }
 }

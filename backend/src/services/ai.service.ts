@@ -66,6 +66,70 @@ function getAiConfig() {
   };
 }
 
+export async function callAiChatStream(
+  messages: { role: string; content: string }[],
+  onToken: (token: string) => void,
+): Promise<string | null> {
+  const { apiKey, isGroq, baseUrl, model } = getAiConfig();
+  if (!apiKey) return null;
+
+  const body: Record<string, any> = { model, messages, stream: true };
+
+  try {
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      console.error(`AI stream API error ${response.status}: ${text}`);
+      return null;
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullContent = "";
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split("\n\n");
+      buffer = parts.pop() || "";
+
+      for (const part of parts) {
+        const lines = part.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+            if (data === "[DONE]") continue;
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || "";
+              if (content) {
+                fullContent += content;
+                onToken(content);
+              }
+            } catch { /* skip malformed chunk */ }
+          }
+        }
+      }
+    }
+
+    return fullContent;
+  } catch (err) {
+    console.error("callAiChatStream error:", err);
+    return null;
+  }
+}
+
 export async function callAiChat(
   messages: { role: string; content: string }[],
 ): Promise<string | null> {

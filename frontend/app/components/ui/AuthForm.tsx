@@ -317,7 +317,13 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
         userRole = regRes.user?.role ?? role;
       }
       onClose();
-      navigate(userRole === "instructor" ? "/dashboard/instructor" : "/dashboard");
+      const redirectTo = sessionStorage.getItem("post_auth_redirect");
+      if (redirectTo) {
+        sessionStorage.removeItem("post_auth_redirect");
+        navigate(redirectTo);
+      } else {
+        navigate(userRole === "instructor" ? "/dashboard/instructor" : "/dashboard");
+      }
     } catch (err) {
       setErrors({
         general: err instanceof Error ? err.message : "Something went wrong.",
