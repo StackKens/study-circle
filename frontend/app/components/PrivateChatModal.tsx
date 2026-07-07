@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Send, Loader2 } from "lucide-react";
+import { X, Send, Loader2, Trash2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { usePrivateChat } from "../context/PrivateChatContext";
 import { UserAvatar } from "./UserAvatar";
@@ -16,13 +16,14 @@ function formatTime(iso: string) {
 
 export default function PrivateChatModal() {
   const { user, token } = useAuth();
-  const { target, closeChat, isOpen, messages, status, sendMessage } =
+  const { target, closeChat, isOpen, messages, status, sendMessage, deleteMessage } =
     usePrivateChat();
   const [input, setInput] = useState("");
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionResults, setMentionResults] = useState<
     Array<{ id: string; name: string }>
   >([]);
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -127,17 +128,19 @@ export default function PrivateChatModal() {
           )}
           {messages.map((msg) => {
             const isOwn = msg.sender_id === user?.id;
+            const isActive = activeMessageId === msg.id;
             return (
               <div
                 key={msg.id}
                 className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
+                  className={`relative max-w-[80%] px-3 py-2 rounded-2xl text-sm leading-relaxed cursor-pointer select-none ${
                     isOwn
                       ? "bg-teal-600 text-white rounded-tr-sm"
                       : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm shadow-sm"
                   }`}
+                  onClick={() => isOwn && setActiveMessageId(isActive ? null : msg.id)}
                 >
                   {renderMessageContent(msg.content, isOwn ? "font-semibold underline underline-offset-2 decoration-white/50" : undefined)}
                   <p
@@ -145,6 +148,19 @@ export default function PrivateChatModal() {
                   >
                     {formatTime(msg.created_at)}
                   </p>
+                  {isOwn && isActive && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteMessage(msg.id);
+                        setActiveMessageId(null);
+                      }}
+                      className="absolute -left-8 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition-colors cursor-pointer"
+                      aria-label="Delete message"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
                 </div>
               </div>
             );

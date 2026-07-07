@@ -30,6 +30,7 @@ interface PrivateChatContextType {
   messages: PrivateMessage[];
   status: "connecting" | "connected" | "error";
   sendMessage: (content: string, mentions: string[]) => void;
+  deleteMessage: (messageId: string) => void;
 }
 
 const PrivateChatContext = createContext<PrivateChatContextType | undefined>(
@@ -92,6 +93,10 @@ export function PrivateChatProvider({
       }
     });
 
+    socket.on("private_message_deleted", ({ message_id }: { message_id: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== message_id));
+    });
+
     socket.on("notification", () => {
       useNotificationStore.getState().incrementUnread();
     });
@@ -124,6 +129,14 @@ export function PrivateChatProvider({
     });
   }, []);
 
+  const deleteMessage = useCallback((messageId: string) => {
+    if (!socketRef.current?.connected || !targetRef.current) return;
+    socketRef.current.emit("delete_private_message", {
+      message_id: messageId,
+      recipient_id: targetRef.current.id,
+    });
+  }, []);
+
   return (
     <PrivateChatContext.Provider
       value={{
@@ -134,6 +147,7 @@ export function PrivateChatProvider({
         messages,
         status,
         sendMessage,
+        deleteMessage,
       }}
     >
       {children}

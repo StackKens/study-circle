@@ -5,7 +5,7 @@ import { usePrivateChat } from "../context/PrivateChatContext";
 import { UserAvatar } from "./UserAvatar";
 import { MentionTextarea } from "./MentionTextarea";
 import { renderMessageContent } from "../utils/chat";
-import { Send, MessageCircle } from "lucide-react";
+import { Send, MessageCircle, Trash2 } from "lucide-react";
 
 interface Message {
   id: string;
@@ -117,6 +117,7 @@ function MessageBubble({
   ownName,
   ownId,
   onAvatarClick,
+  onDelete,
 }: {
   msg: Message;
   isOwn: boolean;
@@ -128,7 +129,10 @@ function MessageBubble({
     avatar_url?: string | null;
     university?: string;
   }) => void;
+  onDelete?: (id: string) => void;
 }) {
+  const [showTrash, setShowTrash] = useState(false);
+
   const handleAvatarClick = () => {
     if (isOwn || !onAvatarClick) return;
     onAvatarClick({
@@ -143,8 +147,20 @@ function MessageBubble({
     return (
       <div className="flex gap-1.5 items-end justify-end">
         <div className="flex flex-col items-end gap-px">
-          <div className="w-fit max-w-[82%] sm:max-w-[70%] lg:max-w-[60%] bg-teal-600 text-white px-2.5 py-1 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words">
+          <div
+            className="relative w-fit max-w-[82%] sm:max-w-[70%] lg:max-w-[60%] bg-teal-600 text-white px-2.5 py-1 rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words cursor-pointer select-none"
+            onClick={() => setShowTrash((v) => !v)}
+          >
             {renderMessageContent(msg.content, "font-semibold underline underline-offset-2 decoration-white/50")}
+            {showTrash && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete?.(msg.id); }}
+                className="absolute -left-8 top-1/2 -translate-y-1/2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition-colors cursor-pointer"
+                aria-label="Delete message"
+              >
+                <Trash2 size={11} />
+              </button>
+            )}
           </div>
           <span className="text-[10px] text-slate-400 pr-0.5">
             {formatTime(msg.created_at)}
@@ -254,6 +270,9 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     socket.on("receive_message", (msg: Message) =>
       setMessages((prev) => [...prev, msg]),
     );
+    socket.on("message_deleted", ({ message_id }: { message_id: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== message_id));
+    });
     socket.on("error", (err: { message: string }) =>
       console.error("[chat]", err.message),
     );
@@ -282,6 +301,11 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
     setInput("");
     inputRef.current?.focus();
   }, [input, groupId]);
+
+  const deleteMessage = useCallback((messageId: string) => {
+    if (!socketRef.current?.connected) return;
+    socketRef.current.emit("delete_message", { message_id: messageId, group_id: groupId });
+  }, [groupId]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -358,6 +382,7 @@ export default function GroupChat({ groupId, groupName }: GroupChatProps) {
                   ownName={user?.name ?? ""}
                   ownId={user?.id ?? ""}
                   onAvatarClick={openChat}
+                  onDelete={deleteMessage}
                 />
               ))}
             </div>

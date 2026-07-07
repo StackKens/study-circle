@@ -495,6 +495,78 @@ export function initChat(httpServer: HTTPServer) {
       },
     );
 
+    // ── DELETE GROUP MESSAGE
+    socket.on("delete_message", async ({ message_id, group_id }: { message_id: string; group_id: string }) => {
+      if (!message_id || !group_id) {
+        socket.emit("error", { message: "message_id and group_id required" });
+        return;
+      }
+      try {
+        // Only the sender can delete their own message
+        const result = await pool.query(
+          `DELETE FROM messages WHERE id = $1 AND sender_id = $2 AND group_id = $3 RETURNING id`,
+          [message_id, user.id, group_id]
+        );
+        if ((result.rowCount ?? 0) === 0) {
+          socket.emit("error", { message: "Message not found or not yours" });
+          return;
+        }
+        // Notify everyone in the room so they remove it from their UI
+        io!.to(`group:${group_id}`).emit("message_deleted", { message_id, group_id });
+      } catch (err) {
+        console.error("[chat] failed to delete group message", err);
+        socket.emit("error", { message: "Failed to delete message" });
+      }
+    });
+
+    // ── DELETE GENERAL MESSAGE
+    socket.on("delete_general_message", async ({ message_id }: { message_id: string }) => {
+      if (!message_id) {
+        socket.emit("error", { message: "message_id required" });
+        return;
+      }
+      try {
+        const result = await pool.query(
+          `DELETE FROM general_messages WHERE id = $1 AND sender_id = $2 RETURNING id`,
+          [message_id, user.id]
+        );
+        if ((result.rowCount ?? 0) === 0) {
+          socket.emit("error", { message: "Message not found or not yours" });
+          return;
+        }
+        // Broadcast to everyone on the platform
+        io!.emit("general_message_deleted", { message_id });
+      } catch (err) {
+        console.error("[chat] failed to delete general message", err);
+        socket.emit("error", { message: "Failed to delete message" });
+      }
+    });
+
+    // ── DELETE PRIVATE MESSAGE
+    socket.on("delete_private_message", async ({ message_id, recipient_id }: { message_id: string; recipient_id: string }) => {
+      if (!message_id || !recipient_id) {
+        socket.emit("error", { message: "message_id and recipient_id required" });
+        return;
+      }
+      try {
+        const result = await pool.query(
+          `DELETE FROM private_messages WHERE id = $1 AND sender_id = $2 RETURNING id`,
+          [message_id, user.id]
+        );
+        if ((result.rowCount ?? 0) === 0) {
+          socket.emit("error", { message: "Message not found or not yours" });
+          return;
+        }
+        // Notify both sides of the DM
+        const room = dmRoom(user.id, recipient_id);
+        io!.to(room).emit("private_message_deleted", { message_id });
+        io!.to(`user:${recipient_id}`).emit("private_message_deleted", { message_id });
+      } catch (err) {
+        console.error("[chat] failed to delete private message", err);
+        socket.emit("error", { message: "Failed to delete message" });
+      }
+    });
+
     // Personal room for push notifications of new DMs
     socket.join(`user:${user.id}`);
 
