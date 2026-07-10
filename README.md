@@ -202,7 +202,6 @@ npm run build
 npm run typecheck
 ```
 
----
 
 ## Contributing
 
@@ -301,7 +300,6 @@ The frontend is configured in `frontend/netlify.toml`. It builds with `react-rou
 
 The backend runs as a Node.js server. Set the production environment variables on Railway and deploy from the repository root using the Dockerfile.
 
----
 
 ## Author
 
