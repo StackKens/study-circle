@@ -1,6 +1,6 @@
 # StudyCircle
 
-> A collaborative learning platform that connects university students for group study sessions, resource sharing, and academic collaboration.
+ A collaborative learning platform that connects university students for group study sessions, resource sharing, and academic collaboration.
 
 ## Contents
 
