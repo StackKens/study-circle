@@ -289,7 +289,7 @@ Use GitHub Issues to report bugs or request features. Include:
 - Expected vs actual behavior
 - Screenshots if applicable
 
----
+
 
 ## Deployment
 
