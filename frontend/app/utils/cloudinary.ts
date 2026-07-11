@@ -7,30 +7,12 @@ if (!CLOUDINARY_CLOUD || !CLOUDINARY_PRESET) {
   );
 }
 
-const TRANSFORMED_CACHE = new Map<string, string>();
-
 export function getOptimizedAvatarUrl(
   url: string | null | undefined,
-  width = 200,
+  _width = 200,
 ): string | null {
   if (!url) return null;
-  const cached = TRANSFORMED_CACHE.get(url);
-  if (cached) return cached;
-
-  if (!url.startsWith("https://res.cloudinary.com/")) return url;
-
-  const separator = "/image/upload/";
-  const idx = url.indexOf(separator);
-  if (idx === -1) return url;
-
-  const insertAt = idx + separator.length;
-  const optimized =
-    url.slice(0, insertAt) +
-    `w_${width},q_auto,f_auto/` +
-    url.slice(insertAt);
-
-  TRANSFORMED_CACHE.set(url, optimized);
-  return optimized;
+  return url;
 }
 
 export async function uploadToCloudinary(file: File): Promise<string> {

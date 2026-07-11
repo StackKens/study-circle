@@ -62,8 +62,6 @@ export async function getHomeStats(req: Request, res: Response) {
          FROM testimonials t
          LEFT JOIN users u ON u.id = t.user_id
          WHERE t.is_active = TRUE
-           AND COALESCE(u.avatar_url, t.avatar_url) IS NOT NULL
-           AND TRIM(COALESCE(u.avatar_url, t.avatar_url)) != ''
          ORDER BY t.display_order ASC, t.created_at DESC`,
       );
       testimonials = testimonialsResult.rows;

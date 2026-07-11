@@ -70,6 +70,10 @@ function pickN<T>(arr: T[], n: number): T[] {
   return shuffled.slice(0, Math.min(n, arr.length));
 }
 
+function avatarUrl(seed: number): string {
+  return `https://i.pravatar.cc/150?u=${seed}`;
+}
+
 async function seed() {
   console.log("Seeding database...\n");
 
@@ -80,11 +84,11 @@ async function seed() {
 
   // ── 1. USERS ──────────────────────────────────────────────────────────────
   const adminResult = await pool.query(
-    `INSERT INTO users (name, email, password_hash, university, course, year_of_study)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO users (name, email, password_hash, university, course, year_of_study, avatar_url)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
      RETURNING id`,
-    ["Admin User", "admin@studycircle.app", passwordHash, "University of Lagos", "Administration", 1]
+    ["Admin User", "admin@studycircle.app", passwordHash, "University of Lagos", "Administration", 1, avatarUrl(0)]
   );
   const adminId = adminResult.rows[0].id;
   console.log(`  ✓ Admin: admin@studycircle.app / password123`);
@@ -105,13 +109,14 @@ async function seed() {
     const university = pick(UNIVERSITIES);
     const course = pick(COURSES);
     const year = pick(YEAR_STUDY);
+    const userIndex = userIds.length + 1;
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, university, course, year_of_study)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (name, email, password_hash, university, course, year_of_study, avatar_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name
        RETURNING id`,
-      [name, email, passwordHash, university, course, year]
+      [name, email, passwordHash, university, course, year, avatarUrl(userIndex)]
     );
     userIds.push(result.rows[0].id);
   }
@@ -288,12 +293,19 @@ async function seed() {
     "The study materials and past questions shared here are invaluable.",
   ];
   for (let i = 0; i < 8; i++) {
-    const user = await pool.query(`SELECT id, name, university, course, year_of_study, avatar_url FROM users ORDER BY RANDOM() LIMIT 1`);
+    const user = await pool.query(
+      `SELECT id, name, university, course, year_of_study, avatar_url
+       FROM users
+       WHERE avatar_url IS NOT NULL AND TRIM(avatar_url) != ''
+       ORDER BY RANDOM() LIMIT 1`
+    );
     const u = user.rows[0];
     await pool.query(
       `INSERT INTO testimonials (user_id, name, university, course, year_of_study, quote, rating, avatar_url, display_order, is_active)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true)
-       ON CONFLICT (name, quote) DO NOTHING`,
+       ON CONFLICT (name, quote) DO UPDATE SET
+         avatar_url = EXCLUDED.avatar_url,
+         user_id = EXCLUDED.user_id`,
       [u.id, u.name, u.university, u.course, u.year_of_study, testimonialQuotes[i], 4 + Math.floor(Math.random() * 2), u.avatar_url, i + 1]
     );
   }
