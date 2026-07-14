@@ -20,6 +20,11 @@ type Pages = {
   "/blog": {
     params: {};
   };
+  "/blog/:slug": {
+    params: {
+      "slug": string;
+    };
+  };
   "/contact": {
     params: {};
   };
@@ -145,11 +150,11 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/join/:token" | "/dashboard" | "/dashboard/assignments" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/messages" | "/dashboard/instructors" | "/dashboard/courses" | "/dashboard/courses/:courseId" | "/dashboard/profile" | "/dashboard/instructor" | "/dashboard/instructor/courses" | "/dashboard/instructor/announcements" | "/dashboard/instructor/resources" | "/dashboard/instructor/assignments" | "/dashboard/instructor/submissions" | "/dashboard/instructor/discussions" | "/dashboard/instructor/courses/:courseId" | "/dashboard/instructor/courses/:courseId/announcements" | "/dashboard/instructor/courses/:courseId/resources" | "/dashboard/instructor/courses/:courseId/assignments" | "/dashboard/instructor/courses/:courseId/discussions";
+    page: "/" | "/about" | "/blog" | "/blog/:slug" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/join/:token" | "/dashboard" | "/dashboard/assignments" | "/dashboard/groups" | "/dashboard/groups/:groupId" | "/dashboard/groups/:groupId/chat" | "/dashboard/chat" | "/dashboard/sessions" | "/dashboard/resources" | "/dashboard/progress" | "/dashboard/friends" | "/dashboard/library" | "/dashboard/messages" | "/dashboard/instructors" | "/dashboard/courses" | "/dashboard/courses/:courseId" | "/dashboard/profile" | "/dashboard/instructor" | "/dashboard/instructor/courses" | "/dashboard/instructor/announcements" | "/dashboard/instructor/resources" | "/dashboard/instructor/assignments" | "/dashboard/instructor/submissions" | "/dashboard/instructor/discussions" | "/dashboard/instructor/courses/:courseId" | "/dashboard/instructor/courses/:courseId/announcements" | "/dashboard/instructor/courses/:courseId/resources" | "/dashboard/instructor/courses/:courseId/assignments" | "/dashboard/instructor/courses/:courseId/discussions";
   };
   "layout/app_layout.tsx": {
     id: "layout/app_layout";
-    page: "/" | "/about" | "/blog" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/join/:token";
+    page: "/" | "/about" | "/blog" | "/blog/:slug" | "/contact" | "/privacy" | "/terms" | "/guidelines" | "/verify-email" | "/join/:token";
   };
   "routes/home.tsx": {
     id: "routes/home";
@@ -162,6 +167,10 @@ type RouteFiles = {
   "routes/blog.tsx": {
     id: "routes/blog";
     page: "/blog";
+  };
+  "routes/blog_post.tsx": {
+    id: "routes/blog_post";
+    page: "/blog/:slug";
   };
   "routes/contact.tsx": {
     id: "routes/contact";
@@ -311,6 +320,7 @@ type RouteModules = {
   "routes/home": typeof import("./app/routes/home.tsx");
   "routes/about": typeof import("./app/routes/about.tsx");
   "routes/blog": typeof import("./app/routes/blog.tsx");
+  "routes/blog_post": typeof import("./app/routes/blog_post.tsx");
   "routes/contact": typeof import("./app/routes/contact.tsx");
   "routes/legal/privacy": typeof import("./app/routes/legal/privacy.tsx");
   "routes/legal/terms": typeof import("./app/routes/legal/terms.tsx");

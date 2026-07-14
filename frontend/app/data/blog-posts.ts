@@ -66,8 +66,8 @@ export const blogPosts: BlogPost[] = [
       },
       {
         type: "image",
-        src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000&q=80",
-        alt: "Students collaborating around a laptop",
+        src: "/blog/resource_board_illustration.png",
+        alt: "StudyCircle resource board",
       },
       {
         type: "heading",
