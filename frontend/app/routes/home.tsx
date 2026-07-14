@@ -869,8 +869,8 @@ export default function Home() {
                 </span>
               </div>
               <p className="text-sm leading-relaxed max-w-xs text-slate-500">
-                The modern study platform built for university students in
-                Uganda and beyond.
+                The modern study platform built for university students
+                everywhere.
               </p>
             </div>
             {footerCols.map((col) => (

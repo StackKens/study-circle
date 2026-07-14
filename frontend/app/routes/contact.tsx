@@ -19,7 +19,7 @@ const infoCards = [
     icon: MapPin,
     label: "Location",
     value: "Kampala, Uganda",
-    desc: "Serving students across Uganda",
+    desc: "Serving students worldwide",
   },
   {
     icon: Clock,
@@ -104,7 +104,7 @@ export default function Contact() {
                 Based in Kampala, Uganda
               </p>
               <p className="text-xs text-slate-500 leading-relaxed">
-                StudyCircle is built for university students across Uganda and beyond.
+                StudyCircle is built for university students everywhere.
               </p>
             </div>
           </div>

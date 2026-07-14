@@ -1,83 +1,124 @@
-import { useState } from "react";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { Link } from "react-router";
+import { ArrowRight, Clock } from "lucide-react";
+import { blogPosts } from "../data/blog-posts";
 
 export function meta() {
   return [{ title: "Blog · StudyCircle" }];
 }
 
-const comingSoonPosts = [
-  {
-    tag: "Study Tips",
-    title: "5 ways study groups improve your grades",
-    desc: "Research shows students who study in groups retain information 40% better. Here's how to make the most of collaborative learning.",
-  },
-  {
-    tag: "Platform",
-    title: "How we built StudyCircle for Ugandan students",
-    desc: "A behind-the-scenes look at the decisions, challenges, and lessons learned building a student platform from scratch.",
-  },
-  {
-    tag: "Productivity",
-    title: "The Pomodoro technique for group study sessions",
-    desc: "How to structure your group study time for maximum focus and minimum burnout — with practical session templates.",
-  },
-];
-
 export default function Blog() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
+  const featured = blogPosts[0];
+  const rest = blogPosts.slice(1);
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-20">
-      <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">Blog</p>
-      <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-4">StudyCircle Blog</h1>
-      <p className="text-slate-500 text-sm leading-relaxed max-w-xl mb-16">
-        Study tips, platform updates, and insights on collaborative learning. Coming soon.
-      </p>
+    <main className="bg-white">
+      {/* Header */}
+      <section className="max-w-6xl mx-auto px-6 pt-20 pb-12">
+        <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">
+          Blog
+        </p>
+        <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+          Study smarter, together
+        </h1>
+        <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-xl">
+          Study tips, platform updates, and insights on collaborative learning.
+        </p>
+      </section>
 
-      {/* Coming soon posts preview */}
-      <div className="space-y-4 mb-16">
-        {comingSoonPosts.map((post) => (
-          <div key={post.title} className="p-6 bg-white rounded-xl border border-slate-200 hover:border-teal-200 transition-colors opacity-60">
-            <span className="text-[11px] font-semibold text-teal-600 uppercase tracking-[0.12em] mb-3 block">{post.tag}</span>
-            <h3 className="font-semibold text-slate-900 mb-2">{post.title}</h3>
-            <p className="text-sm text-slate-500 leading-relaxed">{post.desc}</p>
-            <p className="text-xs text-slate-300 mt-4 font-medium">Coming soon</p>
+      {/* Featured post */}
+      <section className="max-w-6xl mx-auto px-6 mb-12">
+        <Link
+          to={`/blog/${featured.slug}`}
+          className="group block rounded-2xl overflow-hidden border border-slate-200 hover:border-teal-200 hover:shadow-lg transition-all"
+        >
+          <div className="md:flex">
+            <div className="md:w-1/2 h-56 sm:h-72 md:h-auto relative overflow-hidden">
+              <img
+                src={featured.heroImage}
+                alt={featured.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+            </div>
+            <div className="md:w-1/2 p-6 sm:p-8 md:p-10 flex flex-col justify-center">
+              <div className="flex items-center gap-3 mb-4">
+                <span
+                  className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md ${featured.tagColor}`}
+                >
+                  {featured.tag}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-slate-400">
+                  <Clock size={11} />
+                  {featured.readTime}
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-3 group-hover:text-teal-700 transition-colors">
+                {featured.title}
+              </h2>
+              <p className="text-sm text-slate-500 leading-relaxed mb-6">
+                {featured.excerpt}
+              </p>
+              <div className="flex items-center justify-between">
+                <div className="text-xs text-slate-400">
+                  {featured.author} · {featured.date}
+                </div>
+                <span className="flex items-center gap-1 text-xs font-semibold text-teal-600 group-hover:text-teal-700">
+                  Read
+                  <ArrowRight
+                    size={12}
+                    className="group-hover:translate-x-0.5 transition-transform"
+                  />
+                </span>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        </Link>
+      </section>
 
-      {/* Email signup */}
-      <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 text-center">
-        <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center mx-auto mb-4">
-          <BookOpen size={20} className="text-teal-600" />
-        </div>
-        <h2 className="font-bold text-slate-900 mb-2">Get notified when we publish</h2>
-        <p className="text-sm text-slate-500 mb-6">No spam. Just useful content for students, when it's ready.</p>
-
-        {subscribed ? (
-          <p className="text-sm text-teal-600 font-medium">You're on the list — we'll be in touch!</p>
-        ) : (
-          <form
-            onSubmit={(e) => { e.preventDefault(); if (email) setSubscribed(true); }}
-            className="flex gap-2 max-w-sm mx-auto"
-          >
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:border-teal-500 transition-all"
-            />
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 bg-teal-600 hover:bg-teal-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+      {/* Post grid */}
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {rest.map((post) => (
+            <Link
+              key={post.slug}
+              to={`/blog/${post.slug}`}
+              className="group block bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-teal-200 hover:shadow-md transition-all"
             >
-              Notify me <ArrowRight size={13} />
-            </button>
-          </form>
-        )}
-      </div>
+              <div className="h-44 overflow-hidden relative">
+                <img
+                  src={post.heroImage}
+                  alt={post.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+              </div>
+              <div className="p-5">
+                <div className="flex items-center gap-2.5 mb-3">
+                  <span
+                    className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md ${post.tagColor}`}
+                  >
+                    {post.tag}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] text-slate-400">
+                    <Clock size={10} />
+                    {post.readTime}
+                  </span>
+                </div>
+                <h3 className="font-bold text-slate-900 text-sm leading-snug mb-2 group-hover:text-teal-700 transition-colors">
+                  {post.title}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                  {post.excerpt}
+                </p>
+                <div className="mt-4 text-[11px] text-slate-400">
+                  {post.date}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

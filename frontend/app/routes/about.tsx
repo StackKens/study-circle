@@ -10,7 +10,7 @@ export default function About() {
       <p className="text-teal-600 text-[11px] font-semibold uppercase tracking-[0.16em] mb-3">Company</p>
       <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-4">About StudyCircle</h1>
       <p className="text-slate-500 text-base leading-relaxed max-w-2xl mb-16">
-        StudyCircle is a collaborative learning platform built specifically for university students in Uganda and beyond. We believe education becomes more effective when students learn together.
+        StudyCircle is a collaborative learning platform built for university students everywhere. We believe education becomes more effective when students learn together.
       </p>
 
       <div className="grid md:grid-cols-2 gap-6 mb-16">

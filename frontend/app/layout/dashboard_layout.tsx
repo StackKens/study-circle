@@ -297,6 +297,7 @@ type SidebarItem =
 const studentSidebarItems: SidebarItem[] = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
   { name: "Messages", path: "/dashboard/messages", icon: Mail },
+  { name: "General Chat", path: "/dashboard/chat", icon: MessageCircle },
   { divider: true },
   { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
   { name: "Assignments", path: "/dashboard/assignments", icon: ClipboardList },
@@ -315,7 +316,8 @@ const studentSidebarItems: SidebarItem[] = [
 // Sidebar items for desktop — instructors
 const instructorSidebarItems: SidebarItem[] = [
   { name: "Dashboard", path: "/dashboard/instructor", icon: LayoutDashboard },
-  { name: "Messages", path: "/dashboard/chat", icon: Mail },
+  { name: "Messages", path: "/dashboard/messages", icon: Mail },
+  { name: "General Chat", path: "/dashboard/chat", icon: MessageCircle },
   { divider: true },
   {
     name: "My Courses",
@@ -654,6 +656,15 @@ export default function DashboardLayout() {
                         )}
                       </NavLink>
                       <NavLink
+                        to="/dashboard/chat"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        General Chat
+                      </NavLink>
+                      <NavLink
                         to="/dashboard/groups"
                         className={({ isActive }) =>
                           `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
@@ -712,13 +723,27 @@ export default function DashboardLayout() {
                   {isInstructor && (
                     <>
                       <NavLink
-                        to="/dashboard/chat"
+                        to="/dashboard/messages"
                         className={({ isActive }) =>
                           `flex items-center justify-between py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
                         }
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <span>Messages</span>
+                        {dmUnreadCount > 0 && (
+                          <span className="inline-flex items-center justify-center min-w-[1.25rem] h-[1.25rem] px-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold leading-none">
+                            {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
+                          </span>
+                        )}
+                      </NavLink>
+                      <NavLink
+                        to="/dashboard/chat"
+                        className={({ isActive }) =>
+                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        General Chat
                       </NavLink>
                       <NavLink
                         to="/dashboard/instructor/announcements"
