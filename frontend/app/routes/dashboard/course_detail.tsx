@@ -14,17 +14,19 @@ import {
   MessageSquare,
   Loader2,
   ExternalLink,
-  Send,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
   ChevronUp,
   FileText,
-  Heart,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import AiCourseChat from "../../components/AiCourseChat";
-import { UserAvatar } from "../../components/UserAvatar";
+import {
+  DiscussionCard,
+  type Discussion,
+  type Reply,
+} from "../../components/discussions";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
@@ -50,7 +52,7 @@ export default function StudentCourseDetailPage() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
-  const [discussions, setDiscussions] = useState<any[]>([]);
+  const [discussions, setDiscussions] = useState<Discussion[]>([]);
 
   const [submitContent, setSubmitContent] = useState("");
   const [submitUrl, setSubmitUrl] = useState("");
@@ -65,11 +67,9 @@ export default function StudentCourseDetailPage() {
 
   const [newDiscussionTitle, setNewDiscussionTitle] = useState("");
   const [newDiscussionContent, setNewDiscussionContent] = useState("");
-  const [expandedDiscussions, setExpandedDiscussions] = useState<
-    Record<string, boolean>
-  >({});
-  const [replies, setReplies] = useState<Record<string, any[]>>({});
-  const [replyText, setReplyText] = useState("");
+  const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [repliesMap, setRepliesMap] = useState<Record<string, Reply[]>>({});
+  const [loadingReplies, setLoadingReplies] = useState<Set<string>>(new Set());
   const [likingReply, setLikingReply] = useState<string | null>(null);
   const [showAskForm, setShowAskForm] = useState(false);
   const assignmentRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -175,8 +175,91 @@ export default function StudentCourseDetailPage() {
     }
   }
 
-  function formatDateTime(iso: string) {
-    return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  function invalidateReplies(discussionId: string) {
+    setRepliesMap((prev) => {
+      const next = { ...prev };
+      delete next[discussionId];
+      return next;
+    });
+    setExpandedReplies((prev) => {
+      const next = new Set(prev);
+      next.delete(discussionId);
+      return next;
+    });
+  }
+
+  function loadReplies(discussionId: string) {
+    const toggle = () =>
+      setExpandedReplies((prev) => {
+        const next = new Set(prev);
+        if (next.has(discussionId)) next.delete(discussionId);
+        else next.add(discussionId);
+        return next;
+      });
+
+    if (repliesMap[discussionId]) {
+      toggle();
+      return;
+    }
+    setLoadingReplies((prev) => new Set(prev).add(discussionId));
+    fetch(`${API_URL}/discussions/${discussionId}/replies`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setRepliesMap((prev) => ({ ...prev, [discussionId]: data }));
+          toggle();
+        }
+      })
+      .finally(() => {
+        setLoadingReplies((prev) => {
+          const next = new Set(prev);
+          next.delete(discussionId);
+          return next;
+        });
+      });
+  }
+
+  async function handleReply(discussionId: string, content: string) {
+    const res = await fetch(`${API_URL}/discussions/${discussionId}/reply`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (res.ok) {
+      invalidateReplies(discussionId);
+      const list = await fetch(`${API_URL}/courses/${courseId}/discussions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await list.json();
+      if (Array.isArray(data)) setDiscussions(data);
+    }
+  }
+
+  async function handleEditReply(replyId: string, content: string) {
+    const res = await fetch(`${API_URL}/discussions/reply/${replyId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+    if (res.ok) {
+      const discussionId = Object.entries(repliesMap).find(([, replies]) =>
+        replies.some((r) => r.id === replyId),
+      )?.[0];
+      if (discussionId) invalidateReplies(discussionId);
+      const list = await fetch(`${API_URL}/courses/${courseId}/discussions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await list.json();
+      if (Array.isArray(data)) setDiscussions(data);
+    }
   }
 
   async function handleToggleLike(replyId: string) {
@@ -187,53 +270,23 @@ export default function StudentCourseDetailPage() {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      setReplies((prev) => {
+      setRepliesMap((prev) => {
         const next = { ...prev };
         for (const key of Object.keys(next)) {
-          next[key] = next[key].map((r: any) =>
-            r.id === replyId ? { ...r, liked: !r.liked, like_count: r.liked ? r.like_count - 1 : r.like_count + 1 } : r
+          next[key] = next[key].map((r) =>
+            r.id === replyId
+              ? {
+                  ...r,
+                  liked: !r.liked,
+                  like_count: r.liked ? r.like_count - 1 : r.like_count + 1,
+                }
+              : r,
           );
         }
         return next;
       });
     } finally {
       setLikingReply(null);
-    }
-  }
-
-  async function toggleDiscussion(discussionId: string) {
-    const willOpen = !expandedDiscussions[discussionId];
-    setExpandedDiscussions((prev) => ({ ...prev, [discussionId]: willOpen }));
-    if (willOpen && !replies[discussionId]) {
-      const res = await fetch(
-        `${API_URL}/discussions/${discussionId}/replies`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setReplies((prev) => ({ ...prev, [discussionId]: data }));
-      }
-    }
-  }
-
-  async function handleReply(discussionId: string) {
-    if (!replyText.trim()) return;
-    await fetch(`${API_URL}/discussions/${discussionId}/reply`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ content: replyText }),
-    });
-    setReplyText("");
-    const res = await fetch(
-      `${API_URL}/discussions/${discussionId}/replies`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    const data = await res.json();
-    if (Array.isArray(data)) {
-      setReplies((prev) => ({ ...prev, [discussionId]: data }));
     }
   }
 
@@ -551,7 +604,7 @@ export default function StudentCourseDetailPage() {
               {!showAskForm && (
                 <button
                   onClick={() => setShowAskForm(true)}
-                  className="flex items-center gap-1.5 bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
+                  className="flex items-center gap-1.5 bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
                 >
                   <MessageSquare size={13} /> Ask a question
                 </button>
@@ -561,76 +614,21 @@ export default function StudentCourseDetailPage() {
             {tabLoading ? (
               <div className="flex justify-center py-8"><Loader2 className="animate-spin text-teal-600" size={24} /></div>
             ) : discussions.length ? (
-              <div className="divide-y divide-slate-100">
-                {discussions.map((d) => {
-                  const open = expandedDiscussions[d.id] ?? false;
-                  return (
-                    <div key={d.id}>
-                      <button
-                        onClick={() => toggleDiscussion(d.id)}
-                        className="w-full flex items-center justify-between gap-3 py-4 text-left cursor-pointer hover:bg-slate-50 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-slate-900">{d.title}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {d.author_name} · {d.reply_count} replies
-                            {d.is_answered && (
-                              <span className="text-emerald-600 font-medium ml-1">
-                                · Answered
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                        {open ? (
-                          <ChevronUp size={16} className="text-slate-400 shrink-0" />
-                        ) : (
-                          <ChevronDown size={16} className="text-slate-400 shrink-0" />
-                        )}
-                      </button>
-                      {open && (
-                        <div className="pb-4">
-                          <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                            {d.content}
-                          </p>
-                          <div className="divide-y divide-slate-100 border rounded-lg">
-                            {(replies[d.id] || []).map((r) => (
-                              <div key={r.id} className="px-4 py-3 bg-slate-50/50">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <UserAvatar userId={r.author_id} name={r.author_name} avatarUrl={r.author_avatar} size="sm" />
-                                  <span className="text-xs font-medium text-slate-700">{r.author_name}</span>
-                                  <span className="text-[10px] text-slate-400">{formatDateTime(r.created_at)}</span>
-                                  <button
-                                    onClick={() => handleToggleLike(r.id)}
-                                    disabled={!!likingReply}
-                                    className={`ml-auto flex items-center gap-1 text-xs cursor-pointer ${r.liked ? "text-red-500" : "text-slate-400 hover:text-red-400"}`}
-                                  >
-                                    <Heart size={11} fill={r.liked ? "currentColor" : "none"} />
-                                    {r.like_count > 0 && r.like_count}
-                                  </button>
-                                </div>
-                                <p className="text-sm text-slate-600">{r.content}</p>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="flex gap-2 mt-3">
-                            <input
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              placeholder="Add a reply…"
-                              className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 text-sm outline-none"
-                            />
-                            <button
-                              onClick={() => handleReply(d.id)}
-                              className="p-2 bg-teal-600 text-white rounded-lg cursor-pointer"
-                            >
-                              <Send size={14} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className="space-y-3">
+                {discussions.map((d) => (
+                  <DiscussionCard
+                    key={d.id}
+                    discussion={d}
+                    expanded={expandedReplies.has(d.id)}
+                    replies={repliesMap[d.id]}
+                    loadingReplies={loadingReplies.has(d.id)}
+                    onToggleReplies={() => loadReplies(d.id)}
+                    onReply={(content) => handleReply(d.id, content)}
+                    onEditReply={handleEditReply}
+                    onToggleLike={handleToggleLike}
+                    likingReplyId={likingReply}
+                  />
+                ))}
               </div>
             ) : (
               <p className="text-sm text-slate-400 text-center py-8">
