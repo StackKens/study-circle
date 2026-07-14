@@ -263,10 +263,15 @@ export async function createCourse(req: AuthRequest, res: Response) {
   if (!title?.trim()) { res.status(400).json({ error: "Title is required" }); return; }
 
   try {
+    let uni = university?.trim() || null;
+    if (!uni) {
+      const userRow = await pool.query(`SELECT university FROM users WHERE id = $1`, [userId]);
+      uni = userRow.rows[0]?.university || null;
+    }
     const result = await pool.query(
       `INSERT INTO courses (instructor_id, title, code, description, university)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [userId, title.trim(), code?.trim() || null, description?.trim() || null, university?.trim() || null],
+      [userId, title.trim(), code?.trim() || null, description?.trim() || null, uni],
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
