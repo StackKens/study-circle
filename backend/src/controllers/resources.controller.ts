@@ -146,22 +146,39 @@ export async function getAllResources(req: AuthRequest, res: Response) {
 
   try {
     const countResult = await pool.query(
-      `SELECT COUNT(*)::int AS total
-       FROM resources r
-       JOIN groups g ON g.id = r.group_id
-       JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1`,
+      `SELECT COUNT(*)::int AS total FROM (
+        SELECT r.id
+        FROM resources r
+        JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1
+        UNION ALL
+        SELECT cr.id
+        FROM course_resources cr
+        WHERE cr.is_public = TRUE
+      ) combined`,
       [userId]
     );
     const total = countResult.rows[0].total;
 
     const result = await pool.query(
-      `SELECT r.*, u.name AS uploaded_by_name, g.name AS group_name, g.subject
-       FROM resources r
-       JOIN users u ON u.id = r.uploaded_by
-       JOIN groups g ON g.id = r.group_id
-       JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1
-       ORDER BY r.created_at DESC
-       LIMIT $2 OFFSET $3`,
+      `SELECT * FROM (
+        SELECT r.id, r.title, r.type, r.url, r.uploaded_by, r.downloads, r.created_at,
+               u.name AS uploaded_by_name, g.name AS group_name, g.subject
+        FROM resources r
+        JOIN users u ON u.id = r.uploaded_by
+        JOIN groups g ON g.id = r.group_id
+        JOIN group_members gm ON gm.group_id = r.group_id AND gm.user_id = $1
+
+        UNION ALL
+
+        SELECT cr.id, cr.title, cr.type, cr.url, cr.uploaded_by, 0 AS downloads, cr.created_at,
+               u.name AS uploaded_by_name, c.title AS group_name, c.code AS subject
+        FROM course_resources cr
+        JOIN users u ON u.id = cr.uploaded_by
+        JOIN courses c ON c.id = cr.course_id
+        WHERE cr.is_public = TRUE
+      ) combined
+      ORDER BY created_at DESC
+      LIMIT $2 OFFSET $3`,
       [userId, limit, offset]
     );
     res.json({ data: result.rows, total, page, limit });

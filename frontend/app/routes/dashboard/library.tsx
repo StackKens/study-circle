@@ -6,7 +6,7 @@ import type { Resource } from "../../types/resource";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 
 const iconMap: Record<Resource["type"], React.ElementType> = {
-  pdf: FileText, link: Link, video: Video, document: FileText,
+  pdf: FileText, link: Link, video: Video, document: FileText, slides: FileText,
 };
 
 const typeConfig: Record<Resource["type"], { bg: string; text: string; label: string }> = {
@@ -14,6 +14,7 @@ const typeConfig: Record<Resource["type"], { bg: string; text: string; label: st
   link:     { bg: "bg-blue-50",   text: "text-blue-500",   label: "Link"     },
   video:    { bg: "bg-purple-50", text: "text-purple-500", label: "Video"    },
   document: { bg: "bg-teal-50",   text: "text-teal-500",   label: "Document" },
+  slides:   { bg: "bg-orange-50", text: "text-orange-500", label: "Slides"   },
 };
 
 interface ResourceRecommendation {
@@ -29,7 +30,7 @@ interface ResourceRecommendation {
   reason: string;
 }
 
-const typeFilters = ["all", "pdf", "document", "video", "link"] as const;
+const typeFilters = ["all", "pdf", "document", "video", "link", "slides"] as const;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, {

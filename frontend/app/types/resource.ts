@@ -4,7 +4,7 @@ export interface Resource {
   group_name: string;
   subject: string;
   title: string;
-  type: "pdf" | "link" | "video" | "document";
+  type: "pdf" | "link" | "video" | "document" | "slides";
   url: string;
   uploaded_by: string;
   uploaded_by_name: string;
