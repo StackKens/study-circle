@@ -5,23 +5,42 @@ import { recommendGroupsForUser } from "../services/ai.service";
 import { getCached, setCache } from "../utils/cache";
 import { createNotification, notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
+import { isUUID, sanitizeString } from "../middleware/validate.middleware";
 import crypto from "crypto";
 
+function paramId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export async function createGroup(req: AuthRequest, res: Response) {
-  const { name, subject, university, description, is_private } = req.body;
+  const { name, subject, description, is_private } = req.body;
   const userId = req.user!.id;
 
-  if (!name || !subject || !university) {
-    res.status(400).json({ error: "name, subject and university are required" });
+  const trimmedName = sanitizeString(name, 80);
+  const trimmedSubject = sanitizeString(subject, 80);
+
+  if (!trimmedName || !trimmedSubject) {
+    res.status(400).json({ error: "name and subject are required" });
     return;
   }
 
   try {
+    // Fetch the user's university from their profile — don't trust the client
+    const userRes = await pool.query(
+      `SELECT university FROM users WHERE id = $1`,
+      [userId],
+    );
+    if (userRes.rows.length === 0) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    const university = userRes.rows[0].university;
+
     const result = await pool.query(
       `INSERT INTO groups (name, subject, university, description, created_by, is_private)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [name.trim(), subject.trim(), university.trim(), description?.trim() || null, userId, Boolean(is_private)]
+      [trimmedName, trimmedSubject, university, sanitizeString(description, 500) || null, userId, Boolean(is_private)]
     );
 
     const group = result.rows[0];
@@ -83,7 +102,12 @@ export async function getMyGroups(req: AuthRequest, res: Response) {
 
 export async function getGroup(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const groupId = req.params.id;
+  const groupId = paramId(req.params.id);
+
+  if (!isUUID(groupId)) {
+    res.status(400).json({ error: "Invalid group ID" });
+    return;
+  }
 
   try {
     const result = await pool.query(
@@ -110,7 +134,12 @@ export async function getGroup(req: AuthRequest, res: Response) {
 
 export async function getGroupMembers(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const groupId = req.params.id;
+  const groupId = paramId(req.params.id);
+
+  if (!isUUID(groupId)) {
+    res.status(400).json({ error: "Invalid group ID" });
+    return;
+  }
 
   try {
     const membership = await pool.query(
@@ -151,7 +180,12 @@ export async function getGroupMembers(req: AuthRequest, res: Response) {
 
 export async function leaveGroup(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const groupId = req.params.id;
+  const groupId = paramId(req.params.id);
+
+  if (!isUUID(groupId)) {
+    res.status(400).json({ error: "Invalid group ID" });
+    return;
+  }
 
   try {
     // Prevent admin from leaving
@@ -241,7 +275,12 @@ export async function getGroupRecommendations(req: AuthRequest, res: Response) {
 
 export async function joinGroup(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const groupId = req.params.id;
+  const groupId = paramId(req.params.id);
+
+  if (!isUUID(groupId)) {
+    res.status(400).json({ error: "Invalid group ID" });
+    return;
+  }
 
   try {
     const groupExists = await pool.query("SELECT id, is_private FROM groups WHERE id = $1", [
@@ -285,7 +324,12 @@ export async function joinGroup(req: AuthRequest, res: Response) {
 // ── Generate an invite link for a group (admin only)
 export async function generateInviteLink(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const groupId = req.params.id;
+  const groupId = paramId(req.params.id);
+
+  if (!isUUID(groupId)) {
+    res.status(400).json({ error: "Invalid group ID" });
+    return;
+  }
 
   try {
     // Only admins can generate invite links

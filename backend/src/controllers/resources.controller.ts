@@ -6,6 +6,11 @@ import { getCached, setCache } from "../utils/cache";
 import { extractTextFromUrl } from "../services/content-extractor";
 import { notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
+import { isUUID, sanitizeString } from "../middleware/validate.middleware";
+
+function paramId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export async function getResourceRecommendations(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
@@ -54,6 +59,11 @@ export async function uploadResource(req: AuthRequest, res: Response) {
     return;
   }
 
+  if (!isUUID(group_id)) {
+    res.status(400).json({ error: "Invalid group ID" });
+    return;
+  }
+
   const validTypes = ["pdf", "link", "document"];
   if (!validTypes.includes(type)) {
     res.status(400).json({ error: "type must be one of: pdf, link, document. For videos, use type 'link' and paste a YouTube or Google Drive URL." });
@@ -74,7 +84,7 @@ export async function uploadResource(req: AuthRequest, res: Response) {
       `INSERT INTO resources (group_id, title, type, url, uploaded_by)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [group_id, title.trim(), type, url.trim(), userId]
+      [group_id, sanitizeString(title, 255), type, sanitizeString(url, 2048), userId]
     );
 
     const resource = result.rows[0];
@@ -162,7 +172,13 @@ export async function getAllResources(req: AuthRequest, res: Response) {
 }
 
 export async function incrementDownload(req: AuthRequest, res: Response) {
-  const { id } = req.params;
+  const id = paramId(req.params.id);
+
+  if (!isUUID(id)) {
+    res.status(400).json({ error: "Invalid resource ID" });
+    return;
+  }
+
   try {
     const result = await pool.query(
       `UPDATE resources SET downloads = downloads + 1 WHERE id = $1 RETURNING downloads`,

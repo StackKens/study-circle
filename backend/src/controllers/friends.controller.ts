@@ -4,6 +4,11 @@ import { AuthRequest } from "../middleware/auth.middleware";
 
 import { recommendFriendsForUser } from "../services/ai.service";
 import { getCached, setCache } from "../utils/cache";
+import { isUUID } from "../middleware/validate.middleware";
+
+function paramId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 // GET /api/friends/recommendations
 export async function getFriendRecommendations(req: AuthRequest, res: Response) {
@@ -123,7 +128,12 @@ export async function searchUsers(req: AuthRequest, res: Response) {
 // POST /api/friends/request/:id — send friend request
 export async function sendFriendRequest(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const { id: targetId } = req.params;
+  const targetId = paramId(req.params.id);
+
+  if (!isUUID(targetId)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
 
   if (userId === targetId) {
     res.status(400).json({ error: "You cannot send a request to yourself" });
@@ -165,7 +175,12 @@ export async function sendFriendRequest(req: AuthRequest, res: Response) {
 // PATCH /api/friends/request/:id/accept
 export async function acceptFriendRequest(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const { id: fromId } = req.params;
+  const fromId = paramId(req.params.id);
+
+  if (!isUUID(fromId)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
 
   try {
     const result = await pool.query(
@@ -188,7 +203,12 @@ export async function acceptFriendRequest(req: AuthRequest, res: Response) {
 // PATCH /api/friends/request/:id/decline
 export async function declineFriendRequest(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const { id: fromId } = req.params;
+  const fromId = paramId(req.params.id);
+
+  if (!isUUID(fromId)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
 
   try {
     await pool.query(
@@ -206,7 +226,12 @@ export async function declineFriendRequest(req: AuthRequest, res: Response) {
 // DELETE /api/friends/:id — remove friend
 export async function removeFriend(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const { id: friendId } = req.params;
+  const friendId = paramId(req.params.id);
+
+  if (!isUUID(friendId)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
 
   try {
     await pool.query(

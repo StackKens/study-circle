@@ -220,7 +220,7 @@ async function seed() {
 
     await pool.query(
       `INSERT INTO private_messages (sender_id, recipient_id, content, created_at)
-       VALUES ($1, $2, $3, NOW() - interval '${Math.floor(Math.random() * 72)} hours')`,
+       VALUES ($1, $2, $3, NOW() - ($4 || ' hours')::interval)`,
       [senderId, recipientId, pick([
         "Hey, have you started the assignment?",
         "Can we study together tomorrow?",
@@ -232,7 +232,9 @@ async function seed() {
         "Great session today!",
         "Can you share the notes with me?",
         "Let me know when you're free.",
-      ])]
+      ]),
+        String(Math.floor(Math.random() * 72)),
+      ]
     );
   }
   console.log("  ✓ Private messages created");
@@ -327,8 +329,8 @@ async function seed() {
   for (const content of chatMessages) {
     await pool.query(
       `INSERT INTO general_messages (sender_id, content, created_at)
-       VALUES ($1, $2, NOW() - interval '${Math.floor(Math.random() * 48)} hours')`,
-      [pick(userIds), content]
+       VALUES ($1, $2, NOW() - ($3 || ' hours')::interval)`,
+      [pick(userIds), content, String(Math.floor(Math.random() * 48))]
     );
   }
   console.log("  ✓ General chat messages created");

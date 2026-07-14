@@ -3,6 +3,11 @@ import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { notifyGroupMembers } from "../services/notification.service";
 import { getIO } from "../sockets/chat.socket";
+import { isUUID, sanitizeString } from "../middleware/validate.middleware";
+
+function paramId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 function isValidMeetLink(value: string) {
   try {
@@ -93,7 +98,12 @@ export async function createSession(req: AuthRequest, res: Response) {
 
 export async function joinSession(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const { id } = req.params;
+  const id = paramId(req.params.id);
+
+  if (!isUUID(id)) {
+    res.status(400).json({ error: "Invalid session ID" });
+    return;
+  }
 
   try {
     // Session must exist and user must be a group member
@@ -150,7 +160,12 @@ export async function joinSession(req: AuthRequest, res: Response) {
 
 export async function getSessionAttendees(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const { id } = req.params;
+  const id = paramId(req.params.id);
+
+  if (!isUUID(id)) {
+    res.status(400).json({ error: "Invalid session ID" });
+    return;
+  }
 
   try {
     const membership = await pool.query(

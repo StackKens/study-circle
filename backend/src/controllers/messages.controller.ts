@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db/index";
+import { isUUID } from "../middleware/validate.middleware";
 
 function paramId(value: string | string[]): string {
   return Array.isArray(value) ? value[0] : value;
@@ -57,6 +58,11 @@ export async function getMessageHistory(req: AuthRequest, res: Response) {
 
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  if (!isUUID(otherId)) {
+    res.status(400).json({ error: "Invalid user ID" });
     return;
   }
 

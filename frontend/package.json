@@ -9,13 +9,16 @@
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "cd frontend && react-router build",
     "start": "react-router-serve ./frontend/build/server/index.js",
-    "typecheck": "cd frontend && react-router typegen && tsc"
+    "typecheck": "cd frontend && react-router typegen && tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@emailjs/browser": "^4.4.1",
     "@react-router/node": "7.15.0",
     "@react-router/serve": "7.15.0",
     "@tanstack/react-query": "^5.100.10",
-    "@emailjs/browser": "^4.4.1",
     "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
@@ -33,15 +36,20 @@
   "devDependencies": {
     "@react-router/dev": "7.15.0",
     "@tailwindcss/vite": "^4.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.19.19",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "concurrently": "^9.2.1",
+    "jsdom": "^29.1.1",
     "nodemon": "^3.1.14",
     "tailwindcss": "^4.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "vite": "^8.0.3"
+    "vite": "^8.0.3",
+    "vitest": "^4.1.10"
   }
 }

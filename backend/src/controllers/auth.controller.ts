@@ -128,7 +128,7 @@ export async function register(req: Request, res: Response) {
     console.error("=== REGISTER ERROR ===");
     console.error("Message:", err.message);
     console.error("Stack:", err.stack);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Registration failed" });
   }
 }
 

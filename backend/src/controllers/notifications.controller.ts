@@ -1,6 +1,11 @@
 import { Response } from "express";
 import pool from "../db/index";
 import { AuthRequest } from "../middleware/auth.middleware";
+import { isUUID } from "../middleware/validate.middleware";
+
+function paramId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export async function getNotifications(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
@@ -45,7 +50,12 @@ export async function getUnreadCount(req: AuthRequest, res: Response) {
 
 export async function markAsRead(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const notificationId = req.params.id;
+  const notificationId = paramId(req.params.id);
+
+  if (!isUUID(notificationId)) {
+    res.status(400).json({ error: "Invalid notification ID" });
+    return;
+  }
 
   try {
     await pool.query(

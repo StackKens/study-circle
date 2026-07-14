@@ -4,14 +4,6 @@ import { useAuth } from "../../context/AuthContext";
 import { useGroupStore } from "../../store/groupStore";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
-const PREDEFINED_UNIVERSITIES = [
-  "Makerere University",
-  "Kyambogo University",
-  "Uganda Christian University",
-  "Victoria University",
-  "Ndejje University",
-  "MUBS",
-];
 
 interface CreateGroupModalProps {
   isOpen: boolean;
@@ -24,24 +16,19 @@ export function CreateGroupModal({
   onClose,
   onSuccess,
 }: CreateGroupModalProps) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const addGroup = useGroupStore((s) => s.addGroup);
   const [formData, setFormData] = useState({
     name: "",
     subject: "",
-    university: "",
     description: "",
     is_private: false,
   });
-  const [customUniversity, setCustomUniversity] = useState("");
-  const [showCustomInput, setShowCustomInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
   const resetForm = () => {
-    setFormData({ name: "", subject: "", university: "", description: "", is_private: false });
-    setCustomUniversity("");
-    setShowCustomInput(false);
+    setFormData({ name: "", subject: "", description: "", is_private: false });
     setError("");
   };
 
@@ -56,8 +43,6 @@ export function CreateGroupModal({
 
     if (!formData.name.trim()) { setError("Group name is required"); return; }
     if (!formData.subject.trim()) { setError("Subject / course code is required"); return; }
-    const finalUniversity = showCustomInput ? customUniversity : formData.university;
-    if (!finalUniversity.trim()) { setError("University is required"); return; }
 
     setIsLoading(true);
     try {
@@ -67,7 +52,6 @@ export function CreateGroupModal({
         body: JSON.stringify({
           name: formData.name.trim(),
           subject: formData.subject.trim(),
-          university: finalUniversity.trim(),
           description: formData.description.trim(),
           is_private: formData.is_private,
         }),
@@ -126,64 +110,13 @@ export function CreateGroupModal({
             />
           </div>
 
-          {/* University */}
+          {/* University info (read-only from user profile) */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">University *</label>
-            {!showCustomInput ? (
-              <>
-                <select
-                  value={formData.university}
-                  onChange={(e) => setFormData({ ...formData, university: e.target.value })}
-                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none"
-                  required
-                >
-                  <option value="" disabled>Select your university</option>
-                  {PREDEFINED_UNIVERSITIES.map((uni) => (
-                    <option key={uni} value={uni}>{uni}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowCustomInput(true)}
-                  className="mt-2 text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1"
-                >
-                  Add university not listed
-                </button>
-              </>
-            ) : (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={customUniversity}
-                  onChange={(e) => setCustomUniversity(e.target.value)}
-                  placeholder="e.g., Uganda Martyrs University"
-                  className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none"
-                  autoFocus
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (customUniversity.trim()) {
-                        setFormData({ ...formData, university: customUniversity });
-                        setShowCustomInput(false);
-                        setCustomUniversity("");
-                      }
-                    }}
-                    className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded-lg hover:bg-teal-500"
-                  >
-                    Use this university
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowCustomInput(false); setCustomUniversity(""); }}
-                    className="px-3 py-1.5 border border-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-50 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
+            <label className="block text-sm font-medium text-slate-700 mb-1">University</label>
+            <div className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 bg-slate-100 text-slate-600">
+              {user?.university || "Not set"}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">Based on your profile</p>
           </div>
 
           {/* Description */}

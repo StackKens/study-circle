@@ -1,6 +1,11 @@
 import { Response, Request } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import pool from "../db/index";
+import { isUUID, sanitizeString } from "../middleware/validate.middleware";
+
+function paramId(value: string | string[]): string {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 // Public endpoint — no auth required
 export async function getHomeStats(req: Request, res: Response) {
@@ -207,7 +212,7 @@ export async function getUserBadges(req: AuthRequest, res: Response) {
 
 // Returns the bio of a specific user (public)
 export async function getUserBio(req: AuthRequest, res: Response) {
-  const userId = req.params.id;
+  const userId = paramId(req.params.id);
   if (!userId) {
     res.status(400).json({ error: "User ID required" });
     return;
@@ -230,7 +235,12 @@ export async function getUserBio(req: AuthRequest, res: Response) {
 
 export async function updateUserAvatar(req: AuthRequest, res: Response) {
   const authenticatedUserId = req.user?.id;
-  const targetUserId = req.params.id;
+  const targetUserId = paramId(req.params.id);
+
+  if (!isUUID(targetUserId)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
 
   if (!authenticatedUserId || authenticatedUserId !== targetUserId) {
     res.status(403).json({ error: "You can only update your own avatar" });
@@ -277,7 +287,12 @@ export async function updateUserAvatar(req: AuthRequest, res: Response) {
 // Updates the bio of the authenticated user (only own bio can be changed)
 export async function updateUserBio(req: AuthRequest, res: Response) {
   const authenticatedUserId = req.user?.id;
-  const targetUserId = req.params.id;
+  const targetUserId = paramId(req.params.id);
+
+  if (!isUUID(targetUserId)) {
+    res.status(400).json({ error: "Invalid user ID" });
+    return;
+  }
 
   if (!authenticatedUserId) {
     res.status(401).json({ error: "Unauthorized" });
