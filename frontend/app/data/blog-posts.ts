@@ -30,7 +30,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "5 min read",
     author: "The StudyCircle Team",
     heroImage:
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&q=80",
+      "/blog/How it started.png",
     content: [
       {
         type: "paragraph",
@@ -106,7 +106,7 @@ export const blogPosts: BlogPost[] = [
     readTime: "4 min read",
     author: "The StudyCircle Team",
     heroImage:
-      "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&q=80",
+      "/blog/gathered.png",
     content: [
       {
         type: "paragraph",
