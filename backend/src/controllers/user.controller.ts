@@ -19,6 +19,7 @@ export async function getHomeStats(req: Request, res: Response) {
       groupsCountResult,
       sessionsCountResult,
       resourcesCountResult,
+      courseResourcesCountResult,
       ongoingSessionsResult,
     ] = await Promise.all([
       pool.query(`SELECT COUNT(*)::int AS count FROM users`),
@@ -48,6 +49,7 @@ export async function getHomeStats(req: Request, res: Response) {
       pool.query(`SELECT COUNT(*)::int AS count FROM groups`),
       pool.query(`SELECT COUNT(*)::int AS count FROM sessions`),
       pool.query(`SELECT COUNT(*)::int AS count FROM resources`),
+      pool.query(`SELECT COUNT(*)::int AS count FROM course_resources WHERE is_public = TRUE`),
       pool.query(
         `SELECT COUNT(*)::int AS count FROM sessions WHERE start_time <= NOW() AND end_time >= NOW()`
       ),
@@ -77,7 +79,7 @@ export async function getHomeStats(req: Request, res: Response) {
     const totalStudents = parseInt(countResult.rows[0].count, 10);
     const groupCount = parseInt(groupsCountResult.rows[0].count, 10);
     const sessionCount = parseInt(sessionsCountResult.rows[0].count, 10);
-    const resourceCount = parseInt(resourcesCountResult.rows[0].count, 10);
+    const resourceCount = parseInt(resourcesCountResult.rows[0].count, 10) + parseInt(courseResourcesCountResult.rows[0].count, 10);
 
     res.json({
       student_count: totalStudents,
