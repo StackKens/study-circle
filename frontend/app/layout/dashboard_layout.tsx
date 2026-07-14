@@ -33,6 +33,7 @@ import {
   GraduationCap,
   Mail,
   CheckCheck,
+  type LucideIcon,
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
@@ -262,30 +263,6 @@ function LogoutConfirmModal({
 }
 
 /** Chat link with badge for the mobile drawer */
-function MobileDrawerChatLink({ onClick }: { onClick: () => void }) {
-  const count = useChatStore((s) => s.generalMessageCount);
-  return (
-    <NavLink
-      to="/dashboard/chat"
-      onClick={onClick}
-      className={({ isActive }) =>
-        `flex items-center justify-between py-2.5 pl-3 text-sm font-medium ${
-          isActive
-            ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]"
-            : "text-slate-600 hover:text-teal-600"
-        }`
-      }
-    >
-      <span>Chat</span>
-      {count > 0 && (
-        <span className="inline-flex items-center justify-center min-w-[1.25rem] h-[1.25rem] px-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold leading-none">
-          {count}
-        </span>
-      )}
-    </NavLink>
-  );
-}
-
 // Bottom tab items for mobile — students
 const studentBottomTabs = [
   { name: "Home", path: "/dashboard", icon: LayoutDashboard },
@@ -312,26 +289,34 @@ const instructorBottomTabs = [
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
+type SidebarItem =
+  | { name: string; path: string; icon: LucideIcon }
+  | { divider: true };
+
 // Sidebar items for desktop — students
-const studentSidebarItems = [
+const studentSidebarItems: SidebarItem[] = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { name: "Chat", path: "/dashboard/chat", icon: MessageCircle },
   { name: "Messages", path: "/dashboard/messages", icon: Mail },
+  { divider: true },
   { name: "Courses", path: "/dashboard/courses", icon: GraduationCap },
   { name: "Assignments", path: "/dashboard/assignments", icon: ClipboardList },
-  { name: "My Groups", path: "/dashboard/groups", icon: Users },
-  { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Resources", path: "/dashboard/resources", icon: FolderOpen },
   { name: "Instructors", path: "/dashboard/instructors", icon: GraduationCap },
-  { name: "Progress", path: "/dashboard/progress", icon: TrendingUp },
+  { divider: true },
+  { name: "My Groups", path: "/dashboard/groups", icon: Users },
+  { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Friends", path: "/dashboard/friends", icon: UserPlus },
+  { divider: true },
+  { name: "Progress", path: "/dashboard/progress", icon: TrendingUp },
   { name: "Library", path: "/dashboard/library", icon: Book },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
 // Sidebar items for desktop — instructors
-const instructorSidebarItems = [
+const instructorSidebarItems: SidebarItem[] = [
   { name: "Dashboard", path: "/dashboard/instructor", icon: LayoutDashboard },
+  { name: "Messages", path: "/dashboard/chat", icon: Mail },
+  { divider: true },
   {
     name: "My Courses",
     path: "/dashboard/instructor/courses",
@@ -341,11 +326,6 @@ const instructorSidebarItems = [
     name: "Announcements",
     path: "/dashboard/instructor/announcements",
     icon: Megaphone,
-  },
-  {
-    name: "Resources",
-    path: "/dashboard/instructor/resources",
-    icon: FolderOpen,
   },
   {
     name: "Assignments",
@@ -362,9 +342,15 @@ const instructorSidebarItems = [
     path: "/dashboard/instructor/discussions",
     icon: MessageCircle,
   },
+  { divider: true },
+  {
+    name: "Resources",
+    path: "/dashboard/instructor/resources",
+    icon: FolderOpen,
+  },
   { name: "Sessions", path: "/dashboard/sessions", icon: Calendar },
   { name: "Groups", path: "/dashboard/groups", icon: Users },
-  { name: "General Chat", path: "/dashboard/chat", icon: Users },
+  { divider: true },
   { name: "Profile", path: "/dashboard/profile", icon: User },
 ];
 
@@ -485,12 +471,18 @@ export default function DashboardLayout() {
               )}
             </div>
             <nav className="flex-1 py-6 overflow-y-auto">
-              {sidebarItems.map((item) => {
-                const active = isActive(item.path);
+              {sidebarItems.map((item, i) => {
+                if ("divider" in item && item.divider) {
+                  return (
+                    <div key={`divider-${i}`} className="my-3 mx-4 border-t border-slate-100" />
+                  );
+                }
+                const navItem = item as { name: string; path: string; icon: LucideIcon };
+                const active = isActive(navItem.path);
                 return (
                   <Link
-                    key={item.name}
-                    to={item.path}
+                    key={navItem.name}
+                    to={navItem.path}
                     className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all cursor-pointer ${
                       active
                         ? "bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-solid border-emerald-500 pl-[12px]"
@@ -498,19 +490,19 @@ export default function DashboardLayout() {
                     }`}
                   >
                     <span className="relative">
-                      <item.icon
+                      <navItem.icon
                         size={18}
                         className={
                           active ? "text-emerald-600" : "text-slate-400"
                         }
                       />
-                      {item.name === "Messages" && dmUnreadCount > 0 && (
+                      {navItem.name === "Messages" && dmUnreadCount > 0 && (
                         <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center">
                           {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
                         </span>
                       )}
                     </span>
-                    {item.name}
+                    {navItem.name}
                   </Link>
                 );
               })}
@@ -647,9 +639,20 @@ export default function DashboardLayout() {
                 >
                   {!isInstructor && (
                     <>
-                      <MobileDrawerChatLink
+                      <NavLink
+                        to="/dashboard/messages"
+                        className={({ isActive }) =>
+                          `flex items-center justify-between py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
                         onClick={() => setMobileMenuOpen(false)}
-                      />
+                      >
+                        <span>Messages</span>
+                        {dmUnreadCount > 0 && (
+                          <span className="inline-flex items-center justify-center min-w-[1.25rem] h-[1.25rem] px-1 rounded-full bg-amber-50 border border-amber-200 text-amber-600 text-[10px] font-bold leading-none">
+                            {dmUnreadCount > 9 ? "9+" : dmUnreadCount}
+                          </span>
+                        )}
+                      </NavLink>
                       <NavLink
                         to="/dashboard/groups"
                         className={({ isActive }) =>
@@ -708,6 +711,15 @@ export default function DashboardLayout() {
                   )}
                   {isInstructor && (
                     <>
+                      <NavLink
+                        to="/dashboard/chat"
+                        className={({ isActive }) =>
+                          `flex items-center justify-between py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
+                        }
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span>Messages</span>
+                      </NavLink>
                       <NavLink
                         to="/dashboard/instructor/announcements"
                         className={({ isActive }) =>
@@ -770,15 +782,6 @@ export default function DashboardLayout() {
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         Sessions
-                      </NavLink>
-                      <NavLink
-                        to="/dashboard/chat"
-                        className={({ isActive }) =>
-                          `block py-2.5 pl-3 text-sm font-medium ${isActive ? "border-l-4 border-emerald-500 text-emerald-700 bg-emerald-50/50 -ml-4 pl-[11px]" : "text-slate-600 hover:text-teal-600"}`
-                        }
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        General Chat
                       </NavLink>
                     </>
                   )}

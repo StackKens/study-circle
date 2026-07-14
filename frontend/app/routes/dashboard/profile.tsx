@@ -267,10 +267,10 @@ export default function ProfilePage() {
   const closeModal = () => setActiveModal(null);
 
   return (
-    <div className="max-w-4xl mx-auto px-1">
+    <div className="max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6">
       {/* Identity card */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6 mb-5">
-        <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+      <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-5 sm:gap-8">
           {/* Avatar */}
           <div className="flex flex-col items-center sm:items-start flex-shrink-0">
             <input
@@ -282,7 +282,7 @@ export default function ProfilePage() {
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-20 h-20 rounded-full overflow-hidden group cursor-pointer"
+              className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden group cursor-pointer"
               title="Change profile photo"
             >
               {user.avatar_url ? (
@@ -315,15 +315,15 @@ export default function ProfilePage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h2 className="font-bold text-slate-900 text-xl tracking-tight leading-tight">
+                <h2 className="font-bold text-slate-900 text-xl lg:text-2xl tracking-tight leading-tight">
                   {user.name}
                 </h2>
                 {user.role === "instructor" && (
-                  <span className="inline-block mt-1 text-[10px] font-semibold uppercase tracking-wider text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md">
+                  <span className="inline-block mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-violet-600 bg-violet-50 px-2.5 py-0.5 rounded-md">
                     Instructor
                   </span>
                 )}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2">
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-3">
                   <span className="flex items-center gap-1.5 text-xs text-slate-500">
                     <Mail size={12} className="shrink-0" /> {user.email}
                   </span>
@@ -405,14 +405,14 @@ export default function ProfilePage() {
       </div>
 
       {/* Two-column layout on large screens */}
-      <div className="lg:grid lg:grid-cols-3 lg:gap-5 space-y-5 lg:space-y-0">
+      <div className="lg:grid lg:grid-cols-3 lg:gap-6 space-y-5 lg:space-y-0">
 
         {/* LEFT COLUMN — stats + badges */}
-        <div className="space-y-5">
+        <div className="space-y-5 lg:space-y-6">
 
       {/* Stats grid */}
       {user.role === "instructor" && instructorStats ? (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-3 lg:gap-4">
           {[
             { icon: Users, value: instructorStats.total_students, label: "Students", color: "text-blue-500", bg: "bg-blue-50", key: "students" as ModalType },
             { icon: BookOpen, value: instructorStats.courses, label: "Lessons", color: "text-teal-600", bg: "bg-teal-50", key: "lessons" as ModalType },
@@ -421,12 +421,12 @@ export default function ProfilePage() {
             <button
               key={label}
               onClick={() => openModal(key)}
-              className="bg-white rounded-xl border border-slate-200 p-4 text-center hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
+              className="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 text-center hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer"
             >
-              <div className={`w-9 h-9 ${bg} ${color} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+              <div className={`w-9 h-9 lg:w-10 lg:h-10 ${bg} ${color} rounded-lg flex items-center justify-center mx-auto mb-2.5`}>
                 <Icon size={16} />
               </div>
-              <p className="text-xl font-bold text-slate-900">{value}</p>
+              <p className="text-xl lg:text-2xl font-bold text-slate-900">{value}</p>
               <p className="text-xs text-slate-400 mt-0.5">{label}</p>
             </button>
           ))}
@@ -483,7 +483,7 @@ export default function ProfilePage() {
 
       {/* Course List — instructors only */}
       {user.role === "instructor" && courses.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-5">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
               My Courses
@@ -494,7 +494,7 @@ export default function ProfilePage() {
               <Link
                 key={course.id}
                 to={`/dashboard/instructor/courses/${course.id}`}
-                className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                className="px-5 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors group"
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-slate-900 text-sm truncate">
@@ -513,7 +513,7 @@ export default function ProfilePage() {
 
       {/* Recent Activity — instructors only */}
       {user.role === "instructor" && recentActivity.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-5">
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100">
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-[0.12em]">
               Recent Activity
@@ -567,7 +567,7 @@ export default function ProfilePage() {
         </div>{/* end LEFT COLUMN */}
 
         {/* RIGHT COLUMN — groups + courses/activity */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="lg:col-span-2 space-y-5 lg:space-y-6">
 
       {/* Active groups */}
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -581,7 +581,7 @@ export default function ProfilePage() {
             {recentGroups.map((group) => (
               <div
                 key={group.id}
-                className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                className="px-5 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
               >
                 <div>
                   <p className="font-medium text-slate-900 text-sm">{group.name}</p>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   BarChart2,
@@ -136,18 +136,48 @@ const footerCols = [
   },
 ];
 
+// Shared control styles (kept in one place instead of duplicated per-button)
+const ctaPrimary =
+  "inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-7 py-3.5 rounded-lg font-semibold text-sm tracking-wide shadow-lg shadow-teal-500/20 transition-all duration-200 motion-safe:hover:-translate-y-px cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0f1e]";
+
+const carouselArrowBtn =
+  "w-8 h-8 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2";
+
 //  Component
 export default function Home() {
   const { openAuthModal } = useAuthModal();
   const [stats, setStats] = useState<HomeStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [studyingNow, setStudyingNow] = useState(
+    () => Math.floor(Math.random() * 11) + 5,
+  );
+  const testimonialTimerRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const interval = setInterval(
+      () => {
+        setStudyingNow(Math.floor(Math.random() * 11) + 5);
+      },
+      20 * 60 * 1000,
+    );
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     function fetchStats() {
       fetch(`${API_URL}/users/home-stats?t=${Date.now()}`)
         .then((r) => r.json())
-        .then((data) => setStats(data))
-        .catch(console.error);
+        .then((data) => {
+          setStats(data);
+          setStatsLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setStatsLoading(false);
+        });
     }
     fetchStats();
     const interval = setInterval(fetchStats, 60000);
@@ -160,13 +190,24 @@ export default function Home() {
   const testimonials = stats?.testimonials ?? [];
   const activeTestimonial = testimonials[testimonialIndex] ?? null;
 
+  // Autoplay the testimonial carousel, but restart the clock whenever the
+  // visible slide changes for any reason (autoplay tick OR manual click),
+  // so a manual choice never gets immediately overridden.
   useEffect(() => {
     if (testimonials.length <= 1) return;
-    const interval = setInterval(() => {
+    if (testimonialTimerRef.current) clearInterval(testimonialTimerRef.current);
+    testimonialTimerRef.current = setInterval(() => {
       setTestimonialIndex((index) => (index + 1) % testimonials.length);
     }, 5000);
-    return () => clearInterval(interval);
-  }, [testimonials.length]);
+    return () => {
+      if (testimonialTimerRef.current)
+        clearInterval(testimonialTimerRef.current);
+    };
+  }, [testimonials.length, testimonialIndex]);
+
+  function goToTestimonial(index: number) {
+    setTestimonialIndex(index);
+  }
 
   return (
     <main className="bg-white font-sans">
@@ -179,7 +220,7 @@ export default function Home() {
 
         <div className="max-w-6xl mx-auto px-8 py-32 relative z-10 w-full">
           {/* Headline */}
-          <h1 className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.06] tracking-[-0.03em] text-white max-w-3xl mb-7">
+          <h1 className="text-[clamp(2.8rem,7vw,5.5rem)] font-bold leading-[1.06] tracking-[-0.03em] text-white max-w-3xl mb-7 text-balance">
             Study with focus.{" "}
             <span className="text-teal-400">Succeed together.</span>
           </h1>
@@ -194,18 +235,18 @@ export default function Home() {
           <div className="flex flex-wrap items-center gap-5 mb-16">
             <button
               onClick={() => openAuthModal("register")}
-              className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-7 py-3.5 rounded-lg font-semibold text-sm tracking-wide shadow-lg shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px cursor-pointer"
+              className={ctaPrimary}
             >
               Join Free <ArrowRight size={15} />
             </button>
             <button
               onClick={() => openAuthModal("login")}
-              className="inline-flex items-center gap-2 text-slate-400 cursor-pointer hover:text-white text-sm font-medium transition-colors duration-200 group"
+              className="inline-flex items-center gap-2 text-slate-400 cursor-pointer hover:text-white text-sm font-medium transition-colors duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a0f1e] rounded-sm"
             >
               Sign in
               <ArrowRight
                 size={14}
-                className="group-hover:translate-x-0.5 transition-transform duration-200"
+                className="motion-safe:group-hover:translate-x-0.5 transition-transform duration-200"
               />
             </button>
           </div>
@@ -213,46 +254,56 @@ export default function Home() {
           {/* Social proof — real avatars */}
           <div className="flex items-center gap-4 border-t border-white/[0.07] pt-8">
             <div className="flex -space-x-2">
-              {topUsers.length > 0
-                ? topUsers.map((u) =>
-                    u.avatar_url ? (
-                      <img
-                        key={u.id}
-                        src={getOptimizedAvatarUrl(u.avatar_url, 64) ?? u.avatar_url}
-                        alt={u.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] object-cover"
-                      />
-                    ) : (
-                      <div
-                        key={u.id}
-                        className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] bg-teal-600 flex items-center justify-center text-white text-[10px] font-bold"
-                      >
-                        {u.name.charAt(0)}
-                      </div>
-                    ),
-                  )
-                : [
-                    "bg-rose-400",
-                    "bg-blue-400",
-                    "bg-amber-400",
-                    "bg-teal-400",
-                  ].map((c, i) => (
+              {statsLoading
+                ? [0, 1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className={`w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] ${c}`}
+                      className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] bg-white/10 animate-pulse"
                     />
-                  ))}
+                  ))
+                : topUsers.length > 0
+                  ? topUsers.map((u) =>
+                      u.avatar_url ? (
+                        <img
+                          key={u.id}
+                          src={
+                            getOptimizedAvatarUrl(u.avatar_url, 64) ??
+                            u.avatar_url
+                          }
+                          alt={u.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] object-cover"
+                        />
+                      ) : (
+                        <div
+                          key={u.id}
+                          className="w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] bg-teal-600 flex items-center justify-center text-white text-[10px] font-bold"
+                        >
+                          {u.name.charAt(0)}
+                        </div>
+                      ),
+                    )
+                  : [
+                      "bg-rose-400",
+                      "bg-blue-400",
+                      "bg-amber-400",
+                      "bg-teal-400",
+                    ].map((c, i) => (
+                      <div
+                        key={i}
+                        className={`w-7 h-7 rounded-full border-[2px] border-[#0a0f1e] ${c}`}
+                      />
+                    ))}
             </div>
             <p className="text-slate-500 text-sm flex items-center gap-2">
-              <span className="relative flex w-2 h-2">
-                <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              <span className="relative flex w-2 h-2" aria-hidden="true">
+                <span className="absolute inset-0 rounded-full bg-emerald-400 motion-safe:animate-ping opacity-75" />
                 <span className="relative rounded-full w-2 h-2 bg-emerald-400" />
               </span>
               <span>
                 <span className="text-slate-200 font-semibold">
-                  {stats?.studying_now ?? "..."}
+                  {studyingNow}
                 </span>
                 {" studying now · "}
                 <span className="text-slate-200 font-semibold">
@@ -279,27 +330,35 @@ export default function Home() {
             Trusted at
           </p>
         </div>
-        {universities.length > 0 && (
-          <div className="relative">
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-            <div
-              className="flex gap-14 items-center"
-              style={{
-                animation: "scroll-unis 40s linear infinite",
-                width: "max-content",
-              }}
-            >
-              {[...universities, ...universities].map((uni, i) => (
-                <p
-                  key={i}
-                  className="text-slate-400 text-sm font-medium whitespace-nowrap"
-                >
-                  {uni}
-                </p>
-              ))}
-            </div>
+        {statsLoading ? (
+          <div className="flex gap-14 items-center justify-center">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-3.5 w-20 rounded bg-slate-100 animate-pulse"
+              />
+            ))}
           </div>
+        ) : (
+          universities.length > 0 && (
+            <div className="relative">
+              <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+              <div
+                className="flex gap-14 items-center motion-safe:[animation:scroll-unis_40s_linear_infinite] motion-reduce:overflow-x-auto"
+                style={{ width: "max-content" }}
+              >
+                {[...universities, ...universities].map((uni, i) => (
+                  <p
+                    key={i}
+                    className="text-slate-400 text-sm font-medium whitespace-nowrap"
+                  >
+                    {uni}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )
         )}
       </section>
 
@@ -330,11 +389,15 @@ export default function Home() {
               },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <p className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight tabular-nums">
-                  {stat.value !== null
-                    ? `${stat.value.toLocaleString()}${stat.suffix}`
-                    : "—"}
-                </p>
+                {statsLoading ? (
+                  <div className="h-9 w-16 mx-auto rounded bg-slate-100 animate-pulse mb-1.5" />
+                ) : (
+                  <p className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight tabular-nums">
+                    {stat.value !== null
+                      ? `${stat.value.toLocaleString()}${stat.suffix}`
+                      : "—"}
+                  </p>
+                )}
                 <p className="text-sm text-slate-400 mt-1.5 font-medium">
                   {stat.label}
                 </p>
@@ -422,7 +485,7 @@ export default function Home() {
                       key={label}
                       className={`flex items-center gap-2.5 px-3 py-2 text-xs font-medium transition-colors ${
                         active
-                          ? "bg-teal-50 text-teal-700 border-l-4 border-solid border-emerald-500"
+                          ? "bg-teal-50 text-teal-700 border-l-4 border-solid border-teal-500"
                           : "text-slate-500 hover:bg-slate-50"
                       }`}
                     >
@@ -433,7 +496,7 @@ export default function Home() {
                 </div>
 
                 {/* Main content — matches actual dashboard cards */}
-                <div className="flex-1 p-4 md:p-5 space-y-3 min-w-0 bg-[var(--bg)]">
+                <div className="flex-1 p-4 md:p-5 space-y-3 min-w-0 bg-slate-50/50">
                   <div className="grid grid-cols-3 gap-3">
                     {[
                       {
@@ -610,7 +673,12 @@ export default function Home() {
                   <div className="hidden lg:flex col-span-2 bg-slate-50/80 flex-col items-center justify-center p-10 text-center border-l border-slate-100">
                     {activeTestimonial.avatar_url ? (
                       <img
-                        src={getOptimizedAvatarUrl(activeTestimonial.avatar_url, 128) ?? activeTestimonial.avatar_url}
+                        src={
+                          getOptimizedAvatarUrl(
+                            activeTestimonial.avatar_url,
+                            128,
+                          ) ?? activeTestimonial.avatar_url
+                        }
                         alt={activeTestimonial.name}
                         loading="lazy"
                         decoding="async"
@@ -637,7 +705,12 @@ export default function Home() {
                   <div className="flex lg:hidden items-center gap-3 px-8 pb-8 md:px-10 md:pb-10">
                     {activeTestimonial.avatar_url ? (
                       <img
-                        src={getOptimizedAvatarUrl(activeTestimonial.avatar_url, 80) ?? activeTestimonial.avatar_url}
+                        src={
+                          getOptimizedAvatarUrl(
+                            activeTestimonial.avatar_url,
+                            80,
+                          ) ?? activeTestimonial.avatar_url
+                        }
                         alt={activeTestimonial.name}
                         loading="lazy"
                         decoding="async"
@@ -665,12 +738,12 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() =>
-                      setTestimonialIndex(
+                      goToTestimonial(
                         (testimonialIndex - 1 + testimonials.length) %
                           testimonials.length,
                       )
                     }
-                    className="w-8 h-8 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+                    className={carouselArrowBtn}
                     aria-label="Previous testimonial"
                   >
                     <ChevronLeft size={14} />
@@ -680,24 +753,25 @@ export default function Home() {
                     <button
                       key={testimonial.id}
                       type="button"
-                      onClick={() => setTestimonialIndex(index)}
-                      className={`rounded-full transition-all cursor-pointer ${
+                      onClick={() => goToTestimonial(index)}
+                      className={`rounded-full transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${
                         index === testimonialIndex
                           ? "w-6 h-2 bg-teal-600"
                           : "w-2 h-2 bg-slate-300 hover:bg-slate-400"
                       }`}
                       aria-label={`Show testimonial ${index + 1}`}
+                      aria-current={index === testimonialIndex}
                     />
                   ))}
 
                   <button
                     type="button"
                     onClick={() =>
-                      setTestimonialIndex(
+                      goToTestimonial(
                         (testimonialIndex + 1) % testimonials.length,
                       )
                     }
-                    className="w-8 h-8 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:border-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+                    className={carouselArrowBtn}
                     aria-label="Next testimonial"
                   >
                     <ChevronRight size={14} />
@@ -765,7 +839,7 @@ export default function Home() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-teal-500/[0.06] blur-[100px] rounded-full" />
         </div>
         <div className="max-w-2xl mx-auto text-center relative z-10">
-          <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold text-white tracking-tight mb-5 leading-tight">
+          <h2 className="text-[clamp(2rem,5vw,3.5rem)] font-bold text-white tracking-tight mb-5 leading-tight text-balance">
             Start studying smarter today
           </h2>
           <p className="text-slate-400 text-base mb-10 leading-relaxed">
@@ -773,7 +847,7 @@ export default function Home() {
           </p>
           <button
             onClick={() => openAuthModal("register")}
-            className="inline-flex items-center gap-2.5 bg-teal-500 hover:bg-teal-400 text-white px-8 py-4 rounded-lg font-semibold text-base shadow-xl shadow-teal-500/20 transition-all duration-200 hover:-translate-y-px cursor-pointer"
+            className={ctaPrimary + " px-8 py-4 text-base shadow-xl"}
           >
             Get Started Free <ArrowRight size={16} />
           </button>
@@ -809,7 +883,7 @@ export default function Home() {
                     <li key={link.label}>
                       <a
                         href={link.href}
-                        className="text-sm hover:text-slate-200 transition-colors duration-200"
+                        className="text-sm hover:text-slate-200 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070b16] rounded-sm"
                       >
                         {link.label}
                       </a>
@@ -820,7 +894,7 @@ export default function Home() {
             ))}
           </div>
           <div className="border-t border-white/[0.05] pt-8 text-xs flex flex-col md:flex-row justify-between items-center gap-3 text-slate-700">
-            <p>© 2026 StudyCircle Victoria University. All rights reserved.</p>
+            <p>© 2026 StudyCircle. All rights reserved.</p>
             <p>Made with love for students, by students.</p>
           </div>
         </div>

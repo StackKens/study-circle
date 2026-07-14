@@ -4,7 +4,6 @@ import { Menu, X } from "lucide-react";
 import { AuthModal } from "../components/ui/AuthModal";
 import { useAuthModal } from "../context/AuthModalContext";
 
-
 // useAuth is imported only if you need user data in the layout (optional)
 // import { useAuth } from "../context/AuthContext";
 
@@ -68,7 +67,7 @@ export default function AppLayout() {
           {/* Mobile toggle */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Toggle menu"
           >
             {menuOpen ? <X size={22} /> : <Menu size={22} />}

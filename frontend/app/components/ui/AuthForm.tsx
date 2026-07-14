@@ -259,6 +259,7 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
   const [errors, setErrors] = useState<
     Partial<AuthFormData & { general: string; department: string; bio: string }>
   >({});
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   function validate(): boolean {
     const e: typeof errors = {};
@@ -509,10 +510,21 @@ export function AuthForm({ type, onSwitch, onClose }: AuthFormProps) {
           <div className="flex justify-end -mt-2">
             <button
               type="button"
-              className="text-xs text-teal-600 hover:text-teal-500 font-medium transition-colors"
+              onClick={() => setShowForgotPassword(!showForgotPassword)}
+              className="text-xs text-teal-600 hover:text-teal-500 font-medium transition-colors cursor-pointer"
             >
               Forgot password?
             </button>
+          </div>
+        )}
+
+        {type === "login" && showForgotPassword && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 -mt-1">
+            <p className="text-sm text-amber-800">
+              Please contact{" "}
+              <span className="font-semibold">support@studycircle.com</span>{" "}
+              to reset your password.
+            </p>
           </div>
         )}
 
